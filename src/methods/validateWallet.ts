@@ -5,7 +5,7 @@ async function validateWallet(authData: AuthData) {
 	async function fetchZanoApi(method: string, params: object) {
 		try {
 			return await axios
-				.post('http://195.201.107.230:33341/json_rpc', {
+				.post('http://37.27.100.59:10500/json_rpc', {
 					id: 0,
 					jsonrpc: '2.0',
 					method,

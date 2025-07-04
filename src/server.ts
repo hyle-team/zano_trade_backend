@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -85,7 +86,7 @@ process.on('unhandledRejection', (reason, promise) => {
 	app.use('/api/admin', adminRouter);
 
 	app.post('/api/check-auth', middleware.verifyToken, async (req, res) =>
-		res.send({ success: true, userData: req.body.userData })
+		res.send({ success: true, userData: req.body.userData }),
 	);
 
 	server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
