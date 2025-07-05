@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon --exec tsx ./src/server.ts",
-    "start": "cross-env NODE_ENV=production PORT=30289 tsx ./src/server.ts",
+    "start": "tsx ./src/server.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
