@@ -1,8 +1,6 @@
 import 'dotenv/config';
 import pg from 'pg';
 
-console.log(process.env);
-
 async function initdb() {
 	const pool = new pg.Pool({
 		user: process.env.PGUSER,
