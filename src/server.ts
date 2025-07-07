@@ -3,6 +3,8 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
+import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import authRouter from './routes/auth.router.js';
 import offersRouter from './routes/offers.router.js';
 import userRouter from './routes/user.router.js';
@@ -13,7 +15,6 @@ import dexRouter from './routes/dex.router.js';
 import ordersRouter from './routes/orders.router.js';
 import transactionsRouter from './routes/transactions.router.js';
 import adminRouter from './routes/admin.router.js';
-
 import { socketStart } from './socket/main.js';
 import assetsUpdateChecker, { ZANO_ASSET_ID } from './workers/assetsUpdateChecker.js';
 import initdb from './database.js';
@@ -69,8 +70,16 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	socketStart(io);
 
+	app.use(cookieParser());
 	app.use(express.json());
 	app.use(express.urlencoded({ extended: true }));
+
+	app.use(
+		cors({
+			origin: ['http://localhost:3000', 'http://localhost:3001', 'https://trade.zano.org'],
+			credentials: true,
+		}),
+	);
 
 	app.use('/api', [
 		authRouter,

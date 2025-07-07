@@ -7,6 +7,7 @@
 		"airbnb-base",
 		"plugin:@typescript-eslint/recommended",
 		"next/core-web-vitals",
+		"plugin:prettier/recommended",
 		"prettier"
 	],
 	"parser": "@typescript-eslint/parser",
@@ -20,6 +21,7 @@
 		"no-console": "off",
 		"no-void": "off",
 		"import/extensions": "off",
+		"import/no-extraneous-dependencies": "off",
 		"no-unused-vars": [
 			"warn",
 			{
@@ -28,8 +30,6 @@
 		],
 		"func-names": "off",
 		"consistent-return": "off",
-		"no-restricted-syntax": "off",
-		"@typescript-eslint/indent": ["error", "tab"],
 		"class-methods-use-this": "off",
 		"@typescript-eslint/no-unused-vars": [
 			"warn",
@@ -49,7 +49,8 @@
 		"no-promise-executor-return": "off",
 		"import/no-duplicates": "off",
 		"import/prefer-default-export": "off",
-		"import/no-cycle": "off"
+		"import/no-cycle": "off",
+		"no-restricted-syntax": "off"
 	},
 	"settings": {
 		"import/resolver": {

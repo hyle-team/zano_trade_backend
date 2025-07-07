@@ -53,12 +53,12 @@ class DexModel {
 				},
 				whitelistedOnly
 					? {
-						[Op.or]: [
-							Sequelize.where(Sequelize.col('first_currency.whitelisted'), true),
-							Sequelize.where(Sequelize.col('second_currency.whitelisted'), true),
-							Sequelize.where(Sequelize.col('featured'), true),
-						],
-					}
+							[Op.or]: [
+								Sequelize.where(Sequelize.col('first_currency.whitelisted'), true),
+								Sequelize.where(Sequelize.col('second_currency.whitelisted'), true),
+								Sequelize.where(Sequelize.col('featured'), true),
+							],
+						}
 					: {},
 			],
 		};

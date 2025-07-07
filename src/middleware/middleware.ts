@@ -1,15 +1,22 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import User from '@/schemes/User';
+import User from '../schemes/User';
 import UserData from '../interfaces/common/UserData';
 
 class Middleware {
 	async verifyToken(req: Request, res: Response, next: NextFunction) {
 		try {
-			const userData = jwt.verify(req.body.token, process.env.JWT_SECRET || '') as UserData;
+			const token = req.cookies?.authToken;
+
+			if (!token) {
+				return res.status(401).send({ success: false, data: 'No token provided (cookie)' });
+			}
+
+			const userData = jwt.verify(token, process.env.JWT_SECRET || '') as UserData;
 			req.body.userData = userData;
 			next();
-		} catch {
+		} catch (err) {
+			console.error('JWT error:', err);
 			res.status(401).send({ success: false, data: 'Unauthorized (JWT)' });
 		}
 	}
