@@ -36,7 +36,13 @@ class AuthController {
 					process.env.JWT_SECRET || '',
 					neverExpires ? undefined : { expiresIn: '24h' },
 				);
-				res.status(200).send({ success, data: token });
+				res.cookie('authToken', token, {
+					httpOnly: true,
+					secure: process.env.NODE_ENV === 'production',
+					sameSite: 'strict',
+					maxAge: 24 * 60 * 60 * 1000, // 24 hour
+				});
+				res.status(200).send({ success });
 			} else {
 				res.status(500).send({ success, data: 'Internal error' });
 			}
@@ -44,6 +50,14 @@ class AuthController {
 			console.log(err);
 			res.status(500).send({ success: false, data: 'Unhandled error' });
 		}
+	}
+	logout(_req: Request, res: Response) {
+		res.clearCookie('authToken', {
+			httpOnly: true,
+			sameSite: 'strict',
+			secure: process.env.NODE_ENV === 'production',
+		});
+		res.status(200).send({ success: true });
 	}
 }
 

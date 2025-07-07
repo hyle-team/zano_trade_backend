@@ -13,29 +13,29 @@ import OrderData from '../interfaces/special/socket-data/OrderData.js';
 
 type ProcessResult =
 	| {
-		success: boolean;
-		offerRow: unknown;
-		existingChat: unknown;
-		userRow: unknown;
-		data?: undefined;
-	  }
-	| {
-		success: boolean;
-		message?: {
-			text: string;
-			timestamp: number;
-			from_owner: boolean;
 			success: boolean;
-			fail: boolean;
-			type?: string;
-			url?: string;
-			fromOwner?: boolean;
-		};
-		deposits_state: Record<string, unknown>;
+			offerRow: unknown;
+			existingChat: unknown;
+			userRow: unknown;
+			data?: undefined;
 	  }
 	| {
-		success: boolean;
-		[key: string]: unknown;
+			success: boolean;
+			message?: {
+				text: string;
+				timestamp: number;
+				from_owner: boolean;
+				success: boolean;
+				fail: boolean;
+				type?: string;
+				url?: string;
+				fromOwner?: boolean;
+			};
+			deposits_state: Record<string, unknown>;
+	  }
+	| {
+			success: boolean;
+			[key: string]: unknown;
 	  };
 
 async function runNotificationMethods(

@@ -4,7 +4,20 @@ export function validateTokensInput(input: string | number, decimal_point = 12) 
 	let inputVal = input;
 
 	if (typeof inputVal === 'number') {
+		// scientific notation check
+		if (inputVal.toString().toLowerCase().includes('e')) {
+			return {
+				valid: false,
+				error: 'Scientific notation is not allowed',
+			};
+		}
+
 		inputVal = inputVal.toString();
+	} else if (/^[+-]?\d+(\.\d+)?[eE][+-]?\d+$/.test(inputVal)) {
+		return {
+			valid: false,
+			error: 'Scientific notation is not allowed',
+		};
 	}
 
 	if (inputVal === '') {
@@ -28,9 +41,7 @@ export function validateTokensInput(input: string | number, decimal_point = 12) 
 	const dotInput = inputVal.replace(/,/g, '');
 
 	const decimalDevider = new Decimal(10).pow(decimal_point);
-
 	const maxAllowedNumber = MAX_NUMBER.div(decimalDevider);
-
 	const minAllowedNumber = new Decimal(1).div(decimalDevider);
 
 	const rounded = (() => {
@@ -69,7 +80,15 @@ export function validateTokensInput(input: string | number, decimal_point = 12) 
 		};
 	}
 
-	const dotInputDecimal = new Decimal(rounded);
+	let dotInputDecimal: Decimal;
+	try {
+		dotInputDecimal = new Decimal(rounded);
+	} catch (e) {
+		return {
+			valid: false,
+			error: 'Invalid number format',
+		};
+	}
 
 	if (dotInputDecimal.gt(maxAllowedNumber)) {
 		return {
