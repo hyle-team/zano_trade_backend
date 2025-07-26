@@ -3,23 +3,24 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
-import authRouter from './routes/auth.router.js';
-import offersRouter from './routes/offers.router.js';
-import userRouter from './routes/user.router.js';
-import middleware from './middleware/middleware.js';
-import configRouter from './routes/config.router.js';
-import chatsRouter from './routes/chats.router.js';
-import dexRouter from './routes/dex.router.js';
-import ordersRouter from './routes/orders.router.js';
-import transactionsRouter from './routes/transactions.router.js';
-import adminRouter from './routes/admin.router.js';
+import authRouter from './routes/auth.router';
+import offersRouter from './routes/offers.router';
+import userRouter from './routes/user.router';
+import middleware from './middleware/middleware';
+import configRouter from './routes/config.router';
+import chatsRouter from './routes/chats.router';
+import dexRouter from './routes/dex.router';
+import ordersRouter from './routes/orders.router';
+import transactionsRouter from './routes/transactions.router';
+import adminRouter from './routes/admin.router';
 
-import { socketStart } from './socket/main.js';
-import assetsUpdateChecker, { ZANO_ASSET_ID } from './workers/assetsUpdateChecker.js';
-import initdb from './database.js';
-import sequelize from './sequelize.js';
-import Currency, { Asset } from './schemes/Currency.js';
-import User from './schemes/User.js';
+import { socketStart } from './socket/main';
+import assetsUpdateChecker, { ZANO_ASSET_ID } from './workers/assetsUpdateChecker';
+import initdb from './database';
+import sequelize from './sequelize';
+import Currency, { Asset } from './schemes/Currency';
+import User from './schemes/User';
+import statsRouter from './routes/stats.router';
 
 const PORT = process.env.PORT || 3000;
 
@@ -81,6 +82,7 @@ process.on('unhandledRejection', (reason, promise) => {
 		dexRouter,
 		ordersRouter,
 		transactionsRouter,
+		statsRouter,
 	]);
 
 	app.use('/api/admin', adminRouter);

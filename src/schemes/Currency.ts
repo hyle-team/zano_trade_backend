@@ -8,8 +8,8 @@ export interface Asset {
 	price_url: string;
 	ticker: string;
 	full_name: string;
-	total_max_supply: bigint;
-	current_supply: bigint;
+	total_max_supply: string;
+	current_supply: string;
 	decimal_point: number;
 	meta_info: string;
 }
