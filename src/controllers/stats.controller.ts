@@ -1,4 +1,5 @@
 import getAssetStatsRes from '@/interfaces/responses/stats/getAssetStatsRes';
+import getTotalStatsRes from '@/interfaces/responses/stats/getTotalStatsRes';
 import Currency from '@/schemes/Currency';
 import Order from '@/schemes/Order';
 import Pair from '@/schemes/Pair';
@@ -6,6 +7,14 @@ import Transaction from '@/schemes/Transaction';
 import Decimal from 'decimal.js';
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
+
+interface OrderWithBuyOrders extends Order {
+	buy_orders: Transaction[];
+}
+
+interface PairWithFirstCurrency extends Pair {
+	first_currency: Currency;
+}
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
@@ -51,11 +60,9 @@ class StatsController {
 				market_cap: currentSupply.mul(pair.rate || 0).toString(),
 			};
 
-			interface OrderWithBuyOrders extends Order {
-				buy_orders?: Transaction[];
-			}
-
 			if (
+				from_timestamp &&
+				from_timestamp &&
 				typeof from_timestamp_parsed === 'number' &&
 				typeof to_timestamp_parsed === 'number'
 			) {
@@ -72,19 +79,25 @@ class StatsController {
 							model: Transaction,
 							as: 'buy_orders',
 							attributes: ['amount'],
-							required: false,
+							required: true,
 						},
 					],
 					order: [['timestamp', 'ASC']],
 				})) as OrderWithBuyOrders[];
 
-				const filteredOrders = ordersWithTransactions.filter((order) => order.buy_orders && order.buy_orders.length > 0);
+				const filteredOrders = ordersWithTransactions.filter(
+					(order) => order.buy_orders && order.buy_orders.length > 0,
+				);
 
-				const volumeZano = filteredOrders.reduce((acc, order) => (
-					order?.buy_orders?.reduce((innerAcc, tx) => innerAcc.add(
-						new Decimal(tx.amount).mul(new Decimal(order.price)),
-					), acc) || acc
-				), new Decimal(0));
+				const volumeZano = filteredOrders.reduce(
+					(acc, order) =>
+						order?.buy_orders?.reduce(
+							(innerAcc, tx) =>
+								innerAcc.add(new Decimal(tx.amount).mul(new Decimal(order.price))),
+							acc,
+						) || acc,
+					new Decimal(0),
+				);
 
 				const firstPrice = new Decimal(filteredOrders[0]?.price || 0);
 				const lastPrice = new Decimal(filteredOrders.at(-1)?.price || 0);
@@ -111,7 +124,105 @@ class StatsController {
 
 	async getTotalStats(req: Request, res: Response) {
 		try {
-			// soon
+			const { from_timestamp, to_timestamp } = req.query;
+
+			const from_timestamp_parsed = parseInt(from_timestamp as string, 10);
+			const to_timestamp_parsed = parseInt(to_timestamp as string, 10);
+
+			const response: getTotalStatsRes = {
+				largest_tvl: {
+					asset_id: 'soon',
+					tvl: 'soon',
+				},
+				total_tvl: 'soon',
+			};
+
+			if (
+				from_timestamp &&
+				from_timestamp &&
+				typeof from_timestamp_parsed === 'number' &&
+				typeof to_timestamp_parsed === 'number'
+			) {
+				const ordersWithTransactions = (await Order.findAll({
+					where: {
+						timestamp: {
+							[Op.between]: [from_timestamp_parsed, to_timestamp_parsed],
+						},
+					},
+					attributes: ['id', 'price', 'pair_id'],
+					include: [
+						{
+							model: Transaction,
+							as: 'buy_orders',
+							attributes: ['amount'],
+							required: true,
+						},
+					],
+					order: [['timestamp', 'ASC']],
+				})) as OrderWithBuyOrders[];
+
+				const involvedPairs = [
+					...new Set(ordersWithTransactions.map((order) => order.pair_id)),
+				];
+
+				const pairVolumes = ordersWithTransactions.reduce(
+					(acc, order) => {
+						const orderVolume = order.buy_orders.reduce(
+							(sum, t) => sum + Number(order.price) * Number(t.amount),
+							0,
+						);
+
+						acc[order.pair_id] = (acc[order.pair_id] || 0) + orderVolume;
+						return acc;
+					},
+					{} as Record<number, number>,
+				);
+
+				const entries = Object.entries(pairVolumes);
+
+				let maxPairId = Number(entries[0][0]); // берём первый элемент как старт
+				let maxVolume = entries[0][1];
+
+				for (const [pairId, volume] of entries) {
+					if (volume > maxVolume) {
+						maxVolume = volume;
+						maxPairId = Number(pairId);
+					}
+				}
+
+				const biggestPair = (await Pair.findByPk(maxPairId, {
+					attributes: [],
+					include: [
+						{
+							model: Currency,
+							as: 'first_currency',
+							attributes: ['asset_id'],
+							required: true,
+						},
+					],
+				})) as PairWithFirstCurrency;
+
+				const totalVolume = Object.values(pairVolumes).reduce(
+					(sum, volume) => sum + volume,
+					0,
+				);
+
+				const period_data = {
+					active_tokens: involvedPairs.length.toString(),
+					most_traded: {
+						asset_id: biggestPair.first_currency.asset_id,
+						volume: maxVolume.toString(),
+					},
+					total_volume: totalVolume.toString(),
+				};
+
+				response.period_data = period_data;
+			}
+
+			return res.status(200).send({
+				success: true,
+				data: response,
+			});
 		} catch (err) {
 			console.log(err);
 			res.status(500).send({ success: false, data: 'Unhandled error' });
