@@ -129,12 +129,51 @@ class StatsController {
 			const from_timestamp_parsed = parseInt(from_timestamp as string, 10);
 			const to_timestamp_parsed = parseInt(to_timestamp as string, 10);
 
+			const allRates = (
+				(await Pair.findAll({
+					attributes: ['id', 'rate'],
+					include: [
+						{
+							model: Currency,
+							as: 'first_currency',
+							attributes: ['asset_id', 'asset_info', 'auto_parsed'],
+							required: true,
+						},
+					],
+				})) as PairWithFirstCurrency[]
+			)
+				.map((pair) => ({
+					asset_id: pair.first_currency.asset_id,
+					current_supply: pair.first_currency.asset_info?.current_supply || '0',
+					decimal_point: pair.first_currency.asset_info?.decimal_point || 0,
+					rate: pair.rate || 0,
+					auto_parsed: pair.first_currency.auto_parsed,
+				}))
+				.filter((pair) => pair.auto_parsed && pair.rate > 0);
+
+			const allTvls = allRates
+				.map((pair) => {
+					const currentSupply = new Decimal(pair.current_supply).div(
+						new Decimal(10).pow(pair.decimal_point),
+					);
+					return {
+						asset_id: pair.asset_id,
+						tvl: currentSupply.mul(pair.rate).toString(),
+					};
+				})
+				.sort((a, b) => new Decimal(b.tvl).minus(new Decimal(a.tvl)).toNumber());
+
+			const totalTVL = allTvls.reduce(
+				(acc, pair) => acc.add(new Decimal(pair.tvl)),
+				new Decimal(0),
+			);
+
 			const response: getTotalStatsRes = {
 				largest_tvl: {
-					asset_id: 'soon',
-					tvl: 'soon',
+					asset_id: allTvls[0]?.asset_id || '',
+					tvl: allTvls[0]?.tvl || '0',
 				},
-				total_tvl: 'soon',
+				total_tvl: totalTVL.toString(),
 			};
 
 			if (
