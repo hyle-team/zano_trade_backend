@@ -125,10 +125,38 @@ class ExchangeModel {
 			const data = {
 				rate: new Decimal(lastOrderPrice || '0').toNumber(),
 				coefficient: change_coefficient,
-				high: prices?.length ? Decimal.max(...prices).toNumber() : 0,
-				low: prices?.length ? Decimal.min(...prices).toNumber() : 0,
+				high: 0,
+				low: 0,
 				volume: 0,
 			};
+
+			if (prices.length > 0) {
+				data.high = Decimal.max(...prices).toNumber();
+				data.low = Decimal.min(...prices).toNumber();
+			} else {
+				const lastTradedOrder = await Order.findOne({
+					where: {
+						pair_id: pairId,
+					},
+					include: [
+						{
+							model: Transaction,
+							as: 'buy_orders',
+							attributes: [],
+							required: true,
+							where: {
+								status: 'confirmed',
+							},
+						},
+					],
+					order: [['timestamp', 'DESC']],
+				});
+
+				const lastKnownPrice = new Decimal(lastTradedOrder?.price || '0').toNumber();
+
+				data.high = lastKnownPrice;
+				data.low = lastKnownPrice;
+			}
 
 			for (const transaction of allTransactionsWithPrices) {
 				data.volume += new Decimal(transaction.amount)
