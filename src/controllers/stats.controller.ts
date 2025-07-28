@@ -139,7 +139,7 @@ class StatsController {
 
 			const allRates = (
 				(await Pair.findAll({
-					attributes: ['id', 'rate'],
+					attributes: ['id', 'rate', 'volume'],
 					include: [
 						{
 							model: Currency,
