@@ -16,6 +16,8 @@ interface PairWithFirstCurrency extends Pair {
 	first_currency: Currency;
 }
 
+const MIN_VOLUME_THRESHOLD = 10; // volume in zano
+
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
 		try {
@@ -52,12 +54,18 @@ class StatsController {
 				new Decimal(10).pow(targetAsset.asset_info?.decimal_point || 0),
 			);
 
+			const marketCap =
+				(pair.volume || 0) > MIN_VOLUME_THRESHOLD
+					? currentSupply.mul(pair.rate || 0).toString()
+					: '0';
+			const currentTVL = marketCap;
+
 			const response: getAssetStatsRes = {
-				current_tvl: currentSupply.mul(pair.rate || 0).toString(),
+				current_tvl: currentTVL,
 				current_price: (pair.rate || 0).toString(),
 				change_24h_percent: (pair.coefficient || 0).toString(),
 				volume_24h: (pair.volume || 0).toString(),
-				market_cap: currentSupply.mul(pair.rate || 0).toString(),
+				market_cap: marketCap,
 			};
 
 			if (
@@ -148,6 +156,7 @@ class StatsController {
 					decimal_point: pair.first_currency.asset_info?.decimal_point || 0,
 					rate: pair.rate || 0,
 					auto_parsed: pair.first_currency.auto_parsed,
+					volume: pair.volume || 0,
 				}))
 				.filter((pair) => pair.auto_parsed && pair.rate > 0);
 
@@ -159,8 +168,10 @@ class StatsController {
 					return {
 						asset_id: pair.asset_id,
 						tvl: currentSupply.mul(pair.rate).toString(),
+						volume: pair.volume,
 					};
 				})
+				.filter((pair) => pair.volume > MIN_VOLUME_THRESHOLD)
 				.sort((a, b) => new Decimal(b.tvl).minus(new Decimal(a.tvl)).toNumber());
 
 			const totalTVL = allTvls.reduce(
