@@ -139,7 +139,7 @@ class StatsController {
 
 			const allRates = (
 				(await Pair.findAll({
-					attributes: ['id', 'rate'],
+					attributes: ['id', 'rate', 'volume'],
 					include: [
 						{
 							model: Currency,
@@ -173,6 +173,8 @@ class StatsController {
 				})
 				.filter((pair) => pair.volume > MIN_VOLUME_THRESHOLD)
 				.sort((a, b) => new Decimal(b.tvl).minus(new Decimal(a.tvl)).toNumber());
+
+			console.log('allTvls', allTvls);
 
 			const totalTVL = allTvls.reduce(
 				(acc, pair) => acc.add(new Decimal(pair.tvl)),
