@@ -96,6 +96,11 @@ class ExchangeModel {
 				volume: 0,
 			};
 
+			if (data.high === 0) {
+				data.high = data.rate;
+				data.low = data.rate;
+			}
+
 			const transactions = await Transaction.findAll({
 				where: {
 					timestamp: {
