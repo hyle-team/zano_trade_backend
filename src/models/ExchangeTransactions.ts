@@ -73,7 +73,7 @@ class ExchangeModel {
 
 			date.setHours(date.getHours() - 24);
 
-			const firstTimestamp = 0;
+			const firstTimestamp = date.getTime();
 
 			const orders = (await Order.findAll({
 				where: {
@@ -101,13 +101,15 @@ class ExchangeModel {
 			})) as OrderWithTransactions[];
 
 			const allTransactionsWithPrices = orders
-				.flatMap((order) => order.buy_orders.map((transaction) => {
-					const buyOrderPrice = order.price;
-					return {
-						...transaction.toJSON(),
-						buy_order_price: buyOrderPrice,
-					};
-				}))
+				.flatMap((order) =>
+					order.buy_orders.map((transaction) => {
+						const buyOrderPrice = order.price;
+						return {
+							...transaction.toJSON(),
+							buy_order_price: buyOrderPrice,
+						};
+					}),
+				)
 				.sort((a, b) => a.timestamp - b.timestamp);
 
 			const firstOrderPrice = allTransactionsWithPrices[0]?.buy_order_price || NaN;
