@@ -9,6 +9,11 @@ import Transaction from '../schemes/Transaction';
 import Order from '../schemes/Order';
 import Pair from '../schemes/Pair.js';
 
+interface OrderWithTransactions extends Order {
+	buy_orders: Transaction[];
+	sell_orders: Transaction[];
+}
+
 class ExchangeModel {
 	async runPairStatsDaemon() {
 		(async () => {
@@ -68,9 +73,9 @@ class ExchangeModel {
 
 			date.setHours(date.getHours() - 24);
 
-			const firstTimestamp = date.getTime();
+			const firstTimestamp = 0;
 
-			const orders = await Order.findAll({
+			const orders = (await Order.findAll({
 				where: {
 					pair_id: pairId,
 					timestamp: {
@@ -78,47 +83,55 @@ class ExchangeModel {
 						[Op.lte]: lastTimestamp,
 					},
 				},
-				order: [['timestamp', 'DESC']],
-			});
 
-			const lastOrderPrice = orders[0]?.price || NaN;
-			const firstOrderPrice = orders.at(-1)?.price || NaN;
+				include: [
+					{
+						model: Transaction,
+						as: 'buy_orders',
+						attributes: ['buy_order_id', 'sell_order_id', 'amount'],
+						required: true,
+						where: {
+							status: 'confirmed',
+						},
+						order: [['timestamp', 'ASC']],
+					},
+				],
 
-			const prices = orders.map((e) => e.price);
+				order: [['timestamp', 'ASC']],
+			})) as OrderWithTransactions[];
+
+			const allTransactionsWithPrices = orders
+				.flatMap((order) => order.buy_orders.map((transaction) => {
+					const buyOrderPrice = order.price;
+					return {
+						...transaction.toJSON(),
+						buy_order_price: buyOrderPrice,
+					};
+				}))
+				.sort((a, b) => a.timestamp - b.timestamp);
+
+			const firstOrderPrice = allTransactionsWithPrices[0]?.buy_order_price || NaN;
+			const lastOrderPrice = allTransactionsWithPrices.at(-1)?.buy_order_price || NaN;
+
+			const change_coefficient =
+				lastOrderPrice && firstOrderPrice
+					? new Decimal(lastOrderPrice).div(firstOrderPrice).minus(1).mul(100).toNumber()
+					: 0;
+
+			const prices = allTransactionsWithPrices.map((e) => e.buy_order_price);
 
 			const data = {
-				rate: new Decimal(lastOrderPrice).toNumber() || 0,
-				coefficient:
-					new Decimal(lastOrderPrice).div(firstOrderPrice).minus(1).mul(100).toNumber() ||
-					0,
+				rate: new Decimal(lastOrderPrice || '0').toNumber(),
+				coefficient: change_coefficient,
 				high: prices?.length ? Decimal.max(...prices).toNumber() : 0,
 				low: prices?.length ? Decimal.min(...prices).toNumber() : 0,
 				volume: 0,
 			};
 
-			if (data.high === 0) {
-				data.high = data.rate;
-				data.low = data.rate;
-			}
-
-			const transactions = await Transaction.findAll({
-				where: {
-					timestamp: {
-						[Op.gte]: firstTimestamp,
-						[Op.lte]: lastTimestamp,
-					},
-					status: 'confirmed',
-				},
-			});
-
-			for (const transaction of transactions) {
-				const buyOrder = await ordersModel.getOrderRow(transaction.buy_order_id);
-				const sellOrder = await ordersModel.getOrderRow(transaction.sell_order_id);
-
-				if (buyOrder && sellOrder && buyOrder.pair_id === parseInt(pairId, 10)) {
-					const price = Decimal.min(buyOrder.price, sellOrder.price).toFixed();
-					data.volume += new Decimal(transaction.amount).mul(price).toNumber();
-				}
+			for (const transaction of allTransactionsWithPrices) {
+				data.volume += new Decimal(transaction.amount)
+					.mul(transaction.buy_order_price)
+					.toNumber();
 			}
 
 			return { success: true, data };
