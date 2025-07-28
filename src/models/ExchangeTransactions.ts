@@ -10,6 +10,56 @@ import Order from '../schemes/Order';
 import Pair from '../schemes/Pair.js';
 
 class ExchangeModel {
+	async runPairStatsDaemon() {
+		(async () => {
+			while (true) {
+				console.log('Running pair stats update...');
+				const date = +new Date();
+
+				try {
+					const pairs = await Pair.findAll({
+						attributes: ['id'],
+					});
+
+					for (const pair of pairs) {
+						const statsResult = await this.calculatePairStats(pair.id.toString());
+
+						if (!statsResult.success || typeof statsResult.data === 'string') {
+							throw new Error('Error while getting pair stats');
+						}
+
+						const stats = statsResult.data;
+
+						await Pair.update(
+							{
+								rate: stats.rate,
+								coefficient: stats.coefficient,
+								high: stats.high,
+								low: stats.low,
+								volume: stats.volume,
+							},
+							{
+								where: {
+									id: pair.id,
+								},
+							},
+						);
+
+						sendUpdatePairStatsMessage(io, pair.id.toString(), stats);
+					}
+				} catch (error) {
+					console.log(error);
+				}
+
+				console.log(
+					`Pair stats update completed in ${Math.floor((+new Date() - date) / 1000)}s`,
+				);
+
+				await new Promise((resolve) => setTimeout(resolve, 1000 * 60 * 5));
+			}
+		})();
+	}
+
 	private async calculatePairStats(pairId: string) {
 		try {
 			const date = new Date();
