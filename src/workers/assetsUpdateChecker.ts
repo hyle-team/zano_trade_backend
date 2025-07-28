@@ -58,10 +58,8 @@ class AssetsUpdateChecker {
 					});
 
 					if (existingCurrency) {
-						if (!existingCurrency.asset_info) {
-							existingCurrency.asset_info = asset;
-							await existingCurrency.save();
-						}
+						existingCurrency.asset_info = asset;
+						await existingCurrency.save();
 					} else {
 						await Currency.create({
 							name: asset.ticker,
