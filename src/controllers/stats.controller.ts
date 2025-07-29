@@ -66,6 +66,9 @@ class StatsController {
 				change_24h_percent: (pair.coefficient || 0).toString(),
 				volume_24h: (pair.volume || 0).toString(),
 				market_cap: marketCap,
+				name: targetAsset.asset_info?.full_name || '',
+				ticker: targetAsset.asset_info?.ticker || '',
+				pair_id: pair.id.toString(),
 			};
 
 			if (
