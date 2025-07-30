@@ -233,8 +233,8 @@ class StatsController {
 
 				const entries = Object.entries(pairVolumes);
 
-				let maxPairId = Number(entries[0][0]); // берём первый элемент как старт
-				let maxVolume = entries[0][1];
+				let maxPairId = Number(entries[0]?.[0]);
+				let maxVolume = entries[0]?.[1];
 
 				for (const [pairId, volume] of entries) {
 					if (volume > maxVolume) {
@@ -243,17 +243,19 @@ class StatsController {
 					}
 				}
 
-				const biggestPair = (await Pair.findByPk(maxPairId, {
-					attributes: [],
-					include: [
-						{
-							model: Currency,
-							as: 'first_currency',
-							attributes: ['asset_id'],
-							required: true,
-						},
-					],
-				})) as PairWithFirstCurrency;
+				const biggestPair = maxPairId
+					? ((await Pair.findByPk(maxPairId, {
+						attributes: [],
+						include: [
+							{
+								model: Currency,
+								as: 'first_currency',
+								attributes: ['asset_id'],
+								required: true,
+							},
+						],
+					})) as PairWithFirstCurrency)
+					: null;
 
 				const totalVolume = Object.values(pairVolumes).reduce(
 					(sum, volume) => sum + volume,
@@ -263,10 +265,10 @@ class StatsController {
 				const period_data = {
 					active_tokens: involvedPairs.length.toString(),
 					most_traded: {
-						asset_id: biggestPair.first_currency.asset_id,
-						volume: maxVolume.toString(),
+						asset_id: biggestPair?.first_currency?.asset_id || '',
+						volume: maxVolume?.toString() || '0',
 					},
-					total_volume: totalVolume.toString(),
+					total_volume: totalVolume?.toString() || '0',
 				};
 
 				response.period_data = period_data;
