@@ -91,6 +91,9 @@ class StatsController {
 							as: 'buy_orders',
 							attributes: ['amount'],
 							required: true,
+							where: {
+								status: 'confirmed',
+							},
 						},
 					],
 					order: [['timestamp', 'ASC']],
@@ -209,6 +212,9 @@ class StatsController {
 							as: 'buy_orders',
 							attributes: ['amount'],
 							required: true,
+							where: {
+								status: 'confirmed',
+							},
 						},
 					],
 					order: [['timestamp', 'ASC']],
