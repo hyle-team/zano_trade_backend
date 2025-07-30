@@ -16,7 +16,7 @@ interface PairWithFirstCurrency extends Pair {
 	first_currency: Currency;
 }
 
-const MIN_VOLUME_THRESHOLD = 10; // volume in zano
+const MIN_VOLUME_THRESHOLD = -1; // volume in zano
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
