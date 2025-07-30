@@ -231,6 +231,8 @@ class StatsController {
 					{} as Record<number, number>,
 				);
 
+				console.log(pairVolumes);
+
 				const entries = Object.entries(pairVolumes);
 
 				let maxPairId = Number(entries[0]?.[0]);
