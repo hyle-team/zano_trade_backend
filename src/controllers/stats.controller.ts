@@ -16,7 +16,7 @@ interface PairWithFirstCurrency extends Pair {
 	first_currency: Currency;
 }
 
-const MIN_VOLUME_THRESHOLD = -1; // volume in zano
+const MIN_VOLUME_THRESHOLD = 10; // volume in zano
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
@@ -221,10 +221,6 @@ class StatsController {
 					order: [['timestamp', 'ASC']],
 				})) as OrderWithBuyOrders[];
 
-				const involvedPairs = [
-					...new Set(ordersWithTransactions.map((order) => order.pair_id)),
-				];
-
 				const pairVolumes = ordersWithTransactions.reduce(
 					(acc, order) => {
 						const orderVolume = order.buy_orders.reduce(
@@ -238,7 +234,13 @@ class StatsController {
 					{} as Record<number, number>,
 				);
 
-				console.log(pairVolumes);
+				const daysInPeriod = Math.ceil(
+					(to_timestamp_parsed - from_timestamp_parsed) / (24 * 60 * 60 * 1000),
+				);
+
+				const involvedPairs = Object.keys(pairVolumes).filter(
+					(pairId) => pairVolumes[Number(pairId)] / daysInPeriod > MIN_VOLUME_THRESHOLD,
+				);
 
 				const entries = Object.entries(pairVolumes);
 
