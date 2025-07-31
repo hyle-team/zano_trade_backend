@@ -7,6 +7,7 @@ interface getAssetStatsRes {
 	name: string;
 	ticker: string;
 	pair_id: string;
+	current_supply: string;
 	period_data?: {
 		price_change_percent: string;
 		volume: string;

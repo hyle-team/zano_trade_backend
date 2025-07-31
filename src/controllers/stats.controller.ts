@@ -69,6 +69,7 @@ class StatsController {
 				name: targetAsset.asset_info?.full_name || '',
 				ticker: targetAsset.asset_info?.ticker || '',
 				pair_id: pair.id.toString(),
+				current_supply: currentSupply.toString(),
 			};
 
 			if (
