@@ -279,7 +279,7 @@ class StatsController {
 							{
 								model: Currency,
 								as: 'first_currency',
-								attributes: ['asset_id'],
+								attributes: ['asset_id', 'asset_info'],
 								required: true,
 							},
 						],
