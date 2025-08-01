@@ -95,6 +95,8 @@ class TransactionsController {
 				return res.status(400).send({ success: false, data: 'User not found' });
 			}
 
+			console.log(`Fetching transactions for user ID: ${userRow.id} from ${from} to ${to}`);
+
 			const ordersWithTransactions = (await Order.findAll({
 				where: { user_id: userRow.id },
 				include: [
