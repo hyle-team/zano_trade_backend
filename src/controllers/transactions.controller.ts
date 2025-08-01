@@ -97,35 +97,37 @@ class TransactionsController {
 
 			console.log(`Fetching transactions for user ID: ${userRow.id} from ${from} to ${to}`);
 
-			const ordersWithTransactions = (
-				(await Order.findAll({
-					where: { user_id: userRow.id },
-					include: [
-						{
-							model: Transaction,
-							as: 'buy_orders',
-							where: {
-								createdAt: {
-									[Op.between]: [parsedFrom, parsedTo],
-								},
-								status: 'confirmed',
+			const ordersWithTransactions = (await Order.findAll({
+				where: { user_id: userRow.id },
+				include: [
+					{
+						model: Transaction,
+						as: 'buy_orders',
+						where: {
+							createdAt: {
+								[Op.between]: [parsedFrom, parsedTo],
 							},
-							// required: true,
+							status: 'confirmed',
 						},
-						{
-							model: Transaction,
-							as: 'sell_orders',
-							where: {
-								createdAt: {
-									[Op.between]: [parsedFrom, parsedTo],
-								},
-								status: 'confirmed',
+						// required: true,
+					},
+					{
+						model: Transaction,
+						as: 'sell_orders',
+						where: {
+							createdAt: {
+								[Op.between]: [parsedFrom, parsedTo],
 							},
-							// required: true,
+							status: 'confirmed',
 						},
-					],
-				})) as OrderWithAllTransactions[]
-			).filter((e) => e.buy_orders.length > 0 || e.sell_orders.length > 0);
+						// required: true,
+					},
+				],
+			})) as OrderWithAllTransactions[];
+
+			console.log(
+				`Found ${ordersWithTransactions.length} orders with transactions for user ID: ${userRow.id}`,
+			);
 
 			const txs = ordersWithTransactions.map((order) => [
 				...order.buy_orders,
