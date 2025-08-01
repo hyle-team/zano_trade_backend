@@ -1,5 +1,6 @@
 interface getTotalStatsRes {
 	largest_tvl: {
+		ticker: string;
 		asset_id: string;
 		tvl: string;
 	};

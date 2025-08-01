@@ -7,16 +7,10 @@ import Transaction from '@/schemes/Transaction';
 import Decimal from 'decimal.js';
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
+import { OrderWithBuyOrders, PairWithFirstCurrency } from '@/interfaces/database/modifiedRequests';
+import statsModel from '@/models/Stats';
 
-interface OrderWithBuyOrders extends Order {
-	buy_orders: Transaction[];
-}
-
-interface PairWithFirstCurrency extends Pair {
-	first_currency: Currency;
-}
-
-const MIN_VOLUME_THRESHOLD = 10; // volume in zano
+const MIN_VOLUME_THRESHOLD = 1000; // volume in zano per month
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
@@ -54,8 +48,14 @@ class StatsController {
 				new Decimal(10).pow(targetAsset.asset_info?.decimal_point || 0),
 			);
 
+			const monthlyVolume = await statsModel.calcVolumeForPeriod(
+				pair.id,
+				+new Date() - 30 * 24 * 60 * 60 * 1000,
+				+new Date(),
+			);
+
 			const marketCap =
-				(pair.volume || 0) > MIN_VOLUME_THRESHOLD
+				parseFloat(monthlyVolume) > MIN_VOLUME_THRESHOLD
 					? currentSupply.mul(pair.rate || 0).toString()
 					: '0';
 			const currentTVL = marketCap;
@@ -158,6 +158,8 @@ class StatsController {
 				})) as PairWithFirstCurrency[]
 			)
 				.map((pair) => ({
+					id: pair.id,
+					ticker: pair.first_currency.asset_info?.ticker || '',
 					asset_id: pair.first_currency.asset_id,
 					current_supply: pair.first_currency.asset_info?.current_supply || '0',
 					decimal_point: pair.first_currency.asset_info?.decimal_point || 0,
@@ -173,23 +175,37 @@ class StatsController {
 						new Decimal(10).pow(pair.decimal_point),
 					);
 					return {
+						id: pair.id,
 						asset_id: pair.asset_id,
+						ticker: pair.ticker,
 						tvl: currentSupply.mul(pair.rate).toString(),
 						volume: pair.volume,
 					};
 				})
-				.filter((pair) => pair.volume > MIN_VOLUME_THRESHOLD)
+				.filter((pair) => new Decimal(pair.tvl).gt(0))
 				.sort((a, b) => new Decimal(b.tvl).minus(new Decimal(a.tvl)).toNumber());
 
-			const totalTVL = allTvls.reduce(
+			const monthlyVolumes = await statsModel.calcVolumeForMultiplePairs(
+				allTvls.map((pair) => pair.id.toString()),
+				+new Date() - 30 * 24 * 60 * 60 * 1000,
+				+new Date(),
+			);
+
+			const filteredActivePairsTVLs = allTvls.filter((pair) => {
+				const monthlyVolume = new Decimal(monthlyVolumes[pair.id] || 0);
+				return monthlyVolume.gt(MIN_VOLUME_THRESHOLD);
+			});
+
+			const totalTVL = filteredActivePairsTVLs.reduce(
 				(acc, pair) => acc.add(new Decimal(pair.tvl)),
 				new Decimal(0),
 			);
 
 			const response: getTotalStatsRes = {
 				largest_tvl: {
-					asset_id: allTvls[0]?.asset_id || '',
-					tvl: allTvls[0]?.tvl || '0',
+					ticker: filteredActivePairsTVLs[0]?.ticker || '',
+					asset_id: filteredActivePairsTVLs[0]?.asset_id || '',
+					tvl: filteredActivePairsTVLs[0]?.tvl || '0',
 				},
 				total_tvl: totalTVL.toString(),
 			};
@@ -234,12 +250,8 @@ class StatsController {
 					{} as Record<number, number>,
 				);
 
-				const daysInPeriod = Math.ceil(
-					(to_timestamp_parsed - from_timestamp_parsed) / (24 * 60 * 60 * 1000),
-				);
-
 				const involvedPairs = Object.keys(pairVolumes).filter(
-					(pairId) => pairVolumes[Number(pairId)] / daysInPeriod > MIN_VOLUME_THRESHOLD,
+					(pairId) => pairVolumes[Number(pairId)] > MIN_VOLUME_THRESHOLD,
 				);
 
 				const entries = Object.entries(pairVolumes);
