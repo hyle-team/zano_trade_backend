@@ -250,8 +250,14 @@ class StatsController {
 					{} as Record<number, number>,
 				);
 
+				const daysInPeriod = Math.ceil(
+					(to_timestamp_parsed - from_timestamp_parsed) / (24 * 60 * 60 * 1000),
+				);
+
+				const requiredVolumePerDay = MIN_VOLUME_THRESHOLD / 30;
+
 				const involvedPairs = Object.keys(pairVolumes).filter(
-					(pairId) => pairVolumes[Number(pairId)] > MIN_VOLUME_THRESHOLD,
+					(pairId) => pairVolumes[Number(pairId)] >= requiredVolumePerDay * daysInPeriod,
 				);
 
 				const entries = Object.entries(pairVolumes);
