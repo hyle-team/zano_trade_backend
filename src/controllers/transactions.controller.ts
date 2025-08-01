@@ -1,4 +1,11 @@
 import { Request, Response } from 'express';
+import Transaction from '@/schemes/Transaction.js';
+import GetMyTransactionsBody from '@/interfaces/bodies/exchange-transactions/GetMyTransactionsBody.js';
+import { Op } from 'sequelize';
+import {
+	OrderWithAllTransactions,
+	OrderWithBuyOrders,
+} from '@/interfaces/database/modifiedRequests';
 import exchangeModel from '../models/ExchangeTransactions.js';
 import ConfirmTransactionBody from '../interfaces/bodies/exchange-transactions/ConfirmTransactionBody.js';
 import GetActiveTxByOrdersIdsBody from '../interfaces/bodies/exchange-transactions/GetActiveTxByOrdersIdsBody.js';
@@ -66,6 +73,73 @@ class TransactionsController {
 		} catch (err) {
 			console.log(err);
 			return res.status(500).send({ success: false, data: 'Internal error' });
+		}
+	}
+
+	async getMyTransactions(req: Request, res: Response) {
+		try {
+			const {userData} = req.body;
+			const body = req.body as GetMyTransactionsBody;
+			const { from, to } = body;
+
+			const parsedFrom = +new Date(from);
+			const parsedTo = +new Date(to);
+
+			const ordersWithTransactions = (await Order.findAll({
+				where: { user_id: userData.id },
+				include: [
+					{
+						model: Transaction,
+						as: 'buy_orders',
+						where: {
+							createdAt: {
+								[Op.between]: [parsedFrom, parsedTo],
+							},
+							status: 'confirmed',
+						},
+						required: true,
+					},
+					{
+						model: Transaction,
+						as: 'sell_orders',
+						where: {
+							createdAt: {
+								[Op.between]: [parsedFrom, parsedTo],
+							},
+							status: 'confirmed',
+						},
+						required: true,
+					},
+				],
+			})) as OrderWithAllTransactions[];
+
+			const txs = ordersWithTransactions.map((order) => [
+				...order.buy_orders,
+				...order.sell_orders,
+			]);
+
+			const flatTxs = txs
+				.flat()
+				.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+			res.send({
+				success: true,
+				data: flatTxs.map((tx) => ({
+					id: tx.id,
+					buy_order_id: tx.buy_order_id,
+					sell_order_id: tx.sell_order_id,
+					amount: tx.amount,
+					timestamp: tx.timestamp,
+					status: tx.status,
+					creator: tx.creator,
+					hex_raw_proposal: tx.hex_raw_proposal,
+					createdAt: tx.createdAt,
+					updatedAt: tx.updatedAt,
+				})),
+			});
+		} catch (err) {
+			console.log(err);
+			return res.status(500).send({ success: false, data: 'Unhandled error' });
 		}
 	}
 }

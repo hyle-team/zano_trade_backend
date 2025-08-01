@@ -12,4 +12,9 @@ transactionsRouter.post(
 	transactionsController.getActiveTxByOrdersIds,
 );
 
+transactionsRouter.post(
+	'/transactions/get-my-transactions',
+	transactionsController.getMyTransactions,
+);
+
 export default transactionsRouter;
