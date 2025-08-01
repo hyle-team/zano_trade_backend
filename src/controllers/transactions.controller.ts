@@ -109,7 +109,7 @@ class TransactionsController {
 							},
 							status: 'confirmed',
 						},
-						// required: true,
+						required: false,
 					},
 					{
 						model: Transaction,
@@ -120,7 +120,7 @@ class TransactionsController {
 							},
 							status: 'confirmed',
 						},
-						// required: true,
+						required: false,
 					},
 				],
 			})) as OrderWithAllTransactions[];
