@@ -1,5 +1,6 @@
 import middleware from '@/middleware/middleware';
 import Currency from '@/schemes/Currency';
+import Order from '@/schemes/Order';
 import Pair from '@/schemes/Pair';
 import User from '@/schemes/User';
 import express from 'express';
@@ -98,6 +99,42 @@ adminRouter.post('/add-featured', async (req, res) => {
 	await pair.update({ featured: true });
 
 	res.send({ success: true, message: 'Pair updated' });
+});
+
+adminRouter.post('/get_order_data', async (req, res) => {
+	const { orderId } = req.body;
+
+	if (!orderId) {
+		return res.status(400).send({ success: false, data: 'Order ID is required' });
+	}
+
+	const order = await Order.findOne({
+		where: { id: orderId },
+	});
+
+	if (!order) {
+		return res.status(404).send({ success: false, data: 'Order not found' });
+	}
+
+	const orderData = order.toJSON();
+
+	res.send({ success: true, data: orderData });
+});
+
+adminRouter.post('/get_user_data', async (req, res) => {
+	const { userId } = req.body;
+	if (!userId) {
+		return res.status(400).send({ success: false, data: 'User ID is required' });
+	}
+	const user = await User.findOne({
+		where: { id: userId },
+	});
+
+	if (!user) {
+		return res.status(404).send({ success: false, data: 'User not found' });
+	}
+
+	res.send({ success: true, data: user.toJSON() });
 });
 
 export default adminRouter;
