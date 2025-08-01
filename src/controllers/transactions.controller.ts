@@ -6,6 +6,7 @@ import {
 	OrderWithAllTransactions,
 	OrderWithBuyOrders,
 } from '@/interfaces/database/modifiedRequests';
+import User from '@/schemes/User.js';
 import exchangeModel from '../models/ExchangeTransactions.js';
 import ConfirmTransactionBody from '../interfaces/bodies/exchange-transactions/ConfirmTransactionBody.js';
 import GetActiveTxByOrdersIdsBody from '../interfaces/bodies/exchange-transactions/GetActiveTxByOrdersIdsBody.js';
@@ -78,15 +79,24 @@ class TransactionsController {
 
 	async getMyTransactions(req: Request, res: Response) {
 		try {
-			const {userData} = req.body;
+			const { userData } = req.body;
 			const body = req.body as GetMyTransactionsBody;
 			const { from, to } = body;
 
 			const parsedFrom = +new Date(from);
 			const parsedTo = +new Date(to);
 
+			const userRow = await User.findOne({
+				where: { address: userData.address },
+				attributes: ['id'],
+			});
+
+			if (!userRow) {
+				return res.status(400).send({ success: false, data: 'User not found' });
+			}
+
 			const ordersWithTransactions = (await Order.findAll({
-				where: { user_id: userData.id },
+				where: { user_id: userRow.id },
 				include: [
 					{
 						model: Transaction,
