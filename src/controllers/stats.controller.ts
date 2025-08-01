@@ -295,6 +295,7 @@ class StatsController {
 					active_tokens: involvedPairs.length.toString(),
 					most_traded: {
 						asset_id: biggestPair?.first_currency?.asset_id || '',
+						ticker: biggestPair?.first_currency?.asset_info?.ticker || '',
 						volume: maxVolume?.toString() || '0',
 					},
 					total_volume: totalVolume?.toString() || '0',
