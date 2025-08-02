@@ -9,8 +9,7 @@ import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { OrderWithBuyOrders, PairWithFirstCurrency } from '@/interfaces/database/modifiedRequests';
 import statsModel from '@/models/Stats';
-
-const MIN_VOLUME_THRESHOLD = 1000; // volume in zano per month
+import { MIN_VOLUME_THRESHOLD } from '@/models/Stats';
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
@@ -250,14 +249,12 @@ class StatsController {
 					{} as Record<number, number>,
 				);
 
-				const daysInPeriod = Math.ceil(
-					(to_timestamp_parsed - from_timestamp_parsed) / (24 * 60 * 60 * 1000),
-				);
-
-				const requiredVolumePerDay = MIN_VOLUME_THRESHOLD / 30;
-
-				const involvedPairs = Object.keys(pairVolumes).filter(
-					(pairId) => pairVolumes[Number(pairId)] >= requiredVolumePerDay * daysInPeriod,
+				const involvedPairs = Object.keys(pairVolumes).filter((pairId) =>
+					statsModel.checkActivePairEligibility(
+						pairVolumes[Number(pairId)].toString(),
+						from_timestamp_parsed,
+						to_timestamp_parsed,
+					),
 				);
 
 				const entries = Object.entries(pairVolumes);
@@ -311,6 +308,51 @@ class StatsController {
 		} catch (err) {
 			console.log(err);
 			res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
+	async getTotalStatsInPeriod(req: Request, res: Response) {
+		try {
+			const { from_timestamp, to_timestamp } = req.query;
+
+			const from_timestamp_parsed = parseInt(from_timestamp as string, 10);
+			const to_timestamp_parsed = parseInt(to_timestamp as string, 10);
+
+			if (
+				!from_timestamp ||
+				!to_timestamp ||
+				Number.isNaN(from_timestamp_parsed) ||
+				Number.isNaN(to_timestamp_parsed) ||
+				from_timestamp_parsed >= to_timestamp_parsed
+			) {
+				return res.status(400).send({
+					success: false,
+					data: 'Invalid or missing from_timestamp/to_timestamp parameters',
+				});
+			}
+
+			const calcedTvl = await statsModel.calcTotalStatsInPeriod(
+				from_timestamp_parsed,
+				to_timestamp_parsed,
+			);
+
+			if (!calcedTvl) {
+				return res.status(404).send({
+					success: false,
+					data: 'No data found for the specified period',
+				});
+			}
+
+			return res.status(200).send({
+				success: true,
+				data: calcedTvl,
+			});
+		} catch (error) {
+			console.log(error);
+			return res.status(500).send({
+				success: false,
+				data: 'Internal server error',
+			});
 		}
 	}
 }
