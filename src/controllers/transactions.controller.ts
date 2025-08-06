@@ -46,7 +46,7 @@ class TransactionsController {
 			const body = req.body as GetActiveTxByOrdersIdsBody;
 			const { firstOrderId, secondOrderId, userData } = body;
 
-			const userRow = await Order.findOne({ where: { address: userData.address } });
+			const userRow = await User.findOne({ where: { address: userData.address } });
 
 			if (!userRow) {
 				throw new Error('JWT token of non-existent user');
