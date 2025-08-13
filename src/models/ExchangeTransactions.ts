@@ -117,7 +117,11 @@ class ExchangeModel {
 
 			const change_coefficient =
 				lastOrderPrice && firstOrderPrice
-					? new Decimal(lastOrderPrice).div(firstOrderPrice).minus(1).mul(100).toNumber()
+					? new Decimal(lastOrderPrice)
+						.minus(firstOrderPrice)
+						.div(firstOrderPrice)
+						.mul(100)
+						.toNumber()
 					: 0;
 
 			const prices = allTransactionsWithPrices.map((e) => e.buy_order_price);
