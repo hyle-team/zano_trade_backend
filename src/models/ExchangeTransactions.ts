@@ -88,7 +88,7 @@ class ExchangeModel {
 					{
 						model: Transaction,
 						as: 'buy_orders',
-						attributes: ['buy_order_id', 'sell_order_id', 'amount'],
+						attributes: ['buy_order_id', 'sell_order_id', 'amount', 'timestamp'],
 						required: true,
 						where: {
 							status: 'confirmed',
@@ -115,14 +115,11 @@ class ExchangeModel {
 			const firstOrderPrice = allTransactionsWithPrices[0]?.buy_order_price || NaN;
 			const lastOrderPrice = allTransactionsWithPrices.at(-1)?.buy_order_price || NaN;
 
-			const change_coefficient =
-				lastOrderPrice && firstOrderPrice
-					? new Decimal(lastOrderPrice)
-						.minus(firstOrderPrice)
-						.div(firstOrderPrice)
-						.mul(100)
-						.toNumber()
-					: 0;
+			const change_coefficient = new Decimal(lastOrderPrice || '0')
+				.minus(firstOrderPrice || '0')
+				.div(firstOrderPrice || '1')
+				.mul(100)
+				.toNumber();
 
 			const prices = allTransactionsWithPrices.map((e) => e.buy_order_price);
 
