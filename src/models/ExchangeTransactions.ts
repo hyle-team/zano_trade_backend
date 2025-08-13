@@ -100,6 +100,18 @@ class ExchangeModel {
 				order: [['timestamp', 'ASC']],
 			})) as OrderWithTransactions[];
 
+			console.log(
+				orders.flatMap((order) =>
+					order.buy_orders.map((transaction) => {
+						const buyOrderPrice = order.price;
+						return {
+							...transaction.toJSON(),
+							buy_order_price: buyOrderPrice,
+						};
+					}),
+				),
+			);
+
 			const allTransactionsWithPrices = orders
 				.flatMap((order) =>
 					order.buy_orders.map((transaction) => {
