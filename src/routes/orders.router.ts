@@ -24,5 +24,6 @@ ordersRouter.post('/orders/get-candles', ordersController.getCandles);
 ordersRouter.post('/orders/get-chart-orders', ordersController.getChartOrders);
 ordersRouter.post('/orders/get-pair-stats', ordersController.getPairStats);
 ordersRouter.post('/orders/apply-order', ordersController.applyOrder);
+ordersRouter.post('/orders/get-trades', ordersController.getTrades);
 
 export default ordersRouter;
