@@ -67,13 +67,4 @@ User.hasMany(Order, {
 	hooks: true,
 });
 
-Order.belongsTo(User, {
-	foreignKey: 'user_id',
-	as: 'user',
-	onDelete: 'CASCADE',
-	onUpdate: 'CASCADE',
-	hooks: true,
-	constraints: false,
-});
-
 export default User;

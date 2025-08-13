@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import Decimal from 'decimal.js';
+import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import configModel from './Config.js';
 import dexModel from './Dex.js';
 import userModel from './User.js';
@@ -568,6 +569,68 @@ class OrdersModel {
 			sendUpdateOrderMessage(io, orderRow.pair_id.toString());
 
 			return { success: true };
+		} catch (err) {
+			console.log(err);
+			return { success: false, data: 'Internal error' };
+		}
+	}
+
+	async getTrades(pairId: number) {
+		try {
+			const pair = await dexModel.getPairRow(pairId);
+
+			if (!pair) {
+				return { success: false, data: 'Invalid pair data' };
+			}
+
+			const transactions = (await Transaction.findAll({
+				where: { status: 'confirmed' },
+				include: [
+					{
+						model: Order,
+						as: 'buy_order',
+						where: { pair_id: pairId },
+						include: [
+							{
+								model: User,
+								as: 'user',
+								attributes: ['address'],
+							},
+						],
+					},
+					{
+						model: Order,
+						as: 'sell_order',
+						where: { pair_id: pairId },
+						include: [
+							{
+								model: User,
+								as: 'user',
+								attributes: ['address'],
+							},
+						],
+					},
+				],
+				order: [['timestamp', 'DESC']],
+			})) as TransactionWithOrders[];
+
+			const trades = transactions.map((tx) => ({
+				id: tx.id,
+				timestamp: tx.timestamp,
+				amount: tx.amount,
+				price: tx.buy_order.price,
+				type: tx.creator,
+				buyer: {
+					address: tx.buy_order.user.address,
+					id: tx.buy_order.user_id,
+				},
+				seller: {
+					address: tx.sell_order.user.address,
+					id: tx.sell_order.user_id,
+				},
+			}));
+
+			return { success: true, data: trades };
 		} catch (err) {
 			console.log(err);
 			return { success: false, data: 'Internal error' };

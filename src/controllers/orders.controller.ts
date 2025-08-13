@@ -239,6 +239,27 @@ class OrdersController {
 			res.status(500).send({ success: false, data: 'Unhandled error' });
 		}
 	}
+
+	async getTrades(req: Request, res: Response) {
+		try {
+			const { pairId } = req.body;
+
+			if (!pairId) {
+				return res.status(400).send({ success: false, data: 'Invalid pair data' });
+			}
+
+			const result = await ordersModel.getTrades(Number(pairId));
+
+			if (result.data === 'Invalid pair data') return res.status(400).send(result);
+
+			if (result.data === 'Internal error') return res.status(500).send(result);
+
+			res.status(200).send(result);
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
 }
 
 const ordersController = new OrdersController();
