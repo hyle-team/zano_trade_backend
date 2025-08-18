@@ -14,7 +14,56 @@ interface OrderWithTransactions extends Order {
 	sell_orders: Transaction[];
 }
 
+const PRICE_BASE_URL = 'https://explorer.zano.org/api/get_historical_zano_price?timestamp=';
+
 class ExchangeModel {
+	private zano_price_data: {
+		now: string | null;
+		back24hr: string | null;
+	} = {
+			now: null,
+			back24hr: null,
+		};
+
+	constructor() {
+		this.runZanoPriceDaemon();
+	}
+
+	async updateZanoPrice() {
+		try {
+			const priceDataNow = await fetch(`${PRICE_BASE_URL}${Date.now()}`).then((res) =>
+				res.json(),
+			);
+
+			const priceDataBack24hr = await fetch(
+				`${PRICE_BASE_URL}${Date.now() - 24 * 60 * 60 * 1000}`,
+			).then((res) => res.json());
+
+			const priceNowParsed = priceDataNow?.data?.price;
+			const priceBack24hrParsed = priceDataBack24hr?.data?.price;
+
+			if (!priceNowParsed || !priceBack24hrParsed) {
+				console.log(priceDataNow, priceDataBack24hr);
+
+				throw new Error('Failed to fetch Zano price data');
+			}
+
+			this.zano_price_data = {
+				now: priceNowParsed,
+				back24hr: priceBack24hrParsed,
+			};
+		} catch (error) {
+			console.log(error);
+		}
+	}
+
+	async runZanoPriceDaemon() {
+		while (true) {
+			await this.updateZanoPrice();
+			await new Promise((resolve) => setTimeout(resolve, 30 * 1000));
+		}
+	}
+
 	async runPairStatsDaemon() {
 		(async () => {
 			while (true) {
@@ -67,6 +116,14 @@ class ExchangeModel {
 
 	private async calculatePairStats(pairId: string) {
 		try {
+			if (!this.zano_price_data.now || !this.zano_price_data.back24hr) {
+				await this.updateZanoPrice();
+
+				if (!this.zano_price_data.now || !this.zano_price_data.back24hr) {
+					throw new Error('Failed to fetch Zano price data');
+				}
+			}
+
 			const date = new Date();
 
 			const lastTimestamp = date.getTime();
@@ -100,18 +157,6 @@ class ExchangeModel {
 				order: [['timestamp', 'ASC']],
 			})) as OrderWithTransactions[];
 
-			console.log(
-				orders.flatMap((order) =>
-					order.buy_orders.map((transaction) => {
-						const buyOrderPrice = order.price;
-						return {
-							...transaction.toJSON(),
-							buy_order_price: buyOrderPrice,
-						};
-					}),
-				),
-			);
-
 			const allTransactionsWithPrices = orders
 				.flatMap((order) =>
 					order.buy_orders.map((transaction) => {
@@ -127,9 +172,17 @@ class ExchangeModel {
 			const firstOrderPrice = allTransactionsWithPrices[0]?.buy_order_price || NaN;
 			const lastOrderPrice = allTransactionsWithPrices.at(-1)?.buy_order_price || NaN;
 
-			const change_coefficient = new Decimal(lastOrderPrice || '0')
-				.minus(firstOrderPrice || '0')
-				.div(firstOrderPrice || '1')
+			const firstPriceInUSD = new Decimal(firstOrderPrice || '0').mul(
+				new Decimal(this.zano_price_data.back24hr || '1'),
+			);
+
+			const lastPriceInUSD = new Decimal(lastOrderPrice || '0').mul(
+				new Decimal(this.zano_price_data.now || '1'),
+			);
+
+			const change_coefficient = lastPriceInUSD
+				.minus(firstPriceInUSD || '0')
+				.div(firstPriceInUSD || '1')
 				.mul(100)
 				.toNumber();
 
