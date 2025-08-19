@@ -29,6 +29,10 @@ class ExchangeModel {
 		this.runZanoPriceDaemon();
 	}
 
+	getZanoPriceData() {
+		return this.zano_price_data;
+	}
+
 	async updateZanoPrice() {
 		try {
 			const priceDataNow = await fetch(`${PRICE_BASE_URL}${Date.now()}`).then((res) =>
