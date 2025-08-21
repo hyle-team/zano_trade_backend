@@ -17,4 +17,9 @@ transactionsRouter.post(
 	transactionsController.getMyTransactions,
 );
 
+transactionsRouter.post(
+	'/transactions/get-my-pending',
+	transactionsController.getPendingTransactions,
+);
+
 export default transactionsRouter;

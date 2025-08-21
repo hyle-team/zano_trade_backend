@@ -158,6 +158,73 @@ class TransactionsController {
 			return res.status(500).send({ success: false, data: 'Unhandled error' });
 		}
 	}
+
+	async getPendingTransactions(req: Request, res: Response) {
+		try {
+			const { userData } = req.body;
+
+			const userRow = await User.findOne({
+				where: { address: userData.address },
+				attributes: ['id'],
+			});
+
+			if (!userRow) {
+				return res.status(400).send({ success: false, data: 'User not found' });
+			}
+
+			const ordersWithTransactions = (await Order.findAll({
+				where: { user_id: userRow.id },
+				include: [
+					{
+						model: Transaction,
+						as: 'buy_orders',
+						where: {
+							status: 'pending',
+							creator: 'buy',
+						},
+						required: false,
+					},
+					{
+						model: Transaction,
+						as: 'sell_orders',
+						where: {
+							status: 'pending',
+							creator: 'sell',
+						},
+						required: false,
+					},
+				],
+			})) as OrderWithAllTransactions[];
+
+			const txs = ordersWithTransactions.map((order) => [
+				...order.buy_orders,
+				...order.sell_orders,
+			]);
+
+			const flatTxs = txs
+				.flat()
+				.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+			res.send({
+				success: true,
+				data: flatTxs.map((tx) => ({
+					id: tx.id,
+					buy_order_id: tx.buy_order_id,
+					sell_order_id: tx.sell_order_id,
+					amount: tx.amount,
+					timestamp: tx.timestamp,
+					status: tx.status,
+					creator: tx.creator,
+					hex_raw_proposal: tx.hex_raw_proposal,
+					createdAt: tx.createdAt,
+					updatedAt: tx.updatedAt,
+				})),
+			});
+		} catch (error) {
+			console.log(error);
+			return res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
 }
 
 const transactionsController = new TransactionsController();

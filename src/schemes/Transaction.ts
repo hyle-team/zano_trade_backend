@@ -14,7 +14,7 @@ class Transaction extends Model {
 
 	declare status: string;
 
-	declare creator: string;
+	declare creator: 'buy' | 'sell';
 
 	declare hex_raw_proposal: string;
 
