@@ -5,6 +5,7 @@ import { Op } from 'sequelize';
 import {
 	OrderWithAllTransactions,
 	OrderWithBuyOrders,
+	OrderWithUser,
 } from '@/interfaces/database/modifiedRequests';
 import User from '@/schemes/User.js';
 import exchangeModel from '../models/ExchangeTransactions.js';
@@ -155,6 +156,113 @@ class TransactionsController {
 			});
 		} catch (err) {
 			console.log(err);
+			return res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
+	async getPendingTransactions(req: Request, res: Response) {
+		try {
+			const { userData } = req.body;
+
+			const userRow = await User.findOne({
+				where: { address: userData.address },
+				attributes: ['id'],
+			});
+
+			if (!userRow) {
+				return res.status(400).send({ success: false, data: 'User not found' });
+			}
+
+			const ordersWithTransactions = (await Order.findAll({
+				where: { user_id: userRow.id },
+				include: [
+					{
+						model: Transaction,
+						as: 'buy_orders',
+						where: {
+							status: 'pending',
+							creator: 'buy',
+						},
+						required: false,
+					},
+					{
+						model: Transaction,
+						as: 'sell_orders',
+						where: {
+							status: 'pending',
+							creator: 'sell',
+						},
+						required: false,
+					},
+				],
+			})) as OrderWithAllTransactions[];
+
+			const txs = ordersWithTransactions.map((order) =>
+				[...order.buy_orders, ...order.sell_orders].map((e) => ({
+					...e.dataValues,
+					price: order.price,
+				})),
+			);
+
+			const flatTxs = txs
+				.flat()
+				.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+
+			const connectedOrdersIDs = flatTxs.map((tx) => tx.creator === 'buy' ? tx.sell_order_id : tx.buy_order_id);
+
+			const uniqueConnectedOrdersIDs = [...new Set(connectedOrdersIDs)];
+
+			const connectedOrders = (await Order.findAll({
+				where: {
+					id: {
+						[Op.in]: uniqueConnectedOrdersIDs,
+					},
+				},
+				include: [
+					{
+						model: User,
+						as: 'user',
+						required: true,
+					},
+				],
+			})) as OrderWithUser[];
+
+			const txsWithFinalizerData = flatTxs.map((tx) => {
+				const targetOrderID = tx.creator === 'buy' ? tx.sell_order_id : tx.buy_order_id;
+				const orderData = connectedOrders.find((order) => order.id === targetOrderID);
+
+				const finalizer = orderData ? orderData.user : null;
+
+				return {
+					id: tx.id,
+					buy_order_id: tx.buy_order_id,
+					sell_order_id: tx.sell_order_id,
+					amount: tx.amount,
+					price: tx.price,
+					timestamp: tx.timestamp,
+					status: tx.status,
+					creator: tx.creator,
+					hex_raw_proposal: tx.hex_raw_proposal,
+					createdAt: tx.createdAt,
+					updatedAt: tx.updatedAt,
+
+					finalizer: !finalizer
+						? null
+						: {
+							id: finalizer.id,
+							alias: finalizer.alias,
+							address: finalizer.address,
+							order_id: targetOrderID,
+						},
+				};
+			});
+
+			res.send({
+				success: true,
+				data: txsWithFinalizerData,
+			});
+		} catch (error) {
+			console.log(error);
 			return res.status(500).send({ success: false, data: 'Unhandled error' });
 		}
 	}

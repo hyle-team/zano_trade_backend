@@ -350,69 +350,72 @@ class OrdersModel {
 
 	async cancelOrder(body: CancelOrderBody) {
 		try {
-			const userRow = await userModel.getUserRow(body.userData.address);
+			await sequelize.transaction(async (t) => {
+				const userRow = await userModel.getUserRow(body.userData.address);
 
-			if (!userRow) throw new Error('Invalid address from token.');
+				if (!userRow) throw new Error('Invalid address from token.');
 
-			const orderRow = await Order.findOne({
-				where: {
-					id: body.orderId,
-					status: {
-						[Op.ne]: 'finished',
-					},
-					user_id: userRow.id,
-				},
-			});
-
-			if (!orderRow) {
-				return { success: false, data: 'Invalid order data' };
-			}
-
-			await this.cancelOrderNotifications(orderRow, userRow);
-
-			const eps = new Decimal(1e-8);
-			const leftDecimal = new Decimal(orderRow.left);
-			const amountDecimal = new Decimal(orderRow.amount);
-
-			// if order was partially filled
-			if (leftDecimal.minus(amountDecimal).abs().greaterThan(eps)) {
-				const connectedTransactions = await Transaction.findAll({
-					where: {
-						[Op.or]: [{ buy_order_id: orderRow.id }, { sell_order_id: orderRow.id }],
-						status: 'pending',
-					},
-				});
-
-				for (const transaction of connectedTransactions) {
-					await exchangeModel.returnTransactionAmount(transaction.id);
-				}
-
-				await Order.update(
-					{ status: 'finished' },
-					{ where: { id: body.orderId, user_id: userRow.id } },
-				);
-			} else {
-				await Order.destroy({
+				const orderRow = await Order.findOne({
+					transaction: t,
+					lock: t.LOCK.UPDATE,
 					where: {
 						id: body.orderId,
+						status: {
+							[Op.ne]: 'finished',
+						},
 						user_id: userRow.id,
 					},
 				});
-			}
 
-			await Transaction.update(
-				{ status: 'rejected' },
-				{
-					where: {
-						[Op.or]: [{ buy_order_id: orderRow.id }, { sell_order_id: orderRow.id }],
-						[Op.not]: {
-							status: 'confirmed',
+				if (!orderRow) {
+					return { success: false, data: 'Invalid order data' };
+				}
+
+				await this.cancelOrderNotifications(orderRow, userRow);
+
+				const eps = new Decimal(1e-8);
+				const leftDecimal = new Decimal(orderRow.left);
+				const amountDecimal = new Decimal(orderRow.amount);
+
+				// if order was partially filled
+				if (leftDecimal.minus(amountDecimal).abs().greaterThan(eps)) {
+					const connectedTransactions = await Transaction.findAll({
+						where: {
+							[Op.or]: [
+								{ buy_order_id: orderRow.id },
+								{ sell_order_id: orderRow.id },
+							],
+							status: 'pending',
 						},
-					},
-				},
-			);
+						transaction: t,
+						lock: t.LOCK.UPDATE,
+					});
 
-			sendDeleteOrderMessage(io, orderRow.pair_id.toString(), orderRow.id.toString());
+					for (const transaction of connectedTransactions) {
+						await exchangeModel.returnTransactionAmount(transaction.id, t);
+					}
+
+					await Order.update(
+						{ status: 'finished' },
+						{
+							where: { id: body.orderId, user_id: userRow.id },
+							transaction: t,
+						},
+					);
+				} else {
+					await Order.destroy({
+						where: {
+							id: body.orderId,
+							user_id: userRow.id,
+						},
+						transaction: t,
+					});
+				}
+
+				t.afterCommit(() => {
+					sendDeleteOrderMessage(io, orderRow.pair_id.toString(), orderRow.id.toString());
+				});
+			});
 
 			return { success: true };
 		} catch (err) {
@@ -531,6 +534,22 @@ class OrdersModel {
 
 			const transactionAmount = Decimal.min(orderRow.left, applyingOrderRow.left);
 			const isApplyingBuy = applyingOrderRow.type === 'buy';
+
+			console.log(
+				`Transaction Amount: ${transactionAmount.toString()} 
+				for orderRow: ${orderRow.id} 
+				and applyingOrderRow: ${applyingOrderRow.id}`,
+			);
+
+			console.log(
+				`Order Row Left: ${orderRow.left.toString()} 
+				Applying Order Row Left: ${applyingOrderRow.left.toString()}`,
+			);
+
+			console.log(
+				`Order Row Left After: ${new Decimal(orderRow.left).minus(transactionAmount).toNumber()} 
+				Applying Order Row Left After: ${new Decimal(applyingOrderRow.left).minus(transactionAmount).toNumber()}`,
+			);
 
 			await Order.update(
 				{ left: new Decimal(orderRow.left).minus(transactionAmount).toNumber() },

@@ -1,5 +1,6 @@
 import Decimal from 'decimal.js';
 import { Op } from 'sequelize';
+import type { Transaction as SequelizeTransaction } from 'sequelize';
 import { sendDeleteOrderMessage, sendUpdatePairStatsMessage } from '../socket/main.js';
 import ordersModel from './Orders.js';
 import userModel from './User.js';
@@ -27,6 +28,10 @@ class ExchangeModel {
 
 	constructor() {
 		this.runZanoPriceDaemon();
+	}
+
+	getZanoPriceData() {
+		return this.zano_price_data;
 	}
 
 	async updateZanoPrice() {
@@ -237,29 +242,48 @@ class ExchangeModel {
 		}
 	}
 
-	async returnTransactionAmount(transactionId: number) {
-		const transactionRow = await Transaction.findByPk(transactionId);
+	async returnTransactionAmount(
+		transactionId: number,
+		sequelizeTransaction?: SequelizeTransaction,
+	) {
+		const transactionRow = await Transaction.findByPk(transactionId, {
+			transaction: sequelizeTransaction,
+			lock: sequelizeTransaction?.LOCK?.UPDATE,
+		});
 
 		if (!transactionRow) return console.error('Transaction row not found.');
 
-		const buyOrder = await ordersModel.getOrderRow(transactionRow.buy_order_id);
+		const [affected] = await Transaction.update(
+			{ status: 'rejected', rejected_at: new Date() },
+			{
+				where: { id: transactionRow.id, status: 'pending' },
+				transaction: sequelizeTransaction,
+			},
+		);
 
-		const sellOrder = await ordersModel.getOrderRow(transactionRow.sell_order_id);
+		if ((affected as number) === 0) {
+			return;
+		}
+
+		const buyOrder = await Order.findByPk(transactionRow.buy_order_id, {
+			transaction: sequelizeTransaction,
+			lock: sequelizeTransaction?.LOCK?.UPDATE,
+		});
+		const sellOrder = await Order.findByPk(transactionRow.sell_order_id, {
+			transaction: sequelizeTransaction,
+			lock: sequelizeTransaction?.LOCK?.UPDATE,
+		});
 
 		if (!(buyOrder && sellOrder)) return console.error('Buy or sell order not found.');
 
-		// For debug
-		const leftBeforeBuyOrder = new Decimal(buyOrder.left).toNumber();
-		const leftBeforeSellOrder = new Decimal(sellOrder.left).toNumber();
-		// For debug
-
-		const newBuyOrderLeft = Decimal.max(
+		const newBuyOrderLeft = Decimal.min(
 			new Decimal(buyOrder.left).add(transactionRow.amount),
-			buyOrder.amount,
+			new Decimal(buyOrder.amount),
 		).toFixed();
 
-		const newSellOrderLeft = Decimal.max(
+		const newSellOrderLeft = Decimal.min(
 			new Decimal(sellOrder.left).add(transactionRow.amount),
+			new Decimal(sellOrder.amount),
 		).toFixed();
 
 		buyOrder.left = newBuyOrderLeft;
@@ -267,21 +291,8 @@ class ExchangeModel {
 		buyOrder.status = 'active';
 		sellOrder.status = 'active';
 
-		console.log(
-			`
-            [Remaining debug] 
-            Buy order left: ${buyOrder.left}, 
-            Sell order left: ${sellOrder.left},
-            Transaction amount: ${transactionRow.amount},
-            Buy order left before return: ${leftBeforeBuyOrder},
-            Sell order left before return: ${leftBeforeSellOrder},
-            Buy order ID: ${buyOrder.id},
-            Sell order ID: ${sellOrder.id}
-            `,
-		);
-
-		await buyOrder.save();
-		await sellOrder.save();
+		await buyOrder.save({ transaction: sequelizeTransaction });
+		await sellOrder.save({ transaction: sequelizeTransaction });
 	}
 
 	async createTransaction(

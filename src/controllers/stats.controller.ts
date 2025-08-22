@@ -10,6 +10,7 @@ import { Op } from 'sequelize';
 import { OrderWithBuyOrders, PairWithFirstCurrency } from '@/interfaces/database/modifiedRequests';
 import statsModel from '@/models/Stats';
 import { MIN_VOLUME_THRESHOLD } from '@/models/Stats';
+import exchangeModel from '@/models/ExchangeTransactions';
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
@@ -116,7 +117,15 @@ class StatsController {
 				const firstPrice = new Decimal(filteredOrders[0]?.price || 0);
 				const lastPrice = new Decimal(filteredOrders.at(-1)?.price || 0);
 
-				const priceChangePercent = lastPrice.minus(firstPrice).div(firstPrice).mul(100);
+				const zanoPriceData = exchangeModel.getZanoPriceData();
+
+				const firstPriceUSD = firstPrice.mul(new Decimal(zanoPriceData.back24hr || '1'));
+				const lastPriceUSD = lastPrice.mul(new Decimal(zanoPriceData.now || '1'));
+
+				const priceChangePercent = firstPriceUSD
+					.minus(lastPriceUSD)
+					.div(firstPriceUSD)
+					.mul(100);
 
 				const period_data = {
 					price_change_percent: priceChangePercent.toString(),

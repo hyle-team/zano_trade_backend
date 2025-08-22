@@ -12,9 +12,9 @@ class Transaction extends Model {
 
 	declare timestamp: number;
 
-	declare status: string;
+	declare status: 'pending' | 'confirmed' | 'rejected';
 
-	declare creator: string;
+	declare creator: 'buy' | 'sell';
 
 	declare hex_raw_proposal: string;
 
