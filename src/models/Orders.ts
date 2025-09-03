@@ -77,7 +77,10 @@ class OrdersModel {
 			if (!userRow) throw new Error('Invalid address from token.');
 
 			const timestamp = Date.now();
-			const firstCurrencyDecimalPoint = firstCurrency?.asset_info?.decimal_point || 12;
+			const firstCurrencyDecimalPoint =
+				firstCurrency?.asset_info?.decimal_point === undefined
+					? 12
+					: firstCurrency.asset_info.decimal_point;
 
 			console.log(
 				'total:',
