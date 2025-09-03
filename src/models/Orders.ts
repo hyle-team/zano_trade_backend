@@ -79,6 +79,16 @@ class OrdersModel {
 			const timestamp = Date.now();
 			const firstCurrencyDecimalPoint = firstCurrency?.asset_info?.decimal_point || 12;
 
+			console.log(
+				'total:',
+				new Decimal(orderData.price)
+					.mul(new Decimal(orderData.amount))
+					.toDecimalPlaces(firstCurrencyDecimalPoint, Decimal.ROUND_DOWN)
+					.toString(),
+			);
+
+			console.log(firstCurrencyDecimalPoint);
+
 			const newOrder = await Order.create({
 				type: orderData.type === 'buy' ? 'buy' : 'sell',
 				timestamp,
