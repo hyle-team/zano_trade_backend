@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import Decimal from 'decimal.js';
+import Currency from '@/schemes/Currency.js';
 import configModel from './Config.js';
 import dexModel from './Dex.js';
 import userModel from './User.js';
@@ -67,13 +68,16 @@ class OrdersModel {
 			const { userData } = body;
 
 			const pair = await dexModel.getPairRow(parseInt(orderData.pairId, 10));
-			if (!pair) return { success: false, data: 'Invalid order data' };
+			const firstCurrency = await Currency.findByPk(pair?.first_currency_id);
+
+			if (!pair || !firstCurrency) return { success: false, data: 'Invalid order data' };
 
 			const userRow = await userModel.getUserRow(userData.address);
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
 			const timestamp = Date.now();
+			const firstCurrencyDecimalPoint = firstCurrency?.asset_info?.decimal_point || 12;
 
 			const newOrder = await Order.create({
 				type: orderData.type === 'buy' ? 'buy' : 'sell',
@@ -81,7 +85,10 @@ class OrdersModel {
 				side: orderData.side === 'limit' ? 'limit' : 'market',
 				price: new Decimal(orderData.price).toFixed(),
 				amount: orderData.amount,
-				total: new Decimal(orderData.price).mul(new Decimal(orderData.amount)).toFixed(),
+				total: new Decimal(orderData.price)
+					.mul(new Decimal(orderData.amount))
+					.toDecimalPlaces(firstCurrencyDecimalPoint, Decimal.ROUND_DOWN)
+					.toString(),
 				pair_id: orderData.pairId,
 				user_id: userRow.id,
 				status: 'active',
