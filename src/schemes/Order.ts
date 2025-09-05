@@ -1,7 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../sequelize';
-import Transaction from './Transaction';
-import Pair from './Pair';
 
 class Order extends Model {
 	declare readonly id: number;
@@ -88,32 +86,5 @@ Order.init(
 		timestamps: true,
 	},
 );
-
-Order.hasMany(Transaction, {
-	foreignKey: 'buy_order_id',
-	as: 'buy_orders',
-	onDelete: 'CASCADE',
-	onUpdate: 'CASCADE',
-	hooks: true,
-	constraints: false,
-});
-
-Order.hasMany(Transaction, {
-	foreignKey: 'sell_order_id',
-	as: 'sell_orders',
-	onDelete: 'CASCADE',
-	onUpdate: 'CASCADE',
-	hooks: true,
-	constraints: false,
-});
-
-Order.belongsTo(Pair, {
-	foreignKey: 'pair_id',
-	as: 'pair',
-	onDelete: 'CASCADE',
-	onUpdate: 'CASCADE',
-	hooks: true,
-	constraints: false,
-});
 
 export default Order;

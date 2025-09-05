@@ -49,16 +49,28 @@ class CandlesModel {
 
 			const aggregationPeriod = (() => {
 				switch (period) {
+					// case '1sec':
+					// 	return 1000;
+					case '1min':
+						return 60 * 1000;
+					case '5min':
+						return 5 * 60 * 1000;
+					case '15min':
+						return 15 * 60 * 1000;
+					case '30min':
+						return 30 * 60 * 1000;
 					case '1h':
-						return 3600000;
+						return 60 * 60 * 1000;
+					case '4h':
+						return 4 * 60 * 60 * 1000;
 					case '1d':
-						return 86400000;
+						return 24 * 60 * 60 * 1000;
 					case '1w':
-						return 604800000;
+						return 7 * 24 * 60 * 60 * 1000;
 					case '1m':
-						return 2592000000;
+						return 30 * 24 * 60 * 60 * 1000;
 					default:
-						return 3600000;
+						return 60 * 60 * 1000;
 				}
 			})();
 

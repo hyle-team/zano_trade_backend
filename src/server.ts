@@ -22,6 +22,7 @@ import Currency, { Asset } from './schemes/Currency';
 import User from './schemes/User';
 import statsRouter from './routes/stats.router';
 import exchangeModel from './models/ExchangeTransactions';
+import { setupAssociations } from './schemes/Associations';
 
 const PORT = process.env.PORT || 3000;
 
@@ -42,6 +43,7 @@ process.on('unhandledRejection', (reason, promise) => {
 	await initdb();
 	await sequelize.authenticate();
 	await sequelize.sync();
+	await setupAssociations();
 
 	const zanoRow = await Currency.findOne({ where: { asset_id: ZANO_ASSET_ID } });
 
