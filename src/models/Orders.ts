@@ -2,6 +2,11 @@ import { Op } from 'sequelize';
 import Decimal from 'decimal.js';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import Currency from '@/schemes/Currency.js';
+import {
+	OrderWithAllTransactions,
+	OrderWithPair,
+	OrderWithPairAndCurrencies,
+} from '@/interfaces/database/modifiedRequests.js';
 import configModel from './Config.js';
 import dexModel from './Dex.js';
 import userModel from './User.js';
@@ -337,29 +342,26 @@ class OrdersModel {
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
-			const orders = await Order.findAll({
+			const orders = (await Order.findAll({
 				where: {
 					user_id: userRow.id,
 				},
 				order: [['timestamp', 'DESC']],
-			});
+				include: [
+					{
+						model: Pair,
+						as: 'pair',
+						include: ['first_currency', 'second_currency'],
+					},
+				],
+			})) as OrderWithPairAndCurrencies[];
 
-			const ordersWithCurrencies: Order[] = orders;
-
-			const result = [];
-
-			for (let i = 0; i < orders.length; i++) {
-				const pairData = await dexModel.getPairRow(orders[i].pair_id);
-
-				if (!pairData) throw new Error('Invalid pair id in order row.');
-
-				result.push({
-					...(ordersWithCurrencies[i]?.toJSON() || {}),
-					first_currency: await configModel.getCurrencyRow(pairData.first_currency_id),
-					second_currency: await configModel.getCurrencyRow(pairData.second_currency_id),
-					isInstant: dexModel.isBotActive(ordersWithCurrencies[i].id),
-				});
-			}
+			const result = orders.map((e) => ({
+				...e.toJSON(),
+				first_currency: e.pair.first_currency,
+				second_currency: e.pair.second_currency,
+				isInstant: dexModel.isBotActive(e.id),
+			}));
 
 			return { success: true, data: result };
 		} catch (err) {

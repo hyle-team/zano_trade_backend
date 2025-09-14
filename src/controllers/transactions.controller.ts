@@ -8,6 +8,7 @@ import {
 	OrderWithUser,
 } from '@/interfaces/database/modifiedRequests';
 import User from '@/schemes/User.js';
+import CancelTransactionBody from '@/interfaces/bodies/exchange-transactions/CancelTransactionBody.js';
 import exchangeModel from '../models/ExchangeTransactions.js';
 import ConfirmTransactionBody from '../interfaces/bodies/exchange-transactions/ConfirmTransactionBody.js';
 import GetActiveTxByOrdersIdsBody from '../interfaces/bodies/exchange-transactions/GetActiveTxByOrdersIdsBody.js';
@@ -208,7 +209,9 @@ class TransactionsController {
 				.flat()
 				.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
-			const connectedOrdersIDs = flatTxs.map((tx) => tx.creator === 'buy' ? tx.sell_order_id : tx.buy_order_id);
+			const connectedOrdersIDs = flatTxs.map((tx) =>
+				tx.creator === 'buy' ? tx.sell_order_id : tx.buy_order_id,
+			);
 
 			const uniqueConnectedOrdersIDs = [...new Set(connectedOrdersIDs)];
 
@@ -261,6 +264,21 @@ class TransactionsController {
 				success: true,
 				data: txsWithFinalizerData,
 			});
+		} catch (error) {
+			console.log(error);
+			return res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
+	async cancelTransaction(req: Request, res: Response) {
+		try {
+			if (!(req.body as CancelTransactionBody).transactionId) {
+				return res.status(400).json({ success: false, data: 'Invalid transaction data' });
+			}
+
+			const result = await exchangeModel.cancelTransaction(req.body as CancelTransactionBody);
+
+			return res.status(200).send(result);
 		} catch (error) {
 			console.log(error);
 			return res.status(500).send({ success: false, data: 'Unhandled error' });

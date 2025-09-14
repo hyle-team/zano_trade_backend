@@ -22,4 +22,6 @@ transactionsRouter.post(
 	transactionsController.getPendingTransactions,
 );
 
+transactionsRouter.post('/transactions/cancel', transactionsController.cancelTransaction);
+
 export default transactionsRouter;

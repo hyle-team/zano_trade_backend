@@ -1,6 +1,8 @@
 import Decimal from 'decimal.js';
 import { Op } from 'sequelize';
 import type { Transaction as SequelizeTransaction } from 'sequelize';
+import CancelTransactionBody from '@/interfaces/bodies/exchange-transactions/CancelTransactionBody.js';
+import sequelize from '@/sequelize.js';
 import { sendDeleteOrderMessage, sendUpdatePairStatsMessage } from '../socket/main.js';
 import ordersModel from './Orders.js';
 import userModel from './User.js';
@@ -440,6 +442,56 @@ class ExchangeModel {
 			return { success: true };
 		} catch (err) {
 			console.log(err);
+			return { success: false, data: 'Internal error' };
+		}
+	}
+
+	async cancelTransaction(body: CancelTransactionBody) {
+		try {
+			return await sequelize.transaction(async (t) => {
+				const { userData } = body;
+				const { transactionId } = body;
+
+				const userRow = await userModel.getUserRow(userData.address);
+
+				if (!userRow) {
+					throw new Error('User not found.');
+				}
+
+				const transaction = await Transaction.findByPk(transactionId);
+
+				if (!transaction) {
+					return { success: false, data: "Transaction doesn't exist." };
+				}
+
+				const transactionOwnerOrder =
+					transaction.creator === 'buy'
+						? transaction.buy_order_id
+						: transaction.sell_order_id;
+
+				const ownerOrder = await Order.findByPk(transactionOwnerOrder, {
+					transaction: t,
+					lock: t.LOCK.UPDATE,
+				});
+
+				if (!ownerOrder) {
+					throw new Error('Owner order not found.');
+				}
+
+				if (ownerOrder.user_id !== userRow.id) {
+					return { success: false, data: 'You are not the creator of this transaction' };
+				}
+
+				if (transaction.status !== 'pending') {
+					return { success: false, data: 'Transaction is not pending' };
+				}
+
+				await this.returnTransactionAmount(transaction.id, t);
+
+				return { success: true };
+			});
+		} catch (error) {
+			console.log(error);
 			return { success: false, data: 'Internal error' };
 		}
 	}

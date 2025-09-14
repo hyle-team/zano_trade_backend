@@ -20,3 +20,15 @@ export interface PairWithFirstCurrency extends Pair {
 export interface OrderWithUser extends Order {
 	user: User;
 }
+
+export interface OrderWithPair extends Order {
+	pair: Pair;
+}
+export interface PairWithCurrencies extends Pair {
+	first_currency: Currency;
+	second_currency: Currency;
+}
+
+export interface OrderWithPairAndCurrencies extends Order {
+	pair: PairWithCurrencies;
+}
