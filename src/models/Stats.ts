@@ -5,9 +5,36 @@ import { OrderWithBuyOrders, PairWithFirstCurrency } from '@/interfaces/database
 import Decimal from 'decimal.js';
 import Pair from '@/schemes/Pair';
 import Currency from '@/schemes/Currency';
+import { alwaysActiveTokens } from '@/config/config';
 
 export const MIN_VOLUME_THRESHOLD = 1000; // volume in zano per month
 class StatsModel {
+	private alwaysActivePairIds: number[] = [];
+
+	async init() {
+		const alwaysActiveCurrenciesInDB = await Currency.findAll({
+			where: {
+				asset_id: {
+					[Op.in]: alwaysActiveTokens,
+				},
+			},
+			attributes: ['id', 'asset_id'],
+		});
+
+		const alwaysActiveCurrencyIds = alwaysActiveCurrenciesInDB.map((c) => c.id);
+
+		const alwaysActivePairs = await Pair.findAll({
+			where: {
+				first_currency_id: {
+					[Op.in]: alwaysActiveCurrencyIds,
+				},
+			},
+			attributes: ['id'],
+		});
+
+		this.alwaysActivePairIds = alwaysActivePairs.map((p) => p.id);
+	}
+
 	async calcVolumeForPeriod(pairId: number, from: number, to: number) {
 		const orders = (await Order.findAll({
 			where: {
@@ -103,8 +130,13 @@ class StatsModel {
 				pair_id: Number(pairId),
 				volume: new Decimal(volume),
 			}))
-			.filter(({ volume }) =>
-				this.checkActivePairEligibility(volume.toString(), from_timestamp, to_timestamp),
+			.filter(({ pair_id, volume }) =>
+				this.checkActivePairEligibility(
+					Number(pair_id),
+					volume.toString(),
+					from_timestamp,
+					to_timestamp,
+				),
 			);
 
 		const avgPricesInPeriod = (await Order.findAll({
@@ -188,7 +220,7 @@ class StatsModel {
 		const currentSupplies: Record<string, string> = {};
 
 		for (const pair of pairsData) {
-			const {asset_info} = pair.first_currency;
+			const { asset_info } = pair.first_currency;
 			currentSupplies[pair.id] = new Decimal(asset_info?.current_supply || 0)
 				.div(new Decimal(10).pow(asset_info?.decimal_point || 0))
 				.toString();
@@ -237,12 +269,20 @@ class StatsModel {
 		};
 	}
 
-	checkActivePairEligibility(volume: string, from_timestamp: number, to_timestamp: number) {
+	checkActivePairEligibility(
+		pair_id: number,
+		volume: string,
+		from_timestamp: number,
+		to_timestamp: number,
+	) {
 		const daysInPeriod = Math.ceil((to_timestamp - from_timestamp) / (24 * 60 * 60 * 1000));
 
 		const requiredVolumePerDay = MIN_VOLUME_THRESHOLD / 30;
 
-		return parseFloat(volume) >= requiredVolumePerDay * daysInPeriod;
+		return (
+			parseFloat(volume) >= requiredVolumePerDay * daysInPeriod ||
+			this.alwaysActivePairIds.includes(pair_id)
+		);
 	}
 }
 

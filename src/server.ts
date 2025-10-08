@@ -23,6 +23,7 @@ import User from './schemes/User';
 import statsRouter from './routes/stats.router';
 import exchangeModel from './models/ExchangeTransactions';
 import { setupAssociations } from './schemes/Associations';
+import statsModel from './models/Stats';
 
 const PORT = process.env.PORT || 3000;
 
@@ -71,6 +72,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	assetsUpdateChecker.run();
 	exchangeModel.runPairStatsDaemon();
+	statsModel.init();
 
 	socketStart(io);
 

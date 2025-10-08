@@ -11,6 +11,7 @@ import { OrderWithBuyOrders, PairWithFirstCurrency } from '@/interfaces/database
 import statsModel from '@/models/Stats';
 import { MIN_VOLUME_THRESHOLD } from '@/models/Stats';
 import exchangeModel from '@/models/ExchangeTransactions';
+import { alwaysActiveTokens } from '@/config/config';
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
@@ -201,7 +202,10 @@ class StatsController {
 
 			const filteredActivePairsTVLs = allTvls.filter((pair) => {
 				const monthlyVolume = new Decimal(monthlyVolumes[pair.id] || 0);
-				return monthlyVolume.gt(MIN_VOLUME_THRESHOLD);
+				return (
+					monthlyVolume.gt(MIN_VOLUME_THRESHOLD) ||
+					alwaysActiveTokens.includes(pair.asset_id)
+				);
 			});
 
 			const totalTVL = filteredActivePairsTVLs.reduce(
@@ -260,6 +264,7 @@ class StatsController {
 
 				const involvedPairs = Object.keys(pairVolumes).filter((pairId) =>
 					statsModel.checkActivePairEligibility(
+						Number(pairId),
 						pairVolumes[Number(pairId)].toString(),
 						from_timestamp_parsed,
 						to_timestamp_parsed,
