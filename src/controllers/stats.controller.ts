@@ -56,7 +56,8 @@ class StatsController {
 			);
 
 			const marketCap =
-				parseFloat(monthlyVolume) > MIN_VOLUME_THRESHOLD
+				parseFloat(monthlyVolume) > MIN_VOLUME_THRESHOLD ||
+				alwaysActiveTokens.includes(targetAsset.asset_id?.toLowerCase())
 					? currentSupply.mul(pair.rate || 0).toString()
 					: '0';
 			const currentTVL = marketCap;
