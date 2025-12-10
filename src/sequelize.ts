@@ -8,6 +8,11 @@ const sequelize = new Sequelize({
 	port: parseInt(process.env.PGPORT || '5432', 10),
 	database: process.env.PGDATABASE,
 	logging: false,
+	pool: {
+		max: 20,
+		min: 5,
+		idle: 10000,
+	},
 });
 
 export default sequelize;
