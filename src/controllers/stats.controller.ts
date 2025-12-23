@@ -134,10 +134,14 @@ class StatsController {
 				const firstPriceUSD = firstPrice.mul(firstZanoPriceDecimal);
 				const lastPriceUSD = lastPrice.mul(new Decimal(zanoPriceData.now || '1'));
 
-				const priceChangePercent = firstPriceUSD
-					.minus(lastPriceUSD)
-					.div(firstPriceUSD)
-					.mul(100);
+				let priceChangePercent = new Decimal(0);
+
+				if (!firstPriceUSD.isZero()) {
+					priceChangePercent = lastPriceUSD
+						.minus(firstPriceUSD)
+						.div(firstPriceUSD)
+						.mul(100);
+				}
 
 				const period_data = {
 					price_change_percent: priceChangePercent.toString(),
