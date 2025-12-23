@@ -121,7 +121,17 @@ class StatsController {
 
 				const zanoPriceData = exchangeModel.getZanoPriceData();
 
-				const firstPriceUSD = firstPrice.mul(new Decimal(zanoPriceData.back24hr || '1'));
+				const zanoPriceForTimestamp = (
+					await exchangeModel.getZanoPriceForTimestamp(from_timestamp_parsed)
+				)?.data;
+
+				if (!zanoPriceForTimestamp) {
+					throw new Error('Failed to fetch Zano price data for the given timestamp');
+				}
+
+				const firstZanoPriceDecimal = new Decimal(zanoPriceForTimestamp || '1');
+
+				const firstPriceUSD = firstPrice.mul(firstZanoPriceDecimal);
 				const lastPriceUSD = lastPrice.mul(new Decimal(zanoPriceData.now || '1'));
 
 				const priceChangePercent = firstPriceUSD
