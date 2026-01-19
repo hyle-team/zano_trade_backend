@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { rateLimit } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import User from '@/schemes/User';
 import UserData from '../interfaces/common/UserData';
@@ -34,6 +35,18 @@ class Middleware {
 			res.status(401).send({ success: false, data: 'Unauthorized' });
 		}
 	}
+
+	defaultRateLimit = async (req: Request, res: Response, next: NextFunction) =>
+		rateLimit({
+			windowMs: 10 * 60 * 1000, // 10 minutes
+			max: 600, // limit each IP to 600 requests per windowMs for /api/check-auth
+			message: {
+				success: false,
+				data: 'Too many requests from this IP, please try again later.',
+			},
+			standardHeaders: true,
+			legacyHeaders: false,
+		})(req, res, next);
 }
 
 const middleware = new Middleware();
