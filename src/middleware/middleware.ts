@@ -6,7 +6,7 @@ import UserData from '../interfaces/common/UserData';
 
 const defaultRateLimitMiddleware = rateLimit({
 	windowMs: 10 * 60 * 1000, // 10 minutes
-	max: 600, // limit each IP to 600 requests per windowMs for /api/check-auth
+	max: 6000, // limit each IP to 6000 requests per windowMs (10 requests/second)
 	message: {
 		success: false,
 		data: 'Too many requests from this IP, please try again later.',
