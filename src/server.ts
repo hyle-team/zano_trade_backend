@@ -76,6 +76,8 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	socketStart(io);
 
+	app.use(middleware.defaultRateLimit);
+
 	app.use(express.json());
 	app.use(express.urlencoded({ extended: true }));
 
