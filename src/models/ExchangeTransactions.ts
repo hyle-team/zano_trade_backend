@@ -36,6 +36,27 @@ class ExchangeModel {
 		return this.zano_price_data;
 	}
 
+	async getZanoPriceForTimestamp(timestamp: number) {
+		try {
+			const priceData = await fetch(`${PRICE_BASE_URL}${timestamp}`).then((res) =>
+				res.json(),
+			);
+
+			const priceParsed = priceData?.data?.price;
+
+			if (!priceParsed) {
+				console.log(priceData);
+
+				throw new Error('Failed to fetch Zano price data for timestamp');
+			}
+
+			return { success: true, data: priceParsed };
+		} catch (error) {
+			console.log(error);
+			return { success: false, data: 'Internal error' };
+		}
+	}
+
 	async updateZanoPrice() {
 		try {
 			const priceDataNow = await fetch(`${PRICE_BASE_URL}${Date.now()}`).then((res) =>
