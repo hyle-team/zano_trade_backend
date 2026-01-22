@@ -11,6 +11,7 @@ import { OrderWithBuyOrders, PairWithFirstCurrency } from '@/interfaces/database
 import statsModel from '@/models/Stats';
 import { MIN_VOLUME_THRESHOLD } from '@/models/Stats';
 import exchangeModel from '@/models/ExchangeTransactions';
+import { alwaysActiveTokens } from '@/config/config';
 
 class StatsController {
 	async getAssetStats(req: Request, res: Response) {
@@ -55,7 +56,8 @@ class StatsController {
 			);
 
 			const marketCap =
-				parseFloat(monthlyVolume) > MIN_VOLUME_THRESHOLD
+				parseFloat(monthlyVolume) > MIN_VOLUME_THRESHOLD ||
+				alwaysActiveTokens.includes(targetAsset.asset_id?.toLowerCase())
 					? currentSupply.mul(pair.rate || 0).toString()
 					: '0';
 			const currentTVL = marketCap;
@@ -119,13 +121,27 @@ class StatsController {
 
 				const zanoPriceData = exchangeModel.getZanoPriceData();
 
-				const firstPriceUSD = firstPrice.mul(new Decimal(zanoPriceData.back24hr || '1'));
+				const zanoPriceForTimestamp = (
+					await exchangeModel.getZanoPriceForTimestamp(from_timestamp_parsed)
+				)?.data;
+
+				if (!zanoPriceForTimestamp) {
+					throw new Error('Failed to fetch Zano price data for the given timestamp');
+				}
+
+				const firstZanoPriceDecimal = new Decimal(zanoPriceForTimestamp || '1');
+
+				const firstPriceUSD = firstPrice.mul(firstZanoPriceDecimal);
 				const lastPriceUSD = lastPrice.mul(new Decimal(zanoPriceData.now || '1'));
 
-				const priceChangePercent = firstPriceUSD
-					.minus(lastPriceUSD)
-					.div(firstPriceUSD)
-					.mul(100);
+				let priceChangePercent = new Decimal(0);
+
+				if (!firstPriceUSD.isZero()) {
+					priceChangePercent = lastPriceUSD
+						.minus(firstPriceUSD)
+						.div(firstPriceUSD)
+						.mul(100);
+				}
 
 				const period_data = {
 					price_change_percent: priceChangePercent.toString(),
@@ -201,7 +217,10 @@ class StatsController {
 
 			const filteredActivePairsTVLs = allTvls.filter((pair) => {
 				const monthlyVolume = new Decimal(monthlyVolumes[pair.id] || 0);
-				return monthlyVolume.gt(MIN_VOLUME_THRESHOLD);
+				return (
+					monthlyVolume.gt(MIN_VOLUME_THRESHOLD) ||
+					alwaysActiveTokens.includes(pair.asset_id)
+				);
 			});
 
 			const totalTVL = filteredActivePairsTVLs.reduce(
@@ -260,6 +279,7 @@ class StatsController {
 
 				const involvedPairs = Object.keys(pairVolumes).filter((pairId) =>
 					statsModel.checkActivePairEligibility(
+						Number(pairId),
 						pairVolumes[Number(pairId)].toString(),
 						from_timestamp_parsed,
 						to_timestamp_parsed,
