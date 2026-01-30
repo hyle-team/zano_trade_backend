@@ -395,28 +395,29 @@ class OrdersModel {
 
 				await this.cancelOrderNotifications(orderRow, userRow);
 
+				// Reject any pending transactions to invalidate outstanding proposals
+				const connectedTransactions = await Transaction.findAll({
+					where: {
+						[Op.or]: [
+							{ buy_order_id: orderRow.id },
+							{ sell_order_id: orderRow.id },
+						],
+						status: 'pending',
+					},
+					transaction: t,
+					lock: t.LOCK.UPDATE,
+				});
+
+				for (const transaction of connectedTransactions) {
+					await exchangeModel.returnTransactionAmount(transaction.id, t);
+				}
+
 				const eps = new Decimal(1e-8);
 				const leftDecimal = new Decimal(orderRow.left);
 				const amountDecimal = new Decimal(orderRow.amount);
 
 				// if order was partially filled
 				if (leftDecimal.minus(amountDecimal).abs().greaterThan(eps)) {
-					const connectedTransactions = await Transaction.findAll({
-						where: {
-							[Op.or]: [
-								{ buy_order_id: orderRow.id },
-								{ sell_order_id: orderRow.id },
-							],
-							status: 'pending',
-						},
-						transaction: t,
-						lock: t.LOCK.UPDATE,
-					});
-
-					for (const transaction of connectedTransactions) {
-						await exchangeModel.returnTransactionAmount(transaction.id, t);
-					}
-
 					await Order.update(
 						{ status: 'finished' },
 						{
