@@ -1,10 +1,9 @@
+import dexModel from '@/models/Dex';
 import Order from '@/schemes/Order';
 import { Op } from 'sequelize';
 
 const CHECKING_INTERVAL = 60 * 60 * 1000; // 1 hr
-// const ORDER_EXPIRATION_TIME = 30 * 24 * 60 * 60 * 1000; // 30 days
-
-const ORDER_EXPIRATION_TIME = 60 * 1000; // for debug
+const ORDER_EXPIRATION_TIME = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 class OrdersModerationService {
 	public async run() {
@@ -34,15 +33,17 @@ class OrdersModerationService {
 
 		const idsToExpire = ordersToExpire.map((order) => order.id);
 
+		const notInstant = idsToExpire.filter((orderId) => !dexModel.isBotActive(orderId));
+
 		await Order.destroy({
 			where: {
-				id: idsToExpire,
+				id: notInstant,
 			},
 		});
 
-		if (idsToExpire.length > 0) {
+		if (notInstant.length > 0) {
 			console.log(
-				`[${new Date()}] Expired orders handled. Expired orders IDs: ${idsToExpire.join(', ')}`,
+				`[${new Date()}] Expired orders handled. Expired orders IDs: ${notInstant.join(', ')}`,
 			);
 		}
 	}
