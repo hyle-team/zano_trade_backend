@@ -2,7 +2,9 @@ import Order from '@/schemes/Order';
 import { Op } from 'sequelize';
 
 const CHECKING_INTERVAL = 60 * 60 * 1000; // 1 hr
-const ORDER_EXPIRATION_TIME = 30 * 24 * 60 * 60 * 1000; // 30 days
+// const ORDER_EXPIRATION_TIME = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+const ORDER_EXPIRATION_TIME = 60 * 1000; // for debug
 
 class OrdersModerationService {
 	public async run() {
