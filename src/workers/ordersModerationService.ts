@@ -24,7 +24,7 @@ class OrdersModerationService {
 
 		const ordersToExpire = await Order.findAll({
 			where: {
-				updatedAt: {
+				createdAt: {
 					[Op.lte]: new Date(now - ORDER_EXPIRATION_TIME),
 				},
 				status: 'active',
