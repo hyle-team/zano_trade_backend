@@ -128,7 +128,7 @@ class DexModel {
 			});
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const pairsWithCurrencies: PairWithCurrencies[] = pairs;
+			const pairsWithCurrencies: PairWithCurrencies[] = pairs.map((pair) => pair.toJSON());
 
 			for (let i = 0; i < pairs.length; i++) {
 				pairsWithCurrencies[i].first_currency = await configModel.getCurrencyRow(
