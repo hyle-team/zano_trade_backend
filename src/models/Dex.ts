@@ -102,12 +102,12 @@ class DexModel {
 					{
 						model: Currency,
 						as: 'first_currency',
-						attributes: ['asset_id', 'code', 'id', 'name', 'type'],
+						attributes: ['asset_id', 'code', 'id', 'name', 'type', 'whitelisted'],
 					},
 					{
 						model: Currency,
 						as: 'second_currency',
-						attributes: ['asset_id', 'code', 'id', 'name', 'type'],
+						attributes: ['asset_id', 'code', 'id', 'name', 'type', 'whitelisted'],
 					},
 				],
 				where: searchCondition,
