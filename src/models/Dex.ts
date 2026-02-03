@@ -17,6 +17,13 @@ interface ActiveBot {
 	userId: number;
 	expirationTimestamp: number;
 }
+
+interface PairWithCurrencies extends Pair {
+	first_currency?: Currency | null;
+	second_currency?: Currency | null;
+	whitelisted?: boolean;
+}
+
 class DexModel {
 	private activeBots: ActiveBot[];
 
@@ -121,7 +128,7 @@ class DexModel {
 			});
 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const pairsWithCurrencies: any = pairs;
+			const pairsWithCurrencies: PairWithCurrencies[] = pairs;
 
 			for (let i = 0; i < pairs.length; i++) {
 				pairsWithCurrencies[i].first_currency = await configModel.getCurrencyRow(
@@ -132,9 +139,11 @@ class DexModel {
 				);
 			}
 
-			pairsWithCurrencies.whitelisted =
-				pairsWithCurrencies.first_currency.whitelisted &&
-				pairsWithCurrencies.second_currency.whitelisted;
+			for (const pwc of pairsWithCurrencies) {
+				pwc.whitelisted =
+					(pwc.first_currency?.whitelisted || false) &&
+					(pwc.second_currency?.whitelisted || false);
+			}
 
 			return { success: true, data: pairsWithCurrencies };
 		} catch (err) {
@@ -177,11 +186,6 @@ class DexModel {
 			const pair = await this.getPairRow(parseInt(id, 10));
 
 			if (!pair) return { success: false, data: 'Invalid pair data' };
-
-			interface PairWithCurrencies extends Pair {
-				first_currency?: Currency | null;
-				second_currency?: Currency | null;
-			}
 
 			const pairWithCurrencies: Pair = pair;
 
