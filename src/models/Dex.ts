@@ -132,6 +132,10 @@ class DexModel {
 				);
 			}
 
+			pairsWithCurrencies.whitelisted =
+				pairsWithCurrencies.first_currency.whitelisted &&
+				pairsWithCurrencies.second_currency.whitelisted;
+
 			return { success: true, data: pairsWithCurrencies };
 		} catch (err) {
 			console.log(err);
