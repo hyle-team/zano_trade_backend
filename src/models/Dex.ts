@@ -140,9 +140,7 @@ class DexModel {
 			}
 
 			for (const pwc of pairsWithCurrencies) {
-				pwc.whitelisted =
-					(pwc.first_currency?.whitelisted || false) &&
-					(pwc.second_currency?.whitelisted || false);
+				pwc.whitelisted = pwc.first_currency?.whitelisted || false;
 			}
 
 			return { success: true, data: pairsWithCurrencies };
