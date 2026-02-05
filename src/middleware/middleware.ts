@@ -6,7 +6,8 @@ import UserData from '../interfaces/common/UserData';
 
 const defaultRateLimitMiddleware = rateLimit({
 	windowMs: 10 * 60 * 1000, // 10 minutes
-	max: 6000, // limit each IP to 6000 requests per windowMs (10 requests/second)
+	max: 60000000000, // limit each IP to 6000 requests per windowMs (10 requests/second)
+	// temporary disable rate limiting
 	message: {
 		success: false,
 		data: 'Too many requests from this IP, please try again later.',
