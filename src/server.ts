@@ -101,6 +101,8 @@ process.on('unhandledRejection', (reason, promise) => {
 		res.send({ success: true, userData: req.body.userData }),
 	);
 
+	app.use(middleware.resultGlobalErrorHandler);
+
 	server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 })();
 
