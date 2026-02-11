@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { ValidationChain, validationResult } from 'express-validator';
 import { rateLimit } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import User from '@/schemes/User';
@@ -49,6 +50,49 @@ class Middleware {
 
 	defaultRateLimit = async (req: Request, res: Response, next: NextFunction) =>
 		defaultRateLimitMiddleware(req, res, next);
+	expressValidator(validators: ValidationChain[]) {
+		return [
+			...validators,
+			(req: Request, res: Response, next: NextFunction) => {
+				const errors = validationResult(req);
+
+				if (!errors.isEmpty()) {
+					res.status(500).send({
+						success: false,
+						data: 'Internal error',
+					});
+					return;
+				}
+
+				next();
+			},
+		];
+	}
+
+	expressJSONErrorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+		const isExpressJSONError =
+			err instanceof SyntaxError && 'status' in err && err.status === 400 && 'body' in err;
+
+		if (isExpressJSONError) {
+			res.status(500).send({
+				success: false,
+				data: 'Internal error',
+			});
+		} else {
+			next();
+		}
+	};
+
+	globalErrorHandler = (err: Error, req: Request, res: Response, _next: NextFunction) => {
+		console.error('Global error handler:');
+		console.error(err);
+		res.status(500).send({
+			success: false,
+			data: 'Internal error',
+		});
+	};
+
+	resultGlobalErrorHandler = [this.expressJSONErrorHandler, this.globalErrorHandler];
 }
 
 const middleware = new Middleware();
