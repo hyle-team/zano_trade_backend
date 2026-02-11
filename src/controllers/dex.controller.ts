@@ -3,6 +3,10 @@ import UserData from '@/interfaces/common/UserData.js';
 import Currency from '@/schemes/Currency.js';
 import Pair from '@/schemes/Pair.js';
 import { Op } from 'sequelize';
+import GetAssetsPriceRatesBody from '@/interfaces/bodies/dex/GetAssetsPriceRatesBody.js';
+import GetAssetsPriceRatesRes, {
+	GetAssetsPriceRatesResPriceRate,
+} from '@/interfaces/responses/dex/GetAssetsPriceRatesRes.js';
 import User from '../schemes/User.js';
 import ordersModel from '../models/Orders.js';
 import dexModel from '../models/Dex.js';
@@ -104,10 +108,10 @@ class DexController {
 		return res.status(200).send(result);
 	}
 
-	async getAssetsPriceRates(req: Request, res: Response) {
-		const { assetsIds } = req.body;
+	getAssetsPriceRates = async (req: Request, res: Response<GetAssetsPriceRatesRes>) => {
+		const { assetsIds } = req.body as GetAssetsPriceRatesBody;
 
-		const currencysRows = await Currency.findAll({
+		const currenciesRows = await Currency.findAll({
 			where: {
 				asset_id: {
 					[Op.in]: assetsIds,
@@ -115,61 +119,42 @@ class DexController {
 			},
 		});
 
-		if (!currencysRows) {
-			return res.status(200).send({
-				success: false,
-				data: 'Assets with this id doesn`t exists',
-			});
-		}
+		const currencyIds = currenciesRows.map((currency) => currency.id);
 
-		const currencyIds = currencysRows.map((currency) => currency.id);
-
-		const pairsRows = (
-			(await Pair.findAll({
-				where: {
-					first_currency_id: {
-						[Op.in]: currencyIds,
-					},
+		const pairsRows = (await Pair.findAll({
+			where: {
+				first_currency_id: {
+					[Op.in]: currencyIds,
 				},
-				include: [
-					{
-						model: Currency,
-						as: 'first_currency',
-						required: true,
-						attributes: ['asset_id'],
-					},
-				],
-			})) || []
-		).map((pair) => ({
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			asset_id: pair?.first_currency?.asset_id,
-			rate: pair.rate,
-		}));
+			},
+			include: [
+				{
+					model: Currency,
+					as: 'first_currency',
+					required: true,
+					attributes: ['asset_id'],
+				},
+			],
+		})) as (Pair & { first_currency: Currency })[];
 
-		if (!pairsRows || pairsRows.length === 0) {
-			return res.status(200).send({
-				success: false,
-				data: 'Assets with this id doesn`t exists',
-			});
-		}
+		const priceRates: GetAssetsPriceRatesResPriceRate[] = pairsRows.map((pairRow) => {
+			const assetId = pairRow.first_currency.asset_id;
 
-		// const priceRates = await Promise.all(pairsRows.map(async (pair) => {
-		//     const currency = await Currency.findOne({ where: {
-		//         id: pair.first_currency_id
-		//     }})
-
-		//     return {
-		//         asset_id: currency?.asset_id,
-		//         rate: pair.rate
-		//     }
-		// }))
+			return {
+				asset_id: assetId,
+				rate: pairRow?.rate ?? null,
+				day_change: pairRow?.coefficient ?? null,
+				day_volume: pairRow?.volume ?? null,
+				day_high: pairRow?.high ?? null,
+				day_low: pairRow?.low ?? null,
+			};
+		});
 
 		return res.status(200).send({
 			success: true,
-			priceRates: pairsRows,
+			priceRates,
 		});
-	}
+	};
 
 	async findPairID(req: Request, res: Response) {
 		const { first, second } = req.body;
