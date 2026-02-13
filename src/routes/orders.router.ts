@@ -1,4 +1,5 @@
 import express from 'express';
+import { createOrderValidator } from '@/interfaces/bodies/orders/CreateOrderBody.js';
 import middleware from '../middleware/middleware.js';
 import ordersController from '../controllers/orders.controller.js';
 
@@ -15,7 +16,11 @@ ordersRouter.use(
 	middleware.verifyToken,
 );
 
-ordersRouter.post('/orders/create', ordersController.createOrder);
+ordersRouter.post(
+	'/orders/create',
+	middleware.expressValidator(createOrderValidator),
+	ordersController.createOrder,
+);
 ordersRouter.post('/orders/get-page', ordersController.getOrdersPage);
 ordersRouter.post('/orders/get-user-page', ordersController.getUserOrdersPage);
 ordersRouter.post('/orders/get', ordersController.getUserOrders);

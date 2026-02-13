@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import Decimal from 'decimal.js';
+
+import CreateOrderRes, { CreateOrderErrorCode } from '@/interfaces/responses/orders/CreateOrderRes';
 import candlesModel from '../models/Candles';
 import ordersModel from '../models/Orders';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody';
@@ -16,70 +18,97 @@ import Currency from '../schemes/Currency';
 import { validateTokensInput } from '../../shared/utils';
 
 class OrdersController {
-	async createOrder(req: Request, res: Response) {
+	static CURRENCY_DECIMAL_POINT_NOT_FOUND_ERROR_MSG = 'CURRENCY_DECIMAL_POINT_MISSING';
+	async createOrder(req: Request, res: Response<CreateOrderRes>) {
 		try {
-			const { orderData } = req.body as CreateOrderBody;
+			const body = req.body as CreateOrderBody;
+			const { orderData } = body;
+			const { price, amount, pairId } = orderData;
 
-			const isFull =
-				orderData &&
-				orderData?.type &&
-				orderData?.side &&
-				orderData?.price &&
-				orderData?.amount &&
-				orderData?.pairId;
+			const priceDecimal = new Decimal(price);
+			const amountDecimal = new Decimal(amount);
 
-			const priceDecimal = new Decimal(orderData?.price || 0);
-			const amountDecimal = new Decimal(orderData?.amount || 0);
-
-			const pair = await Pair.findByPk(orderData?.pairId);
+			const pair = await Pair.findByPk(pairId);
 
 			const firstCurrency = await Currency.findByPk(pair?.first_currency_id);
 
 			const secondCurrency = await Currency.findByPk(pair?.second_currency_id);
 
 			if (!pair || !firstCurrency || !secondCurrency) {
-				return res.status(400).send({ success: false, data: 'Invalid pair data' });
+				return res.status(400).send({
+					success: false,
+					data: CreateOrderErrorCode.INVALID_ORDER_DATA,
+				});
 			}
 
-			const firstCurrencyDecimalPoint = firstCurrency?.asset_info?.decimal_point || 12;
-			const secondCurrencyDecimalPoint = secondCurrency?.asset_info?.decimal_point || 12;
+			const firstCurrencyDP = firstCurrency.asset_info?.decimal_point;
+			const secondCurrencyDP = secondCurrency.asset_info?.decimal_point;
 
-			const rangeCorrect = (() => {
-				const priceCorrect = validateTokensInput(
-					orderData?.price,
-					secondCurrencyDecimalPoint,
-				).valid;
-				const amountCorrect = validateTokensInput(
-					orderData?.amount,
-					firstCurrencyDecimalPoint,
-				).valid;
-
-				return priceCorrect && amountCorrect;
-			})();
-
-			const priceDecimalPointCorrect = priceDecimal.toString().replace('.', '').length <= 20;
-			const amountDecimalPointCorrect =
-				amountDecimal.toString().replace('.', '').length <= 18;
-
-			if (!priceDecimalPointCorrect || !amountDecimalPointCorrect) {
-				return res.status(400).send({ success: false, data: 'Invalid pair data' });
+			if (firstCurrencyDP === undefined || secondCurrencyDP === undefined) {
+				throw new Error(OrdersController.CURRENCY_DECIMAL_POINT_NOT_FOUND_ERROR_MSG);
 			}
 
-			if (!isFull || !rangeCorrect)
-				return res.status(400).send({ success: false, data: 'Invalid order data' });
+			const totalDecimal = priceDecimal.mul(amountDecimal);
+			const total = totalDecimal.toFixed();
+
+			const isPriceValid = validateTokensInput(price, secondCurrencyDP).valid;
+			const isAmountValid = validateTokensInput(amount, firstCurrencyDP).valid;
+			const isTotalValid = validateTokensInput(total, secondCurrencyDP).valid;
+
+			const areAmountsValid = isPriceValid && isAmountValid && isTotalValid;
+
+			if (!areAmountsValid) {
+				return res.status(400).send({
+					success: false,
+					data: CreateOrderErrorCode.INVALID_ORDER_DATA,
+				});
+			}
 
 			const result = await ordersModel.createOrder(req.body);
 
-			if (result.data === 'Invalid order data') return res.status(400).send(result);
+			if (result.data === 'Invalid order data')
+				return res.status(400).send({
+					success: false,
+					data: CreateOrderErrorCode.INVALID_ORDER_DATA,
+				});
 
-			if (result.data === 'Same order') return res.status(400).send(result);
+			if (result.data === 'Same order')
+				return res.status(400).send({
+					success: false,
+					data: CreateOrderErrorCode.SAME_ORDER,
+				});
 
-			if (result.data === 'Internal error') return res.status(500).send(result);
+			if (result.data === 'Internal error') {
+				throw new Error('orderModel.createOrder returned Internal error');
+			}
 
-			res.status(200).send(result);
+			if (typeof result.data === 'string') {
+				throw new Error('Invalid orderModel.createOrder result');
+			}
+
+			const createdOrder = result.data;
+
+			res.status(200).send({
+				success: true,
+				data: {
+					id: createdOrder.id,
+					type: createdOrder.type,
+					timestamp: createdOrder.timestamp,
+					side: createdOrder.side,
+					price: createdOrder.price,
+					amount: createdOrder.amount,
+					total: createdOrder.total,
+					pair_id: createdOrder.pairId,
+					user_id: createdOrder.userId,
+					status: createdOrder.status,
+					left: createdOrder.left,
+					hasNotification: createdOrder.hasNotification,
+					immediateMatch: createdOrder.immediateMatch,
+				},
+			});
 		} catch (err) {
 			console.log(err);
-			res.status(500).send({ success: false, data: 'Unhandled error' });
+			res.status(500).send({ success: false, data: CreateOrderErrorCode.UNHANDLED_ERROR });
 		}
 	}
 

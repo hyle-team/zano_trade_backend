@@ -68,7 +68,30 @@ class OrdersModel {
 		return matchedOrders;
 	}
 
-	async createOrder(body: CreateOrderBody) {
+	async createOrder(body: CreateOrderBody): Promise<
+	| {
+		success: false;
+		data: string;
+		  }
+	| {
+		success: true;
+		data: {
+			id: number;
+			type: string;
+			timestamp: number;
+			side: string;
+			price: string;
+			amount: string;
+			total: string;
+			pairId: number;
+			userId: number;
+			status: string;
+			left: string;
+			hasNotification: boolean;
+			immediateMatch?: true;
+		};
+		  }
+	> {
 		try {
 			const { orderData } = body;
 			const { userData } = body;
@@ -173,13 +196,41 @@ class OrdersModel {
 				return {
 					success: true,
 					data: {
-						...newOrder.toJSON(),
+						id: newOrder.id,
+						type: newOrder.type,
+						timestamp: newOrder.timestamp,
+						side: newOrder.side,
+						price: newOrder.price,
+						amount: newOrder.amount,
+						total: newOrder.total,
+						pairId: newOrder.pair_id,
+						userId: newOrder.user_id,
+						status: newOrder.status,
+						left: newOrder.left,
+						hasNotification: newOrder.hasNotification,
+
 						immediateMatch: true,
 					},
 				};
 			}
 
-			return { success: true, data: newOrder.toJSON() };
+			return {
+				success: true,
+				data: {
+					id: newOrder.id,
+					type: newOrder.type,
+					timestamp: newOrder.timestamp,
+					side: newOrder.side,
+					price: newOrder.price,
+					amount: newOrder.amount,
+					total: newOrder.total,
+					pairId: newOrder.pair_id,
+					userId: newOrder.user_id,
+					status: newOrder.status,
+					left: newOrder.left,
+					hasNotification: newOrder.hasNotification,
+				},
+			};
 		} catch (err) {
 			console.log(err);
 			return { success: false, data: 'Internal error' };
