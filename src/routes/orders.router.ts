@@ -1,5 +1,6 @@
 import express from 'express';
 import { createOrderValidator } from '@/interfaces/bodies/orders/CreateOrderBody.js';
+import { getUserOrdersValidator } from '@/interfaces/bodies/orders/GetUserOrdersBody.js';
 import middleware from '../middleware/middleware.js';
 import ordersController from '../controllers/orders.controller.js';
 
@@ -23,7 +24,11 @@ ordersRouter.post(
 );
 ordersRouter.post('/orders/get-page', ordersController.getOrdersPage);
 ordersRouter.post('/orders/get-user-page', ordersController.getUserOrdersPage);
-ordersRouter.post('/orders/get', ordersController.getUserOrders);
+ordersRouter.patch(
+	'/orders/get',
+	middleware.expressValidator(getUserOrdersValidator),
+	ordersController.getUserOrders.bind(ordersController),
+);
 ordersRouter.post('/orders/cancel', ordersController.cancelOrder);
 ordersRouter.post('/orders/get-candles', ordersController.getCandles);
 ordersRouter.post('/orders/get-chart-orders', ordersController.getChartOrders);

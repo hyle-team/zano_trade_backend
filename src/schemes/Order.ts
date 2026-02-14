@@ -1,6 +1,22 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../sequelize';
 
+export enum OrderType {
+	// eslint-disable-next-line no-unused-vars
+	BUY = 'buy',
+	// eslint-disable-next-line no-unused-vars
+	SELL = 'sell',
+}
+
+export enum OrderStatus {
+	// eslint-disable-next-line no-unused-vars
+	ACTIVE = 'active',
+	// eslint-disable-next-line no-unused-vars
+	ZERO = 'zero',
+	// eslint-disable-next-line no-unused-vars
+	FINISHED = 'finished',
+}
+
 class Order extends Model {
 	declare readonly id: number;
 
@@ -8,6 +24,7 @@ class Order extends Model {
 
 	declare timestamp: number;
 
+	// Currently not used
 	declare side: string;
 
 	declare price: string;

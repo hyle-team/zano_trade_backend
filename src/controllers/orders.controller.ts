@@ -2,11 +2,19 @@ import { Request, Response } from 'express';
 import Decimal from 'decimal.js';
 
 import CreateOrderRes, { CreateOrderErrorCode } from '@/interfaces/responses/orders/CreateOrderRes';
+import GetUserOrdersRes, {
+	GetUserOrdersErrorCode,
+	GetUserOrdersResCurrency,
+	GetUserOrdersResOrderData,
+} from '@/interfaces/responses/orders/GetUserOrdersRes';
 import candlesModel from '../models/Candles';
 import ordersModel from '../models/Orders';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody';
 import GetUserOrdersPageBody from '../interfaces/bodies/orders/GetUserOrdersPageBody';
-import GetUserOrdersBody from '../interfaces/bodies/orders/GetUserOrdersBody';
+import GetUserOrdersBody, {
+	GetUserOrdersBodyStatus,
+	GetUserOrdersBodyType,
+} from '../interfaces/bodies/orders/GetUserOrdersBody';
 import CancelOrderBody from '../interfaces/bodies/orders/CancelOrderBody';
 import GetCandlesBody from '../interfaces/bodies/orders/GetCandlesBody';
 import GetChartOrdersBody from '../interfaces/bodies/orders/GetChartOrdersBody';
@@ -157,21 +165,131 @@ class OrdersController {
 		}
 	}
 
-	async getUserOrders(req: Request, res: Response) {
+	private fromGetUserOrdersServiceToResCurrencyMapper(
+		currency: Currency,
+	): GetUserOrdersResCurrency {
+		return {
+			id: currency.id,
+			name: currency.name,
+			code: currency.code,
+			type: currency.type,
+			asset_id: currency.asset_id,
+			auto_parsed: currency.auto_parsed,
+			asset_info: currency.asset_info
+				? {
+					asset_id: currency.asset_info.asset_id,
+					logo: currency.asset_info.logo,
+					price_url: currency.asset_info.price_url,
+					ticker: currency.asset_info.ticker,
+					full_name: currency.asset_info.full_name,
+					total_max_supply: currency.asset_info.total_max_supply,
+					current_supply: currency.asset_info.current_supply,
+					decimal_point: currency.asset_info.decimal_point,
+					meta_info: currency.asset_info.meta_info,
+				}
+				: undefined,
+			whitelisted: currency.whitelisted,
+		};
+	}
+	getUserOrders = async (req: Request, res: Response<GetUserOrdersRes>) => {
 		try {
-			await userModel.resetExchangeNotificationsAmount(
-				(req.body.userData as UserData).address,
-			);
-			const result = await ordersModel.getUserOrders(req.body as GetUserOrdersBody);
+			const body = req.body as GetUserOrdersBody;
+			const { userData, offset, limit, filterInfo } = body;
 
-			if (result.data === 'Internal error') return res.status(500).send(result);
+			await userModel.resetExchangeNotificationsAmount(userData.address);
 
-			res.status(200).send(result);
+			const serviceOrderType: 'buy' | 'sell' | undefined = (() => {
+				if (filterInfo?.type === undefined) {
+					return undefined;
+				}
+
+				return filterInfo.type === GetUserOrdersBodyType.BUY ? 'buy' : 'sell';
+			})();
+
+			const serviceOrderStatus: 'active' | 'finished' | undefined = (() => {
+				if (filterInfo?.status === undefined) {
+					return undefined;
+				}
+
+				return filterInfo.status === GetUserOrdersBodyStatus.ACTIVE ? 'active' : 'finished';
+			})();
+
+			const result = await ordersModel.getUserOrders({
+				address: userData.address,
+				offset,
+				limit,
+				filterInfo: {
+					type: serviceOrderType,
+					status: serviceOrderStatus,
+					date:
+						filterInfo.date !== undefined
+							? {
+								from: filterInfo.date.from,
+								to: filterInfo.date.to,
+							}
+							: undefined,
+				},
+			});
+
+			if (result.data === 'Internal error') {
+				throw new Error('ordersModel.getUserOrders returned Internal error');
+			}
+
+			const userOrders = result.data.map((order) => {
+				const mappedOrder: GetUserOrdersResOrderData = {
+					id: order.id,
+					type: order.type,
+					timestamp: order.timestamp,
+					side: order.side,
+					price: order.price,
+					amount: order.amount,
+					total: order.total,
+					pair_id: order.pair_id,
+					user_id: order.user_id,
+					status: order.status,
+					left: order.left,
+					hasNotification: order.hasNotification,
+					pair: {
+						id: order.pair.id,
+						first_currency_id: order.pair.first_currency_id,
+						second_currency_id: order.pair.second_currency_id,
+						rate: order.pair.rate,
+						coefficient: order.pair.coefficient,
+						high: order.pair.high,
+						low: order.pair.low,
+						volume: order.pair.volume,
+						featured: order.pair.featured,
+						first_currency: this.fromGetUserOrdersServiceToResCurrencyMapper(
+							order.pair.first_currency,
+						),
+						second_currency: this.fromGetUserOrdersServiceToResCurrencyMapper(
+							order.pair.second_currency,
+						),
+					},
+					first_currency: this.fromGetUserOrdersServiceToResCurrencyMapper(
+						order.first_currency,
+					),
+					second_currency: this.fromGetUserOrdersServiceToResCurrencyMapper(
+						order.second_currency,
+					),
+					isInstant: order.isInstant,
+				};
+
+				return mappedOrder;
+			});
+
+			res.status(200).send({
+				success: true,
+				data: userOrders,
+			});
 		} catch (err) {
 			console.log(err);
-			res.status(500).send({ success: false, data: 'Unhandled error' });
+			res.status(500).send({
+				success: false,
+				data: GetUserOrdersErrorCode.UNHANDLED_ERROR,
+			});
 		}
-	}
+	};
 
 	async cancelOrder(req: Request, res: Response) {
 		try {

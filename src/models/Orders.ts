@@ -6,6 +6,7 @@ import {
 	OrderWithAllTransactions,
 	OrderWithPair,
 	OrderWithPairAndCurrencies,
+	PairWithCurrencies,
 } from '@/interfaces/database/modifiedRequests.js';
 import configModel from './Config.js';
 import dexModel from './Dex.js';
@@ -25,7 +26,7 @@ import GetUserOrdersPageBody from '../interfaces/bodies/orders/GetUserOrdersPage
 import GetUserOrdersBody from '../interfaces/bodies/orders/GetUserOrdersBody.js';
 import CancelOrderBody from '../interfaces/bodies/orders/CancelOrderBody.js';
 import ApplyOrderBody from '../interfaces/bodies/orders/ApplyOrderBody.js';
-import Order from '../schemes/Order';
+import Order, { OrderStatus, OrderType } from '../schemes/Order';
 import User from '../schemes/User';
 import Transaction from '../schemes/Transaction';
 import Pair from '../schemes/Pair';
@@ -387,17 +388,78 @@ class OrdersModel {
 		}
 	}
 
-	async getUserOrders(body: GetUserOrdersBody) {
+	async getUserOrders({
+		address,
+		offset,
+		limit,
+		filterInfo: { status, type, date },
+	}: {
+		address: string;
+		offset: number;
+		limit: number;
+		filterInfo: {
+			status?: 'active' | 'finished';
+			type?: 'buy' | 'sell';
+			date?: {
+				from: number;
+				to: number;
+			};
+		};
+	}): Promise<
+		| {
+			success: false;
+			data: 'Internal error';
+		  }
+		| {
+			success: true;
+			data: {
+				id: number;
+				type: string;
+				timestamp: number;
+				side: string;
+				price: string;
+				amount: string;
+				total: string;
+				pair_id: number;
+				user_id: number;
+				status: string;
+				left: string;
+				hasNotification: boolean;
+
+				pair: PairWithCurrencies;
+
+				first_currency: Currency;
+				second_currency: Currency;
+				isInstant: boolean;
+			}[];
+		  }
+		> {
 		try {
-			const userRow = await userModel.getUserRow(body.userData.address);
+			const userRow = await userModel.getUserRow(address);
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
-			const orders = (await Order.findAll({
+			const ordersRows = (await Order.findAll({
 				where: {
 					user_id: userRow.id,
+					...(status !== undefined
+						? {
+							status:
+									status === 'finished'
+										? OrderStatus.FINISHED
+										: OrderStatus.ACTIVE,
+						}
+						: {}),
+					...(type !== undefined
+						? { type: type === 'buy' ? OrderType.BUY : OrderType.SELL }
+						: {}),
+					...(date !== undefined
+						? { timestamp: { [Op.between]: [date.from, date.to] } }
+						: {}),
 				},
 				order: [['timestamp', 'DESC']],
+				limit,
+				offset,
 				include: [
 					{
 						model: Pair,
@@ -407,8 +469,22 @@ class OrdersModel {
 				],
 			})) as OrderWithPairAndCurrencies[];
 
-			const result = orders.map((e) => ({
-				...e.toJSON(),
+			const result = ordersRows.map((e) => ({
+				id: e.id,
+				type: e.type,
+				timestamp: e.timestamp,
+				side: e.side,
+				price: e.price,
+				amount: e.amount,
+				total: e.total,
+				pair_id: e.pair_id,
+				user_id: e.user_id,
+				status: e.status,
+				left: e.left,
+				hasNotification: e.hasNotification,
+
+				pair: e.pair,
+
 				first_currency: e.pair.first_currency,
 				second_currency: e.pair.second_currency,
 				isInstant: dexModel.isBotActive(e.id),
