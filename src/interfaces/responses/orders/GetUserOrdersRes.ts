@@ -55,6 +55,7 @@ export type GetUserOrdersResOrderData = {
 
 export type GetUserOrdersSuccessRes = {
 	success: true;
+	totalItemsCount: number;
 	data: GetUserOrdersResOrderData[];
 };
 

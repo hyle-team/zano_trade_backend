@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import Decimal from 'decimal.js';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import Currency from '@/schemes/Currency.js';
@@ -409,6 +409,7 @@ class OrdersModel {
 		  }
 		| {
 			success: true;
+			totalItemsCount: number;
 			data: {
 				id: number;
 				type: string;
@@ -436,24 +437,28 @@ class OrdersModel {
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
+			const ordersSelectWhereClause: WhereOptions = {
+				user_id: userRow.id,
+				...(status !== undefined
+					? {
+						status:
+								status === 'finished' ? OrderStatus.FINISHED : OrderStatus.ACTIVE,
+					}
+					: {}),
+				...(type !== undefined
+					? { type: type === 'buy' ? OrderType.BUY : OrderType.SELL }
+					: {}),
+				...(date !== undefined
+					? { timestamp: { [Op.between]: [date.from, date.to] } }
+					: {}),
+			};
+
+			const totalItemsCount = await Order.count({
+				where: ordersSelectWhereClause,
+			});
+
 			const ordersRows = (await Order.findAll({
-				where: {
-					user_id: userRow.id,
-					...(status !== undefined
-						? {
-							status:
-									status === 'finished'
-										? OrderStatus.FINISHED
-										: OrderStatus.ACTIVE,
-						}
-						: {}),
-					...(type !== undefined
-						? { type: type === 'buy' ? OrderType.BUY : OrderType.SELL }
-						: {}),
-					...(date !== undefined
-						? { timestamp: { [Op.between]: [date.from, date.to] } }
-						: {}),
-				},
+				where: ordersSelectWhereClause,
 				order: [['timestamp', 'DESC']],
 				limit,
 				offset,
@@ -487,7 +492,11 @@ class OrdersModel {
 				isInstant: dexModel.isBotActive(e.id),
 			}));
 
-			return { success: true, data: result };
+			return {
+				success: true,
+				totalItemsCount,
+				data: result,
+			};
 		} catch (err) {
 			console.log(err);
 			return { success: false, data: 'Internal error' };

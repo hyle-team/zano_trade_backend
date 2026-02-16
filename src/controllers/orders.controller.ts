@@ -240,6 +240,8 @@ class OrdersController {
 				throw new Error('ordersModel.getUserOrders returned Internal error');
 			}
 
+			const { totalItemsCount } = result;
+
 			const userOrders = result.data.map((order) => {
 				const mappedOrder: GetUserOrdersResOrderData = {
 					id: order.id,
@@ -285,6 +287,7 @@ class OrdersController {
 
 			res.status(200).send({
 				success: true,
+				totalItemsCount,
 				data: userOrders,
 			});
 		} catch (err) {
