@@ -15,6 +15,7 @@ ordersRouter.use(
 		'/orders/get',
 		'/orders/cancel',
 		'/orders/apply-order',
+		'/orders/get-user-orders-pairs',
 	],
 	middleware.verifyToken,
 );

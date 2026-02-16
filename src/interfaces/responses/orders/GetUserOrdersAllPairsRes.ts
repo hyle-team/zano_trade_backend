@@ -2,11 +2,11 @@ export type GetUserOrdersAllPairsResPair = {
 	id: number;
 	firstCurrency: {
 		id: number;
-		ticker: string | null;
+		ticker: string;
 	};
 	secondCurrency: {
 		id: number;
-		ticker: string | null;
+		ticker: string;
 	};
 };
 

@@ -3,9 +3,9 @@ import Decimal from 'decimal.js';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import Currency from '@/schemes/Currency.js';
 import {
-	GroupByIdPair,
 	OrderWithPairAndCurrencies,
 	PairWithCurrencies,
+	PairWithIdAndCurrencies,
 } from '@/interfaces/database/modifiedRequests.js';
 import dexModel from './Dex.js';
 import userModel from './User.js';
@@ -820,11 +820,11 @@ class OrdersModel {
 			id: number;
 			firstCurrency: {
 				id: number;
-				ticker: string | null;
+				ticker: string;
 			};
 			secondCurrency: {
 				id: number;
-				ticker: string | null;
+				ticker: string;
 			};
 		}[];
 	}> => {
@@ -834,33 +834,37 @@ class OrdersModel {
 			throw new Error(OrdersModel.GET_USER_ORDERS_ALL_PAIRS_USER_NOT_FOUND);
 		}
 
-		const pairsGroupedSelection = (await Order.findAll({
-			where: {
-				user_id: userRow.id,
-			},
-			group: 'pair_id',
-			include: [
-				{
-					model: Pair,
-					as: 'pair',
-					include: ['first_currency', 'second_currency'],
-				},
-			],
-		})) as unknown as GroupByIdPair[];
+		// Select distinct pair IDs for the user's orders, then fetch pairs
+		const distinctPairIdRows = (await Order.findAll({
+			attributes: [[sequelize.fn('DISTINCT', sequelize.col('pair_id')), 'pair_id']],
+			where: { user_id: userRow.id },
+			raw: true,
+		})) as { pair_id: number }[];
 
-		const pairs = pairsGroupedSelection.map((e) => {
-			const firstCurrencyTicker = e.pair.first_currency.asset_info?.ticker;
-			const secondCurrencyTicker = e.pair.second_currency.asset_info?.ticker;
+		const pairIds = distinctPairIdRows.map((row) => row.pair_id);
+
+		const pairsSelection = (await Pair.findAll({
+			where: { id: pairIds },
+			include: [
+				{ model: Currency, as: 'first_currency' },
+				{ model: Currency, as: 'second_currency' },
+			],
+			attributes: ['id'],
+		})) as PairWithIdAndCurrencies[];
+
+		const pairs = pairsSelection.map((e) => {
+			const firstCurrencyTicker = e.first_currency.name;
+			const secondCurrencyTicker = e.second_currency.name;
 
 			return {
-				id: e.pair.id,
+				id: e.id,
 				firstCurrency: {
-					id: e.pair.first_currency.id,
-					ticker: firstCurrencyTicker ?? null,
+					id: e.first_currency.id,
+					ticker: firstCurrencyTicker,
 				},
 				secondCurrency: {
-					id: e.pair.second_currency.id,
-					ticker: secondCurrencyTicker ?? null,
+					id: e.second_currency.id,
+					ticker: secondCurrencyTicker,
 				},
 			};
 		});

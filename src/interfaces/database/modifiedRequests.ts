@@ -33,7 +33,6 @@ export interface OrderWithPairAndCurrencies extends Order {
 	pair: PairWithCurrencies;
 }
 
-export interface GroupByIdPair {
-	pair_id: number;
-	pair: PairWithCurrencies;
+export interface PairWithIdAndCurrencies extends PairWithCurrencies {
+	id: number;
 }
