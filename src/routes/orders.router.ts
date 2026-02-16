@@ -37,7 +37,7 @@ ordersRouter.post('/orders/get-chart-orders', ordersController.getChartOrders);
 ordersRouter.post('/orders/get-pair-stats', ordersController.getPairStats);
 ordersRouter.post('/orders/apply-order', ordersController.applyOrder);
 ordersRouter.post('/orders/get-trades', ordersController.getTrades);
-ordersRouter.get(
+ordersRouter.patch(
 	'/orders/get-user-orders-pairs',
 	middleware.expressValidator(getUserOrdersAllPairsValidator),
 	ordersController.getUserOrdersAllPairs.bind(ordersController),
