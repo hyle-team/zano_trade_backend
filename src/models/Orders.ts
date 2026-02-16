@@ -3,12 +3,10 @@ import Decimal from 'decimal.js';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import Currency from '@/schemes/Currency.js';
 import {
-	OrderWithAllTransactions,
-	OrderWithPair,
+	GroupByIdPair,
 	OrderWithPairAndCurrencies,
 	PairWithCurrencies,
 } from '@/interfaces/database/modifiedRequests.js';
-import configModel from './Config.js';
 import dexModel from './Dex.js';
 import userModel from './User.js';
 import exchangeModel from './ExchangeTransactions.js';
@@ -23,7 +21,6 @@ import io from '../server.js';
 import ApplyTip from '../interfaces/responses/orders/ApplyTip.js';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody.js';
 import GetUserOrdersPageBody from '../interfaces/bodies/orders/GetUserOrdersPageBody.js';
-import GetUserOrdersBody from '../interfaces/bodies/orders/GetUserOrdersBody.js';
 import CancelOrderBody from '../interfaces/bodies/orders/CancelOrderBody.js';
 import ApplyOrderBody from '../interfaces/bodies/orders/ApplyOrderBody.js';
 import Order, { OrderStatus, OrderType } from '../schemes/Order';
@@ -804,6 +801,66 @@ class OrdersModel {
 			return { success: false, data: 'Internal error' };
 		}
 	}
+
+	static GET_USER_ORDERS_ALL_PAIRS_USER_NOT_FOUND = 'No user found';
+	getUserOrdersAllPairs = async (
+		address: string,
+	): Promise<{
+		success: true;
+		data: {
+			id: number;
+			firstCurrency: {
+				id: number;
+				ticker: string | null;
+			};
+			secondCurrency: {
+				id: number;
+				ticker: string | null;
+			};
+		}[];
+	}> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			throw new Error(OrdersModel.GET_USER_ORDERS_ALL_PAIRS_USER_NOT_FOUND);
+		}
+
+		const pairsGroupedSelection = (await Order.findAll({
+			where: {
+				user_id: userRow.id,
+			},
+			group: 'pair_id',
+			include: [
+				{
+					model: Pair,
+					as: 'pair',
+					include: ['first_currency', 'second_currency'],
+				},
+			],
+		})) as unknown as GroupByIdPair[];
+
+		const pairs = pairsGroupedSelection.map((e) => {
+			const firstCurrencyTicker = e.pair.first_currency.asset_info?.ticker;
+			const secondCurrencyTicker = e.pair.second_currency.asset_info?.ticker;
+
+			return {
+				id: e.pair.id,
+				firstCurrency: {
+					id: e.pair.first_currency.id,
+					ticker: firstCurrencyTicker ?? null,
+				},
+				secondCurrency: {
+					id: e.pair.second_currency.id,
+					ticker: secondCurrencyTicker ?? null,
+				},
+			};
+		});
+
+		return {
+			success: true,
+			data: pairs,
+		};
+	};
 }
 
 const ordersModel = new OrdersModel();

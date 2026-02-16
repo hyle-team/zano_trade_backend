@@ -7,6 +7,11 @@ import GetUserOrdersRes, {
 	GetUserOrdersResCurrency,
 	GetUserOrdersResOrderData,
 } from '@/interfaces/responses/orders/GetUserOrdersRes';
+import GetUserOrdersAllPairsBody from '@/interfaces/bodies/orders/GetUserOrdersAllPairsBody';
+import GetUserOrdersAllPairsRes, {
+	GetUserOrdersAllPairsErrorCode,
+	GetUserOrdersAllPairsResPair,
+} from '@/interfaces/responses/orders/GetUserOrdersAllPairsRes';
 import candlesModel from '../models/Candles';
 import ordersModel from '../models/Orders';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody';
@@ -287,6 +292,42 @@ class OrdersController {
 			res.status(500).send({
 				success: false,
 				data: GetUserOrdersErrorCode.UNHANDLED_ERROR,
+			});
+		}
+	};
+
+	getUserOrdersAllPairs = async (req: Request, res: Response<GetUserOrdersAllPairsRes>) => {
+		try {
+			const body = req.body as GetUserOrdersAllPairsBody;
+			const { userData } = body;
+
+			const getUserOrdersAllPairsResult = await ordersModel.getUserOrdersAllPairs(
+				userData.address,
+			);
+
+			const pairs = getUserOrdersAllPairsResult.data;
+
+			const responsePairs: GetUserOrdersAllPairsResPair[] = pairs.map((pair) => ({
+				id: pair.id,
+				firstCurrency: {
+					id: pair.firstCurrency.id,
+					ticker: pair.firstCurrency.ticker,
+				},
+				secondCurrency: {
+					id: pair.secondCurrency.id,
+					ticker: pair.secondCurrency.ticker,
+				},
+			}));
+
+			res.status(200).send({
+				success: true,
+				data: responsePairs,
+			});
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({
+				success: false,
+				data: GetUserOrdersAllPairsErrorCode.UNHANDLED_ERROR,
 			});
 		}
 	};

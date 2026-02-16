@@ -1,6 +1,8 @@
 import express from 'express';
+
 import { createOrderValidator } from '@/interfaces/bodies/orders/CreateOrderBody.js';
 import { getUserOrdersValidator } from '@/interfaces/bodies/orders/GetUserOrdersBody.js';
+import { getUserOrdersAllPairsValidator } from '@/interfaces/bodies/orders/GetUserOrdersAllPairsBody.js';
 import middleware from '../middleware/middleware.js';
 import ordersController from '../controllers/orders.controller.js';
 
@@ -35,5 +37,10 @@ ordersRouter.post('/orders/get-chart-orders', ordersController.getChartOrders);
 ordersRouter.post('/orders/get-pair-stats', ordersController.getPairStats);
 ordersRouter.post('/orders/apply-order', ordersController.applyOrder);
 ordersRouter.post('/orders/get-trades', ordersController.getTrades);
+ordersRouter.get(
+	'/orders/get-user-orders-pairs',
+	middleware.expressValidator(getUserOrdersAllPairsValidator),
+	ordersController.getUserOrdersAllPairs.bind(ordersController),
+);
 
 export default ordersRouter;
