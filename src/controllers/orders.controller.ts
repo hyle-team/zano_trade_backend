@@ -224,6 +224,7 @@ class OrdersController {
 				offset,
 				limit,
 				filterInfo: {
+					pairId: filterInfo.pairId,
 					type: serviceOrderType,
 					status: serviceOrderStatus,
 					date:

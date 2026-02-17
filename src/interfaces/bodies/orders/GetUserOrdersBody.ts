@@ -21,6 +21,7 @@ interface GetUserOrdersBody {
 	limit: number;
 	offset: number;
 	filterInfo: {
+		pairId?: number;
 		status?: GetUserOrdersBodyStatus;
 		type?: GetUserOrdersBodyType;
 		date?: {
@@ -37,6 +38,10 @@ export const getUserOrdersValidator = [
 		.withMessage('limit must be a positive integer within certain range'),
 	body('offset').isInt({ min: 0 }).withMessage('offset must be a non-negative integer'),
 	body('filterInfo').isObject().withMessage('filterInfo must be an object'),
+	body('filterInfo.pairId')
+		.optional()
+		.isInt({ min: 0 })
+		.withMessage('filterInfo.pairId must be a non-negative integer'),
 	body('filterInfo.status')
 		.optional()
 		.isIn(Object.values(GetUserOrdersBodyStatus))

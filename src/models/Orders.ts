@@ -389,12 +389,13 @@ class OrdersModel {
 		address,
 		offset,
 		limit,
-		filterInfo: { status, type, date },
+		filterInfo: { pairId, status, type, date },
 	}: {
 		address: string;
 		offset: number;
 		limit: number;
 		filterInfo: {
+			pairId?: number;
 			status?: 'active' | 'finished';
 			type?: 'buy' | 'sell';
 			date?: {
@@ -439,6 +440,7 @@ class OrdersModel {
 
 			const ordersSelectWhereClause: WhereOptions = {
 				user_id: userRow.id,
+				...(pairId !== undefined ? { pair_id: pairId } : {}),
 				...(status !== undefined
 					? {
 						status:
