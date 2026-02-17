@@ -3,6 +3,7 @@ import express from 'express';
 import { createOrderValidator } from '@/interfaces/bodies/orders/CreateOrderBody.js';
 import { getUserOrdersValidator } from '@/interfaces/bodies/orders/GetUserOrdersBody.js';
 import { getUserOrdersAllPairsValidator } from '@/interfaces/bodies/orders/GetUserOrdersAllPairsBody.js';
+import { cancelAllValidator } from '@/interfaces/bodies/orders/CancelAllBody.js';
 import middleware from '../middleware/middleware.js';
 import ordersController from '../controllers/orders.controller.js';
 
@@ -42,6 +43,11 @@ ordersRouter.patch(
 	'/orders/get-user-orders-pairs',
 	middleware.expressValidator(getUserOrdersAllPairsValidator),
 	ordersController.getUserOrdersAllPairs.bind(ordersController),
+);
+ordersRouter.patch(
+	'/orders/cancel-all',
+	middleware.expressValidator(cancelAllValidator),
+	ordersController.cancelAll.bind(ordersController),
 );
 
 export default ordersRouter;

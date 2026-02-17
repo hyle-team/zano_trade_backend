@@ -12,6 +12,9 @@ import GetUserOrdersAllPairsRes, {
 	GetUserOrdersAllPairsErrorCode,
 	GetUserOrdersAllPairsResPair,
 } from '@/interfaces/responses/orders/GetUserOrdersAllPairsRes';
+import CancelAllBody, { CancelAllBodyOrderType } from '@/interfaces/bodies/orders/CancelAllBody';
+import sequelize from '@/sequelize';
+import CancelAllRes, { CancelAllErrorCode } from '@/interfaces/responses/orders/CancelAllRes';
 import candlesModel from '../models/Candles';
 import ordersModel from '../models/Orders';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody';
@@ -450,6 +453,51 @@ class OrdersController {
 		} catch (err) {
 			console.log(err);
 			res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
+	async cancelAll(req: Request, res: Response<CancelAllRes>) {
+		try {
+			const body = req.body as CancelAllBody;
+			const { userData, filterInfo } = body;
+
+			const filterType = (() => {
+				if (filterInfo.type === undefined) {
+					return undefined;
+				}
+
+				return filterInfo.type === CancelAllBodyOrderType.BUY
+					? GetUserOrdersBodyType.BUY
+					: GetUserOrdersBodyType.SELL;
+			})();
+
+			await sequelize.transaction(async (transaction) => {
+				await ordersModel.cancelAll(
+					{
+						address: userData.address,
+						filterInfo: {
+							pairId: filterInfo.pairId,
+							type: filterType,
+							date:
+								filterInfo.date !== undefined
+									? {
+										from: filterInfo.date.from,
+										to: filterInfo.date.to,
+									}
+									: undefined,
+						},
+					},
+					{ transaction },
+				);
+			});
+
+			res.status(200).send({ success: true });
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({
+				success: false,
+				data: CancelAllErrorCode.UNHANDLED_ERROR,
+			});
 		}
 	}
 }

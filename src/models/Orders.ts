@@ -1,4 +1,4 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op, Transaction as SequelizeTransaction, WhereOptions } from 'sequelize';
 import Decimal from 'decimal.js';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import Currency from '@/schemes/Currency.js';
@@ -875,6 +875,114 @@ class OrdersModel {
 			success: true,
 			data: pairs,
 		};
+	};
+
+	static CANCEL_ALL_USER_NOT_FOUND = 'No user found';
+	static CANCEL_ALL_ORDER_NOT_FOUND = 'Order not found during cancel all process';
+	cancelAll = async (
+		{
+			address,
+			filterInfo: { pairId, type, date },
+		}: {
+			address: string;
+			filterInfo: {
+				pairId?: number;
+				type?: 'buy' | 'sell';
+				date?: {
+					from: number;
+					to: number;
+				};
+			};
+		},
+		{ transaction }: { transaction: SequelizeTransaction },
+	): Promise<{
+		success: true;
+	}> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			throw new Error(OrdersModel.CANCEL_ALL_USER_NOT_FOUND);
+		}
+
+		const ordersToCancelWhereClause: WhereOptions = {
+			user_id: userRow.id,
+			status: {
+				[Op.ne]: OrderStatus.FINISHED,
+			},
+			...(pairId !== undefined ? { pair_id: pairId } : {}),
+			...(type !== undefined
+				? { type: type === 'buy' ? OrderType.BUY : OrderType.SELL }
+				: {}),
+			...(date !== undefined ? { timestamp: { [Op.between]: [date.from, date.to] } } : {}),
+		};
+
+		const ordersToCancelCount = await Order.count({
+			where: ordersToCancelWhereClause,
+		});
+
+		const cancelPromises = [];
+
+		for (let offset = 0; offset < ordersToCancelCount; offset += 1) {
+			cancelPromises.push(async () => {
+				const orderRow = await Order.findOne({
+					where: ordersToCancelWhereClause,
+					order: [['timestamp', 'ASC']],
+					offset,
+					limit: 1,
+				});
+
+				if (!orderRow) {
+					throw new Error(OrdersModel.CANCEL_ALL_ORDER_NOT_FOUND);
+				}
+
+				await this.cancelOrderNotifications(orderRow, userRow);
+
+				const eps = new Decimal(1e-8);
+				const leftDecimal = new Decimal(orderRow.left);
+				const amountDecimal = new Decimal(orderRow.amount);
+
+				// if order was partially filled
+				if (leftDecimal.minus(amountDecimal).abs().greaterThan(eps)) {
+					const connectedTransactions = await Transaction.findAll({
+						where: {
+							[Op.or]: [
+								{ buy_order_id: orderRow.id },
+								{ sell_order_id: orderRow.id },
+							],
+							status: 'pending',
+						},
+					});
+
+					for (const tx of connectedTransactions) {
+						await exchangeModel.returnTransactionAmount(tx.id, transaction);
+					}
+
+					await Order.update(
+						{ status: OrderStatus.FINISHED },
+						{
+							where: { id: orderRow.id, user_id: userRow.id },
+							transaction,
+						},
+					);
+				} else {
+					await Order.destroy({
+						where: {
+							id: orderRow.id,
+							user_id: userRow.id,
+						},
+						transaction,
+					});
+				}
+
+				transaction.afterCommit(() => {
+					sendDeleteOrderMessage(io, orderRow.pair_id.toString(), orderRow.id.toString());
+				});
+			});
+		}
+
+		await Promise.all(cancelPromises);
+
+		return { success: true };
 	};
 }
 
