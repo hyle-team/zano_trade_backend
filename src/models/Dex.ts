@@ -38,8 +38,44 @@ class DexModel {
 	}
 
 	private getPairsSearchCondition(searchText: string, whitelistedOnly: boolean) {
+		const tickerRegexp = /^[A-Za-z0-9]{1,14}$/;
+		const fullNameRegexp = /^[A-Za-z0-9.,:!?\-() ]{0,255}$/;
+
+		const firstFullNameExpr = Sequelize.literal(`"first_currency"."asset_info"->>'full_name'`);
+		const secondFullNameExpr = Sequelize.literal(
+			`"second_currency"."asset_info"->>'full_name'`,
+		);
+
 		const searchCondition: WhereOptions = {
 			[Op.and]: [
+				Sequelize.where(Sequelize.col('first_currency.name'), {
+					[Op.regexp]: tickerRegexp.source,
+				}),
+				{
+					[Op.or]: [
+						Sequelize.where(Sequelize.col('first_currency.asset_info'), {
+							[Op.is]: null,
+						}),
+						Sequelize.where(firstFullNameExpr, { [Op.is]: null }),
+						Sequelize.where(firstFullNameExpr, {
+							[Op.regexp]: fullNameRegexp.source,
+						}),
+					],
+				},
+				Sequelize.where(Sequelize.col('second_currency.name'), {
+					[Op.regexp]: tickerRegexp.source,
+				}),
+				{
+					[Op.or]: [
+						Sequelize.where(Sequelize.col('second_currency.asset_info'), {
+							[Op.is]: null,
+						}),
+						Sequelize.where(secondFullNameExpr, { [Op.is]: null }),
+						Sequelize.where(secondFullNameExpr, {
+							[Op.regexp]: fullNameRegexp.source,
+						}),
+					],
+				},
 				{
 					[Op.or]: [
 						Sequelize.where(
@@ -70,7 +106,20 @@ class DexModel {
 			],
 		};
 
-		return searchCondition;
+		const includeCondition = [
+			{
+				model: Currency,
+				as: 'first_currency',
+				attributes: ['asset_id', 'code', 'id', 'name', 'type', 'whitelisted'],
+			},
+			{
+				model: Currency,
+				as: 'second_currency',
+				attributes: ['asset_id', 'code', 'id', 'name', 'type', 'whitelisted'],
+			},
+		];
+
+		return { searchCondition, includeCondition };
 	}
 
 	async getPairRow(id: number) {
@@ -88,7 +137,10 @@ class DexModel {
 		sortOption: PairSortOption,
 	) {
 		try {
-			const searchCondition = this.getPairsSearchCondition(searchText, whitelistedOnly);
+			const { searchCondition, includeCondition } = this.getPairsSearchCondition(
+				searchText,
+				whitelistedOnly,
+			);
 
 			const volumeSortDirection =
 				sortOption === PairSortOption.VOLUME_LOW_TO_HIGH ? 'ASC' : 'DESC';
@@ -105,18 +157,7 @@ class DexModel {
 					'volume',
 					'featured',
 				],
-				include: [
-					{
-						model: Currency,
-						as: 'first_currency',
-						attributes: ['asset_id', 'code', 'id', 'name', 'type', 'whitelisted'],
-					},
-					{
-						model: Currency,
-						as: 'second_currency',
-						attributes: ['asset_id', 'code', 'id', 'name', 'type', 'whitelisted'],
-					},
-				],
+				include: includeCondition,
 				where: searchCondition,
 				order: [
 					['volume', volumeSortDirection],
@@ -152,21 +193,13 @@ class DexModel {
 
 	async getPairsPagesAmount(searchText: string, whitelistedOnly: boolean) {
 		try {
-			const searchCondition = this.getPairsSearchCondition(searchText, whitelistedOnly);
+			const { searchCondition, includeCondition } = this.getPairsSearchCondition(
+				searchText,
+				whitelistedOnly,
+			);
 
 			const count = await Pair.count({
-				include: [
-					{
-						model: Currency,
-						as: 'first_currency',
-						attributes: ['asset_id', 'code', 'id', 'name', 'type'],
-					},
-					{
-						model: Currency,
-						as: 'second_currency',
-						attributes: ['asset_id', 'code', 'id', 'name', 'type'],
-					},
-				],
+				include: includeCondition,
 				where: searchCondition,
 			});
 
