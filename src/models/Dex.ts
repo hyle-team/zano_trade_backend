@@ -39,7 +39,7 @@ class DexModel {
 
 	private getPairsSearchCondition(searchText: string, whitelistedOnly: boolean) {
 		const tickerRegexp = /^[A-Za-z0-9]{1,14}$/;
-		const fullNameRegexp = /^[A-Za-z0-9.,:!?\-() ]{0,255}$/;
+		const fullNameRegexp = /^[A-Za-z0-9.,:!?\-() ]*$/;
 
 		const firstFullNameExpr = Sequelize.literal(`"first_currency"."asset_info"->>'full_name'`);
 		const secondFullNameExpr = Sequelize.literal(
@@ -57,9 +57,16 @@ class DexModel {
 							[Op.is]: null,
 						}),
 						Sequelize.where(firstFullNameExpr, { [Op.is]: null }),
-						Sequelize.where(firstFullNameExpr, {
-							[Op.regexp]: fullNameRegexp.source,
-						}),
+						{
+							[Op.and]: [
+								Sequelize.where(firstFullNameExpr, {
+									[Op.regexp]: fullNameRegexp.source,
+								}),
+								Sequelize.where(Sequelize.fn('char_length', firstFullNameExpr), {
+									[Op.lte]: 400,
+								}),
+							],
+						},
 					],
 				},
 				Sequelize.where(Sequelize.col('second_currency.name'), {
@@ -71,9 +78,16 @@ class DexModel {
 							[Op.is]: null,
 						}),
 						Sequelize.where(secondFullNameExpr, { [Op.is]: null }),
-						Sequelize.where(secondFullNameExpr, {
-							[Op.regexp]: fullNameRegexp.source,
-						}),
+						{
+							[Op.and]: [
+								Sequelize.where(secondFullNameExpr, {
+									[Op.regexp]: fullNameRegexp.source,
+								}),
+								Sequelize.where(Sequelize.fn('char_length', secondFullNameExpr), {
+									[Op.lte]: 400,
+								}),
+							],
+						},
 					],
 				},
 				{
