@@ -878,7 +878,6 @@ class OrdersModel {
 	};
 
 	static CANCEL_ALL_USER_NOT_FOUND = 'No user found';
-	static CANCEL_ALL_ORDER_NOT_FOUND = 'Order not found during cancel all process';
 	cancelAll = async (
 		{
 			address,
@@ -916,25 +915,30 @@ class OrdersModel {
 			...(date !== undefined ? { timestamp: { [Op.between]: [date.from, date.to] } } : {}),
 		};
 
-		const ordersToCancelCount = await Order.count({
-			where: ordersToCancelWhereClause,
-		});
+		const ORDERS_PER_CANCEL_CHUNK = 10_000;
+		let lastOrderTimestamp: number | undefined;
+		let finished = false;
 
-		const cancelPromises = [];
+		while (!finished) {
+			const orderRows = await Order.findAll({
+				where: {
+					...ordersToCancelWhereClause,
+					...(lastOrderTimestamp !== undefined
+						? { timestamp: { [Op.gt]: lastOrderTimestamp } }
+						: {}),
+				},
+				order: [['timestamp', 'ASC']],
+				limit: ORDERS_PER_CANCEL_CHUNK,
+			});
 
-		for (let offset = 0; offset < ordersToCancelCount; offset += 1) {
-			cancelPromises.push(async () => {
-				const orderRow = await Order.findOne({
-					where: ordersToCancelWhereClause,
-					order: [['timestamp', 'ASC']],
-					offset,
-					limit: 1,
-				});
+			const lastOrderRow = orderRows.at(-1);
 
-				if (!orderRow) {
-					throw new Error(OrdersModel.CANCEL_ALL_ORDER_NOT_FOUND);
-				}
+			// if there are no more orders to cancel, finish the process
+			if (!lastOrderRow) {
+				finished = true;
+			}
 
+			for (const orderRow of orderRows) {
 				await this.cancelOrderNotifications(orderRow, userRow);
 
 				const eps = new Decimal(1e-8);
@@ -977,10 +981,12 @@ class OrdersModel {
 				transaction.afterCommit(() => {
 					sendDeleteOrderMessage(io, orderRow.pair_id.toString(), orderRow.id.toString());
 				});
-			});
-		}
+			}
 
-		await Promise.all(cancelPromises);
+			if (lastOrderRow) {
+				lastOrderTimestamp = lastOrderRow.timestamp;
+			}
+		}
 
 		return { success: true };
 	};
