@@ -1,4 +1,4 @@
-import { Transaction } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 
 import AuthMessage from '@/schemes/AuthMessage';
 
@@ -64,6 +64,20 @@ class AuthMessagesModel {
 				address,
 				alias,
 				message,
+			},
+			transaction,
+		});
+	};
+
+	deleteAllExpired = async (
+		{ now }: { now: Date },
+		{ transaction }: { transaction?: Transaction } = {},
+	): Promise<void> => {
+		await AuthMessage.destroy({
+			where: {
+				expires_at: {
+					[Op.lt]: now,
+				},
 			},
 			transaction,
 		});
