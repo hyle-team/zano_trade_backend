@@ -50,7 +50,10 @@ class AuthController {
 				message,
 			});
 
-			if (!authMessageRow) {
+			const isAuthMessageValid =
+				!!authMessageRow && authMessageRow.expires_at.getTime() > Date.now();
+
+			if (!isAuthMessageValid) {
 				return res.status(400).send({ success: false, data: 'Invalid auth message' });
 			}
 

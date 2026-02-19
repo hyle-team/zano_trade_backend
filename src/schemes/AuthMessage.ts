@@ -6,7 +6,7 @@ class AuthMessage extends Model {
 	declare address: string;
 	declare alias: string;
 	declare message: string;
-	declare expiresAt: Date;
+	declare expires_at: Date;
 
 	declare readonly createdAt: Date;
 	declare readonly updatedAt: Date;
@@ -31,7 +31,7 @@ AuthMessage.init(
 			type: DataTypes.STRING,
 			allowNull: false,
 		},
-		expiresAt: {
+		expires_at: {
 			type: DataTypes.DATE,
 			allowNull: false,
 		},
@@ -39,7 +39,6 @@ AuthMessage.init(
 	{
 		sequelize,
 		modelName: 'AuthMessage',
-		tableName: 'auth_messages',
 	},
 );
 

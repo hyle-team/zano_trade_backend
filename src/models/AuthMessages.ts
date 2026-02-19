@@ -22,7 +22,7 @@ class AuthMessagesModel {
 				address,
 				alias,
 				message,
-				expiresAt,
+				expires_at: expiresAt,
 			},
 			{ transaction },
 		);
