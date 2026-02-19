@@ -46,6 +46,28 @@ class AuthMessagesModel {
 				message,
 			},
 		});
+
+	deleteOne = async (
+		{
+			address,
+			alias,
+			message,
+		}: {
+			address: string;
+			alias: string;
+			message: string;
+		},
+		{ transaction }: { transaction?: Transaction } = {},
+	): Promise<void> => {
+		await AuthMessage.destroy({
+			where: {
+				address,
+				alias,
+				message,
+			},
+			transaction,
+		});
+	};
 }
 
 const authMessagesModel = new AuthMessagesModel();
