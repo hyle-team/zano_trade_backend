@@ -7,7 +7,7 @@ import authController from '../controllers/auth.controller.js';
 const authRouter = express.Router();
 
 authRouter.post(
-	'/request-auth',
+	'/auth/request-auth',
 	middleware.expressValidator(requestAuthBodyValidator),
 	authController.requestAuth.bind(authController),
 );
