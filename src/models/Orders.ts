@@ -1,13 +1,12 @@
-import { Op } from 'sequelize';
+import { Op, Transaction as SequelizeTransaction, WhereOptions } from 'sequelize';
 import Decimal from 'decimal.js';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import Currency from '@/schemes/Currency.js';
 import {
-	OrderWithAllTransactions,
-	OrderWithPair,
 	OrderWithPairAndCurrencies,
+	PairWithCurrencies,
+	PairWithIdAndCurrencies,
 } from '@/interfaces/database/modifiedRequests.js';
-import configModel from './Config.js';
 import dexModel from './Dex.js';
 import userModel from './User.js';
 import exchangeModel from './ExchangeTransactions.js';
@@ -22,10 +21,9 @@ import io from '../server.js';
 import ApplyTip from '../interfaces/responses/orders/ApplyTip.js';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody.js';
 import GetUserOrdersPageBody from '../interfaces/bodies/orders/GetUserOrdersPageBody.js';
-import GetUserOrdersBody from '../interfaces/bodies/orders/GetUserOrdersBody.js';
 import CancelOrderBody from '../interfaces/bodies/orders/CancelOrderBody.js';
 import ApplyOrderBody from '../interfaces/bodies/orders/ApplyOrderBody.js';
-import Order from '../schemes/Order';
+import Order, { OrderStatus, OrderType } from '../schemes/Order';
 import User from '../schemes/User';
 import Transaction from '../schemes/Transaction';
 import Pair from '../schemes/Pair';
@@ -68,7 +66,30 @@ class OrdersModel {
 		return matchedOrders;
 	}
 
-	async createOrder(body: CreateOrderBody) {
+	async createOrder(body: CreateOrderBody): Promise<
+	| {
+		success: false;
+		data: string;
+		  }
+	| {
+		success: true;
+		data: {
+			id: number;
+			type: string;
+			timestamp: number;
+			side: string;
+			price: string;
+			amount: string;
+			total: string;
+			pairId: number;
+			userId: number;
+			status: string;
+			left: string;
+			hasNotification: boolean;
+			immediateMatch?: true;
+		};
+		  }
+	> {
 		try {
 			const { orderData } = body;
 			const { userData } = body;
@@ -173,13 +194,41 @@ class OrdersModel {
 				return {
 					success: true,
 					data: {
-						...newOrder.toJSON(),
+						id: newOrder.id,
+						type: newOrder.type,
+						timestamp: newOrder.timestamp,
+						side: newOrder.side,
+						price: newOrder.price,
+						amount: newOrder.amount,
+						total: newOrder.total,
+						pairId: newOrder.pair_id,
+						userId: newOrder.user_id,
+						status: newOrder.status,
+						left: newOrder.left,
+						hasNotification: newOrder.hasNotification,
+
 						immediateMatch: true,
 					},
 				};
 			}
 
-			return { success: true, data: newOrder.toJSON() };
+			return {
+				success: true,
+				data: {
+					id: newOrder.id,
+					type: newOrder.type,
+					timestamp: newOrder.timestamp,
+					side: newOrder.side,
+					price: newOrder.price,
+					amount: newOrder.amount,
+					total: newOrder.total,
+					pairId: newOrder.pair_id,
+					userId: newOrder.user_id,
+					status: newOrder.status,
+					left: newOrder.left,
+					hasNotification: newOrder.hasNotification,
+				},
+			};
 		} catch (err) {
 			console.log(err);
 			return { success: false, data: 'Internal error' };
@@ -336,17 +385,85 @@ class OrdersModel {
 		}
 	}
 
-	async getUserOrders(body: GetUserOrdersBody) {
+	async getUserOrders({
+		address,
+		offset,
+		limit,
+		filterInfo: { pairId, status, type, date },
+	}: {
+		address: string;
+		offset: number;
+		limit: number;
+		filterInfo: {
+			pairId?: number;
+			status?: 'active' | 'finished';
+			type?: 'buy' | 'sell';
+			date?: {
+				from: number;
+				to: number;
+			};
+		};
+	}): Promise<
+		| {
+			success: false;
+			data: 'Internal error';
+		  }
+		| {
+			success: true;
+			totalItemsCount: number;
+			data: {
+				id: number;
+				type: string;
+				timestamp: number;
+				side: string;
+				price: string;
+				amount: string;
+				total: string;
+				pair_id: number;
+				user_id: number;
+				status: string;
+				left: string;
+				hasNotification: boolean;
+
+				pair: PairWithCurrencies;
+
+				first_currency: Currency;
+				second_currency: Currency;
+				isInstant: boolean;
+			}[];
+		  }
+		> {
 		try {
-			const userRow = await userModel.getUserRow(body.userData.address);
+			const userRow = await userModel.getUserRow(address);
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
-			const orders = (await Order.findAll({
-				where: {
-					user_id: userRow.id,
-				},
+			const ordersSelectWhereClause: WhereOptions = {
+				user_id: userRow.id,
+				...(pairId !== undefined ? { pair_id: pairId } : {}),
+				...(status !== undefined
+					? {
+						status:
+								status === 'finished' ? OrderStatus.FINISHED : OrderStatus.ACTIVE,
+					}
+					: {}),
+				...(type !== undefined
+					? { type: type === 'buy' ? OrderType.BUY : OrderType.SELL }
+					: {}),
+				...(date !== undefined
+					? { timestamp: { [Op.between]: [date.from, date.to] } }
+					: {}),
+			};
+
+			const totalItemsCount = await Order.count({
+				where: ordersSelectWhereClause,
+			});
+
+			const ordersRows = (await Order.findAll({
+				where: ordersSelectWhereClause,
 				order: [['timestamp', 'DESC']],
+				limit,
+				offset,
 				include: [
 					{
 						model: Pair,
@@ -356,14 +473,32 @@ class OrdersModel {
 				],
 			})) as OrderWithPairAndCurrencies[];
 
-			const result = orders.map((e) => ({
-				...e.toJSON(),
+			const result = ordersRows.map((e) => ({
+				id: e.id,
+				type: e.type,
+				timestamp: e.timestamp,
+				side: e.side,
+				price: e.price,
+				amount: e.amount,
+				total: e.total,
+				pair_id: e.pair_id,
+				user_id: e.user_id,
+				status: e.status,
+				left: e.left,
+				hasNotification: e.hasNotification,
+
+				pair: e.pair,
+
 				first_currency: e.pair.first_currency,
 				second_currency: e.pair.second_currency,
 				isInstant: dexModel.isBotActive(e.id),
 			}));
 
-			return { success: true, data: result };
+			return {
+				success: true,
+				totalItemsCount,
+				data: result,
+			};
 		} catch (err) {
 			console.log(err);
 			return { success: false, data: 'Internal error' };
@@ -677,6 +812,184 @@ class OrdersModel {
 			return { success: false, data: 'Internal error' };
 		}
 	}
+
+	static GET_USER_ORDERS_ALL_PAIRS_USER_NOT_FOUND = 'No user found';
+	getUserOrdersAllPairs = async (
+		address: string,
+	): Promise<{
+		success: true;
+		data: {
+			id: number;
+			firstCurrency: {
+				id: number;
+				ticker: string;
+			};
+			secondCurrency: {
+				id: number;
+				ticker: string;
+			};
+		}[];
+	}> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			throw new Error(OrdersModel.GET_USER_ORDERS_ALL_PAIRS_USER_NOT_FOUND);
+		}
+
+		// Select distinct pair IDs for the user's orders, then fetch pairs
+		const distinctPairIdRows = (await Order.findAll({
+			attributes: [[sequelize.fn('DISTINCT', sequelize.col('pair_id')), 'pair_id']],
+			where: { user_id: userRow.id },
+			raw: true,
+		})) as { pair_id: number }[];
+
+		const pairIds = distinctPairIdRows.map((row) => row.pair_id);
+
+		const pairsSelection = (await Pair.findAll({
+			where: { id: pairIds },
+			include: [
+				{ model: Currency, as: 'first_currency' },
+				{ model: Currency, as: 'second_currency' },
+			],
+			attributes: ['id'],
+		})) as PairWithIdAndCurrencies[];
+
+		const pairs = pairsSelection.map((e) => {
+			const firstCurrencyTicker = e.first_currency.name;
+			const secondCurrencyTicker = e.second_currency.name;
+
+			return {
+				id: e.id,
+				firstCurrency: {
+					id: e.first_currency.id,
+					ticker: firstCurrencyTicker,
+				},
+				secondCurrency: {
+					id: e.second_currency.id,
+					ticker: secondCurrencyTicker,
+				},
+			};
+		});
+
+		return {
+			success: true,
+			data: pairs,
+		};
+	};
+
+	static CANCEL_ALL_USER_NOT_FOUND = 'No user found';
+	cancelAll = async (
+		{
+			address,
+			filterInfo: { pairId, type, date },
+		}: {
+			address: string;
+			filterInfo: {
+				pairId?: number;
+				type?: 'buy' | 'sell';
+				date?: {
+					from: number;
+					to: number;
+				};
+			};
+		},
+		{ transaction }: { transaction: SequelizeTransaction },
+	): Promise<{
+		success: true;
+	}> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			throw new Error(OrdersModel.CANCEL_ALL_USER_NOT_FOUND);
+		}
+
+		const ordersToCancelWhereClause: WhereOptions = {
+			user_id: userRow.id,
+			status: {
+				[Op.ne]: OrderStatus.FINISHED,
+			},
+			...(pairId !== undefined ? { pair_id: pairId } : {}),
+			...(type !== undefined
+				? { type: type === 'buy' ? OrderType.BUY : OrderType.SELL }
+				: {}),
+			...(date !== undefined ? { timestamp: { [Op.between]: [date.from, date.to] } } : {}),
+		};
+
+		const ORDERS_PER_CANCEL_CHUNK = 10_000;
+		let lastOrderTimestamp: number | undefined;
+		let finished = false;
+
+		while (!finished) {
+			const orderRows = await Order.findAll({
+				where: {
+					...ordersToCancelWhereClause,
+					...(lastOrderTimestamp !== undefined
+						? { timestamp: { [Op.gt]: lastOrderTimestamp } }
+						: {}),
+				},
+				order: [['timestamp', 'ASC']],
+				limit: ORDERS_PER_CANCEL_CHUNK,
+			});
+
+			const lastOrderRow = orderRows.at(-1);
+
+			// if there are no more orders to cancel, finish the process
+			if (!lastOrderRow) {
+				finished = true;
+			}
+
+			for (const orderRow of orderRows) {
+				await this.cancelOrderNotifications(orderRow, userRow);
+
+				const eps = new Decimal(1e-8);
+				const leftDecimal = new Decimal(orderRow.left);
+				const amountDecimal = new Decimal(orderRow.amount);
+
+				// if order was partially filled
+				if (leftDecimal.minus(amountDecimal).abs().greaterThan(eps)) {
+					const connectedTransactions = await Transaction.findAll({
+						where: {
+							[Op.or]: [
+								{ buy_order_id: orderRow.id },
+								{ sell_order_id: orderRow.id },
+							],
+							status: 'pending',
+						},
+					});
+
+					for (const tx of connectedTransactions) {
+						await exchangeModel.returnTransactionAmount(tx.id, transaction);
+					}
+
+					await Order.update(
+						{ status: OrderStatus.FINISHED },
+						{
+							where: { id: orderRow.id, user_id: userRow.id },
+							transaction,
+						},
+					);
+				} else {
+					await Order.destroy({
+						where: {
+							id: orderRow.id,
+							user_id: userRow.id,
+						},
+						transaction,
+					});
+				}
+
+				transaction.afterCommit(() => {
+					sendDeleteOrderMessage(io, orderRow.pair_id.toString(), orderRow.id.toString());
+				});
+			}
+
+			if (lastOrderRow) {
+				lastOrderTimestamp = lastOrderRow.timestamp;
+			}
+		}
+
+		return { success: true };
+	};
 }
 
 const ordersModel = new OrdersModel();

@@ -3,6 +3,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
+import authMessagesCleanService from '@/workers/authMessagesCleanService';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
 import userRouter from './routes/user.router';
@@ -73,6 +74,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	assetsUpdateChecker.run();
 	ordersModerationService.run();
+	authMessagesCleanService.run();
 	exchangeModel.runPairStatsDaemon();
 	statsModel.init();
 
@@ -100,6 +102,8 @@ process.on('unhandledRejection', (reason, promise) => {
 	app.post('/api/check-auth', middleware.verifyToken, async (req, res) =>
 		res.send({ success: true, userData: req.body.userData }),
 	);
+
+	app.use(middleware.resultGlobalErrorHandler);
 
 	server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
 })();
