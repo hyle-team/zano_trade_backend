@@ -32,3 +32,7 @@ export interface PairWithCurrencies extends Pair {
 export interface OrderWithPairAndCurrencies extends Order {
 	pair: PairWithCurrencies;
 }
+
+export interface PairWithIdAndCurrencies extends PairWithCurrencies {
+	id: number;
+}

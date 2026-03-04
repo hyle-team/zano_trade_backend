@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, Transaction } from 'sequelize';
 import Offer from '../schemes/Offer';
 import GetUserBody from '../interfaces/bodies/user/GetUserBody';
 import SetFavouriteCurrsBody from '../interfaces/bodies/user/SetFavouriteCurrsBody';
@@ -15,7 +15,7 @@ class UserModel {
 		return selected;
 	}
 
-	async add(userData: UserData) {
+	async add(userData: UserData, { transaction }: { transaction?: Transaction } = {}) {
 		try {
 			const userRow = await this.getUserRow(userData.address);
 
@@ -23,26 +23,18 @@ class UserModel {
 			// 	where: { alias: userData.alias },
 			// });
 
-			// if (oldAddressOfCurrentAlias) {
-			// 	await User.update(
-			// 		{ address: userData.address },
-			// 		{ where: { alias: userData.alias } },
-			// 	);
-			// 	return true;
-			// }
-
-			if (userRow) {
-				if (userData.alias !== userRow.alias) {
-					await User.update(
-						{ alias: userData.alias },
-						{ where: { address: userData.address } },
-					);
-				}
-
+			if (oldAddressOfCurrentAlias) {
+				await User.update(
+					{ address: userData.address },
+					{ where: { alias: userData.alias }, transaction },
+				);
 				return true;
 			}
 
-			await User.create({ alias: userData.alias, address: userData.address });
+			await User.create(
+				{ alias: userData.alias, address: userData.address },
+				{ transaction },
+			);
 
 			return true;
 		} catch (err) {
