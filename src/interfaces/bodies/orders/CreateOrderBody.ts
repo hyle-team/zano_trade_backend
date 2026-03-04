@@ -22,8 +22,8 @@ interface CreateOrderData {
 	price: string;
 	amount: string;
 	pairId: string;
-	minPerApplyAmount: string | null;
-	maxPerApplyAmount: string | null;
+	minPerApplyAmount?: string;
+	maxPerApplyAmount?: string;
 }
 
 interface CreateOrderBody {
@@ -49,17 +49,12 @@ export const createOrderValidator = [
 		.withMessage('orderData.amount must be a positive decimal string'),
 	body('orderData.pairId').isString().withMessage('orderData.pairId must be a string'),
 	body('orderData.minPerApplyAmount')
-		.if(body('orderData.minPerApplyAmount').not().isString())
-		.custom((value) => value === null)
-		.withMessage('orderData.minPerApplyAmount must be a string or null')
-		.if(body('orderData.minPerApplyAmount').isString())
+		.optional()
 		.isString()
 		.matches(NON_NEGATIVE_REAL_NUMBER_REGEX)
 		.withMessage('orderData.minPerApplyAmount must be a positive decimal string'),
 	body('orderData.maxPerApplyAmount')
-		.if(body('orderData.maxPerApplyAmount').not().isString())
-		.custom((value) => value === null)
-		.withMessage('orderData.maxPerApplyAmount must be a string or null')
+		.optional()
 		.isString()
 		.matches(NON_NEGATIVE_REAL_NUMBER_REGEX)
 		.withMessage('orderData.maxPerApplyAmount must be a positive decimal string'),

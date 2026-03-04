@@ -122,11 +122,11 @@ class OrdersModel {
 
 			const amount = new Decimal(orderData.amount);
 			const minPerApplyAmount =
-				orderData.minPerApplyAmount !== null
+				orderData.minPerApplyAmount !== undefined
 					? new Decimal(orderData.minPerApplyAmount)
 					: null;
 			const maxPerApplyAmount =
-				orderData.maxPerApplyAmount !== null
+				orderData.maxPerApplyAmount !== undefined
 					? new Decimal(orderData.maxPerApplyAmount)
 					: null;
 
@@ -187,13 +187,9 @@ class OrdersModel {
 				status: 'active',
 				left: new Decimal(orderData.amount).toFixed(),
 				min_per_apply_amount:
-					orderData.minPerApplyAmount !== null
-						? new Decimal(orderData.minPerApplyAmount).toFixed()
-						: null,
+					minPerApplyAmount !== null ? minPerApplyAmount.toFixed() : null,
 				max_per_apply_amount:
-					orderData.maxPerApplyAmount !== null
-						? new Decimal(orderData.maxPerApplyAmount).toFixed()
-						: null,
+					maxPerApplyAmount !== null ? maxPerApplyAmount.toFixed() : null,
 			});
 
 			if (!newOrder) throw new Error('DB error while creating new order.');
