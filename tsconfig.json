@@ -104,6 +104,8 @@
 	"include": [
 		"**/*.ts",
 		"**/*.tsx",
+		"./migrations/**/*.cjs",
+		"./migrations/**/*.js",
 	],
 	"exclude": ["node_modules"]
 }
