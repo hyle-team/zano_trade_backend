@@ -759,6 +759,9 @@ class OrdersModel {
 
 			const orderLeft = new Decimal(orderRow.left);
 			const applyingOrderLeft = new Decimal(applyingOrderRow.left);
+			const orderRowMinPerApplyAmount = orderRow.min_per_apply_amount
+				? new Decimal(orderRow.min_per_apply_amount)
+				: null;
 			const applyingOrderMaxPerApplyAmount = applyingOrderRow.max_per_apply_amount
 				? new Decimal(applyingOrderRow.max_per_apply_amount)
 				: null;
@@ -815,11 +818,14 @@ class OrdersModel {
 				},
 			);
 
-			if (orderNewLeft.lt(applyingOrderMinPerApplyAmount ?? 0)) {
+			if (orderRowMinPerApplyAmount !== null && orderNewLeft.lt(orderRowMinPerApplyAmount)) {
 				await Order.update({ status: 'zero' }, { where: { id: orderRow.id } });
 			}
 
-			if (applyingOrderLeft.lt(applyingOrderMinPerApplyAmount ?? 0)) {
+			if (
+				applyingOrderMinPerApplyAmount !== null &&
+				applyOrderNewLeft.lt(applyingOrderMinPerApplyAmount)
+			) {
 				await Order.update({ status: 'zero' }, { where: { id: applyingOrderRow.id } });
 			}
 
