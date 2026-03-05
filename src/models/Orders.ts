@@ -759,6 +759,11 @@ class OrdersModel {
 
 			const orderLeft = new Decimal(orderRow.left);
 			const applyingOrderLeft = new Decimal(applyingOrderRow.left);
+
+			const orderMinPerApplyAmount = orderRow.min_per_apply_amount
+				? new Decimal(orderRow.min_per_apply_amount)
+				: null;
+
 			const applyingOrderMaxPerApplyAmount = applyingOrderRow.max_per_apply_amount
 				? new Decimal(applyingOrderRow.max_per_apply_amount)
 				: null;
@@ -800,13 +805,13 @@ class OrdersModel {
 			);
 
 			const orderNewLeft = orderLeft.minus(transactionAmount);
-			const applyOrderNewLeft = applyingOrderLeft.minus(transactionAmount);
+			const applyingOrderNewLeft = applyingOrderLeft.minus(transactionAmount);
 
 			await Order.update({ left: orderNewLeft.toFixed() }, { where: { id: orderRow.id } });
 
 			await Order.update(
 				{
-					left: applyOrderNewLeft.toFixed(),
+					left: applyingOrderNewLeft.toFixed(),
 				},
 				{
 					where: {
@@ -815,11 +820,21 @@ class OrdersModel {
 				},
 			);
 
-			if (orderNewLeft.lt(applyingOrderMinPerApplyAmount ?? 0)) {
+			const orderAmountExceeded =
+				orderMinPerApplyAmount !== null
+					? orderNewLeft.lt(orderMinPerApplyAmount)
+					: orderNewLeft.lte(0);
+
+			if (orderAmountExceeded) {
 				await Order.update({ status: 'zero' }, { where: { id: orderRow.id } });
 			}
 
-			if (applyingOrderLeft.lt(applyingOrderMinPerApplyAmount ?? 0)) {
+			const applyingOrderAmountExceeded =
+				applyingOrderMinPerApplyAmount !== null
+					? applyingOrderNewLeft.lt(applyingOrderMinPerApplyAmount)
+					: applyingOrderNewLeft.lte(0);
+
+			if (applyingOrderAmountExceeded) {
 				await Order.update({ status: 'zero' }, { where: { id: applyingOrderRow.id } });
 			}
 
