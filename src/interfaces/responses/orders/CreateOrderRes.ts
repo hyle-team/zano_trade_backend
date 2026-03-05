@@ -13,6 +13,8 @@ export type CreateOrderSuccessRes = {
 		user_id: number;
 		status: string;
 		left: string;
+		minPerApplyAmount: string | null;
+		maxPerApplyAmount: string | null;
 		immediateMatch?: true;
 	};
 };

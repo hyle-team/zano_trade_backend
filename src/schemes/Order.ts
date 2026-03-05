@@ -43,6 +43,10 @@ class Order extends Model {
 
 	declare hasNotification: boolean;
 
+	declare min_per_apply_amount: string | null;
+
+	declare max_per_apply_amount: string | null;
+
 	declare readonly createdAt: Date;
 
 	declare readonly updatedAt: Date;
@@ -95,6 +99,16 @@ Order.init(
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: false,
+		},
+		min_per_apply_amount: {
+			type: DataTypes.STRING,
+			allowNull: true,
+			defaultValue: null,
+		},
+		max_per_apply_amount: {
+			type: DataTypes.STRING,
+			allowNull: true,
+			defaultValue: null,
 		},
 	},
 	{

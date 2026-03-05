@@ -118,6 +118,8 @@ class OrdersController {
 					user_id: createdOrder.userId,
 					status: createdOrder.status,
 					left: createdOrder.left,
+					minPerApplyAmount: createdOrder.minPerApplyAmount,
+					maxPerApplyAmount: createdOrder.maxPerApplyAmount,
 					hasNotification: createdOrder.hasNotification,
 					immediateMatch: createdOrder.immediateMatch,
 				},
