@@ -45,7 +45,7 @@ export const createOrderValidator = [
 		.isString()
 		.matches(NON_NEGATIVE_REAL_NUMBER_REGEX)
 		.withMessage('orderData.amount must be a positive decimal string'),
-	body('orderData.pairId').isString().withMessage('orderData.pairId must be a string'),
+	body('orderData.pairId').isNumeric().withMessage('orderData.pairId must be a number'),
 ];
 
 export default CreateOrderBody;

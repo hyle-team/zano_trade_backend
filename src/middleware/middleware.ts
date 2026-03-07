@@ -60,7 +60,10 @@ class Middleware {
 				if (!errors.isEmpty()) {
 					res.status(500).send({
 						success: false,
-						data: 'Internal error',
+						data: errors
+							.array()
+							.map((err) => err.msg)
+							.join(', '),
 					});
 					return;
 				}
