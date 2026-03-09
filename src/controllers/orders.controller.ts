@@ -249,6 +249,7 @@ class OrdersController {
 			const { totalItemsCount } = result;
 
 			const userOrders = result.data.map((order) => {
+				console.log('order', order);
 				const mappedOrder: GetUserOrdersResOrderData = {
 					id: order.id,
 					type: order.type,
@@ -261,6 +262,8 @@ class OrdersController {
 					user_id: order.user_id,
 					status: order.status,
 					left: order.left,
+					max_per_apply_amount: order.max_per_apply_amount,
+					min_per_apply_amount: order.min_per_apply_amount,
 					hasNotification: order.hasNotification,
 					pair: {
 						id: order.pair.id,

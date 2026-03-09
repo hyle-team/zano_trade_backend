@@ -485,6 +485,8 @@ class OrdersModel {
 				status: string;
 				left: string;
 				hasNotification: boolean;
+				min_per_apply_amount: string | null;
+				max_per_apply_amount: string | null;
 
 				pair: PairWithCurrencies;
 
@@ -546,6 +548,8 @@ class OrdersModel {
 				user_id: e.user_id,
 				status: e.status,
 				left: e.left,
+				min_per_apply_amount: e.min_per_apply_amount,
+				max_per_apply_amount: e.max_per_apply_amount,
 				hasNotification: e.hasNotification,
 
 				pair: e.pair,
