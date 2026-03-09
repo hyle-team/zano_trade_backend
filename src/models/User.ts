@@ -17,15 +17,16 @@ class UserModel {
 
 	async add(userData: UserData, { transaction }: { transaction?: Transaction } = {}) {
 		try {
-			const oldAddressOfCurrentAlias = await User.findOne({
-				where: { alias: userData.alias },
-			});
+			const userRow = await this.getUserRow(userData.address);
 
-			if (oldAddressOfCurrentAlias) {
-				await User.update(
-					{ address: userData.address },
-					{ where: { alias: userData.alias }, transaction },
-				);
+			if (userRow) {
+				if (userData.alias !== userRow.alias) {
+					await User.update(
+						{ alias: userData.alias },
+						{ where: { address: userData.address }, transaction },
+					);
+				}
+
 				return true;
 			}
 
