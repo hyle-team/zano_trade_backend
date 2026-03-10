@@ -31,6 +31,8 @@ export type GetUserOrdersResOrderData = {
 	user_id: number;
 	status: string;
 	left: string;
+	min_per_apply_amount: string | null;
+	max_per_apply_amount: string | null;
 	hasNotification: boolean;
 
 	pair: {
