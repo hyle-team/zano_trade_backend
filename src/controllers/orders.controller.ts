@@ -65,7 +65,9 @@ class OrdersController {
 			}
 
 			const totalDecimal = priceDecimal.mul(amountDecimal);
-			const total = totalDecimal.toFixed();
+			const total = totalDecimal
+				.toDecimalPlaces(secondCurrencyDP, Decimal.ROUND_DOWN)
+				.toFixed();
 
 			const isPriceValid = validateTokensInput(price, secondCurrencyDP).valid;
 			const isAmountValid = validateTokensInput(amount, firstCurrencyDP).valid;
