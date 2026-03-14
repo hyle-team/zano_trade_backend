@@ -8,11 +8,12 @@ const sequelize = new Sequelize({
 	port: parseInt(process.env.PGPORT || '5432', 10),
 	database: process.env.PGDATABASE,
 	benchmark: true,
-	logging: (sql, timingMs) => {
-		if (typeof timingMs === 'number' && timingMs > 1000) {
-			console.warn(`[slow sql] ${timingMs}ms`, sql);
-		}
-	},
+	// logging: (sql, timingMs) => {
+	// 	if (typeof timingMs === 'number' && timingMs > 1000) {
+	// 		console.warn(`[slow sql] ${timingMs}ms`, sql);
+	// 	}
+	// },
+	logging: false,
 	pool: {
 		max: 80,
 		min: 0,
