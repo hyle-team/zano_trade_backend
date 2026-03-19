@@ -19,7 +19,7 @@ import {
 } from '../socket/main.js';
 import io from '../server.js';
 import ApplyTip from '../interfaces/responses/orders/ApplyTip.js';
-import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody.js';
+import CreateOrderBody, { CreateOrderType } from '../interfaces/bodies/orders/CreateOrderBody.js';
 import GetUserOrdersPageBody from '../interfaces/bodies/orders/GetUserOrdersPageBody.js';
 import CancelOrderBody from '../interfaces/bodies/orders/CancelOrderBody.js';
 import ApplyOrderBody from '../interfaces/bodies/orders/ApplyOrderBody.js';
@@ -79,7 +79,10 @@ class OrdersModel {
 		return matchedOrders;
 	}
 
+	static MAX_ORDERS_PER_USER_PER_PAIR = 10;
+
 	static CREATE_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
+	static CREATE_ORDER_TOO_MANY_ORDERS_MSG = `Too many orders`;
 	async createOrder(body: CreateOrderBody): Promise<
 	| {
 		success: false;
@@ -171,6 +174,24 @@ class OrdersModel {
 			);
 
 			console.log(firstCurrencyDecimalPoint);
+
+			const existingOrdersCount = await Order.count({
+				where: {
+					user_id: userRow.id,
+					pair_id: orderData.pairId,
+					type: orderData.type === CreateOrderType.BUY ? OrderType.BUY : OrderType.SELL,
+					status: {
+						[Op.ne]: OrderStatus.FINISHED,
+					},
+				},
+			});
+
+			if (existingOrdersCount >= OrdersModel.MAX_ORDERS_PER_USER_PER_PAIR) {
+				return {
+					success: false,
+					data: OrdersModel.CREATE_ORDER_TOO_MANY_ORDERS_MSG,
+				};
+			}
 
 			const newOrder = await Order.create({
 				type: orderData.type === 'buy' ? 'buy' : 'sell',

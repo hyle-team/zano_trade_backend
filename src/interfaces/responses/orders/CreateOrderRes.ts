@@ -26,6 +26,8 @@ export enum CreateOrderErrorCode {
 	SAME_ORDER = 'Same order',
 	// eslint-disable-next-line no-unused-vars
 	UNHANDLED_ERROR = 'Unhandled error',
+	// eslint-disable-next-line no-unused-vars
+	TOO_MANY_ORDERS = 'Too many orders',
 }
 
 export type CreateOrderErrorRes = {
