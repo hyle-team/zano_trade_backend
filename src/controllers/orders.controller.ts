@@ -90,11 +90,23 @@ class OrdersController {
 					data: CreateOrderErrorCode.INVALID_ORDER_DATA,
 				});
 
-			if (result.data === 'Same order')
-				return res.status(400).send({
+			if (result.data === 'Same order') {
+				res.status(400).send({
 					success: false,
 					data: CreateOrderErrorCode.SAME_ORDER,
 				});
+
+				return;
+			}
+
+			if (result.data === 'Too many orders') {
+				res.status(400).send({
+					success: false,
+					data: CreateOrderErrorCode.TOO_MANY_ORDERS,
+				});
+
+				return;
+			}
 
 			if (result.data === 'Internal error') {
 				throw new Error('orderModel.createOrder returned Internal error');
