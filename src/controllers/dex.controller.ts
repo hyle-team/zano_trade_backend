@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import UserData from '@/interfaces/common/UserData.js';
 import Currency from '@/schemes/Currency.js';
 import Pair from '@/schemes/Pair.js';
-import { Op } from 'sequelize';
+import { Op, literal } from 'sequelize';
 import GetAssetsPriceRatesBody from '@/interfaces/bodies/dex/GetAssetsPriceRatesBody.js';
 import GetAssetsPriceRatesRes, {
 	GetAssetsPriceRatesResPriceRate,
@@ -127,6 +127,20 @@ class DexController {
 					[Op.in]: currencyIds,
 				},
 			},
+			attributes: {
+				include: [
+					[
+						literal(`(
+							SELECT MAX(t."createdAt")
+							FROM "Transactions" t
+							INNER JOIN "Orders" o ON t.buy_order_id = o.id
+							WHERE o.pair_id = "Pair".id
+							AND t.status = 'confirmed'
+						)`),
+						'last_transaction_at',
+					],
+				],
+			},
 			include: [
 				{
 					model: Currency,
@@ -135,9 +149,14 @@ class DexController {
 					attributes: ['asset_id'],
 				},
 			],
-		})) as (Pair & { first_currency: Currency })[];
+		})) as (Pair & { first_currency: Currency; last_transaction_at: Date | null })[];
 
-		const priceRates: GetAssetsPriceRatesResPriceRate[] = pairsRows.map((pairRow) => {
+		const serializedRows = pairsRows.map(
+			(e) =>
+				e.toJSON() as Pair & { first_currency: Currency; last_transaction_at: Date | null },
+		);
+
+		const priceRates: GetAssetsPriceRatesResPriceRate[] = serializedRows.map((pairRow) => {
 			const assetId = pairRow.first_currency.asset_id;
 
 			return {
@@ -147,6 +166,7 @@ class DexController {
 				day_volume: pairRow?.volume ?? null,
 				day_high: pairRow?.high ?? null,
 				day_low: pairRow?.low ?? null,
+				last_transaction_at: pairRow.last_transaction_at,
 			};
 		});
 
