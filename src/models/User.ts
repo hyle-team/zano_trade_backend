@@ -10,14 +10,17 @@ import Order from '../schemes/Order';
 import Pair from '../schemes/Pair';
 
 class UserModel {
-	async getUserRow(address: string) {
-		const selected = User.findOne({ where: { address } });
+	async getUserRow(address: string, transaction?: Transaction) {
+		const selected = User.findOne({
+			where: { address },
+			...(transaction ? { transaction } : {}),
+		});
 		return selected;
 	}
 
 	async add(userData: UserData, { transaction }: { transaction?: Transaction } = {}) {
 		try {
-			const userRow = await this.getUserRow(userData.address);
+			const userRow = await this.getUserRow(userData.address, transaction);
 
 			if (userRow) {
 				if (userData.alias !== userRow.alias) {

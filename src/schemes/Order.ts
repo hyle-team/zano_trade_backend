@@ -101,6 +101,12 @@ Order.init(
 		sequelize,
 		modelName: 'Order',
 		timestamps: true,
+		indexes: [
+			{ fields: ['pair_id', 'type', 'status', 'price'] },
+			{ fields: ['pair_id'] },
+			{ fields: ['user_id'] },
+			{ fields: ['timestamp'] },
+		],
 	},
 );
 

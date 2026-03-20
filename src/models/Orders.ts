@@ -508,7 +508,7 @@ class OrdersModel {
 	async cancelOrder(body: CancelOrderBody) {
 		try {
 			await sequelize.transaction(async (t) => {
-				const userRow = await userModel.getUserRow(body.userData.address);
+				const userRow = await userModel.getUserRow(body.userData.address, t);
 
 				if (!userRow) throw new Error('Invalid address from token.');
 
@@ -897,7 +897,7 @@ class OrdersModel {
 	): Promise<{
 		success: true;
 	}> => {
-		const userRow = await userModel.getUserRow(address);
+		const userRow = await userModel.getUserRow(address, transaction);
 
 		if (!userRow) {
 			throw new Error(OrdersModel.CANCEL_ALL_USER_NOT_FOUND);
@@ -929,6 +929,8 @@ class OrdersModel {
 				},
 				order: [['timestamp', 'ASC']],
 				limit: ORDERS_PER_CANCEL_CHUNK,
+				transaction,
+				lock: transaction.LOCK.UPDATE,
 			});
 
 			const lastOrderRow = orderRows.at(-1);
@@ -955,6 +957,8 @@ class OrdersModel {
 							],
 							status: 'pending',
 						},
+						transaction,
+						lock: transaction.LOCK.UPDATE,
 					});
 
 					for (const tx of connectedTransactions) {
