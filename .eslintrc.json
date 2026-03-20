@@ -51,6 +51,7 @@
 		"import/prefer-default-export": "off",
 		"import/no-cycle": "off"
 	},
+	"ignorePatterns": ["migrations/**/*.cjs"],
 	"settings": {
 		"import/resolver": {
 			"node": {

@@ -59,6 +59,11 @@ Transaction.init(
 		sequelize,
 		modelName: 'Transaction',
 		timestamps: true,
+		indexes: [
+			{ fields: ['buy_order_id', 'status'] },
+			{ fields: ['sell_order_id', 'status'] },
+			{ fields: ['timestamp'] },
+		],
 	},
 );
 
