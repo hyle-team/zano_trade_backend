@@ -161,7 +161,7 @@ function sendDeleteOrderMessage(io: Server, pairId: string, orderId: string) {
 }
 
 function sendUpdateOrderMessage(io: Server, pairId: string) {
-	io.to(`trade${pairId}`).emit('update-orders');
+	io.to(`trade${pairId}`).emit('update-orders', { pairId });
 }
 
 function sendUpdatePairStatsMessage(io: Server, pairId: string, pairStats: PairStats) {
