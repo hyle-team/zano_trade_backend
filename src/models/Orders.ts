@@ -655,7 +655,14 @@ class OrdersModel {
 		}
 	}
 
-	async applyOrder(body: ApplyOrderBody) {
+	async applyOrder(
+		body: ApplyOrderBody,
+		{
+			transaction,
+		}: {
+			transaction: SequelizeTransaction;
+		},
+	) {
 		try {
 			const { userData } = body;
 			const { orderData } = body;
@@ -710,7 +717,7 @@ class OrdersModel {
 
 			await Order.update(
 				{ left: new Decimal(orderRow.left).minus(transactionAmount).toNumber() },
-				{ where: { id: orderRow.id } },
+				{ where: { id: orderRow.id }, transaction },
 			);
 
 			await Order.update(
@@ -721,30 +728,37 @@ class OrdersModel {
 					where: {
 						id: applyingOrderRow.id,
 					},
+					transaction,
 				},
 			);
 
 			const eps = new Decimal(1e-10);
 
 			if (new Decimal(orderRow.left).minus(transactionAmount).abs().lt(eps)) {
-				await Order.update({ status: 'zero' }, { where: { id: orderRow.id } });
+				await Order.update({ status: 'zero' }, { where: { id: orderRow.id }, transaction });
 			}
 
 			if (new Decimal(applyingOrderRow.left).minus(transactionAmount).abs().lt(eps)) {
-				await Order.update({ status: 'zero' }, { where: { id: applyingOrderRow.id } });
+				await Order.update(
+					{ status: 'zero' },
+					{ where: { id: applyingOrderRow.id }, transaction },
+				);
 			}
 
-			await exchangeModel.createTransaction(
+			const transactionRow = await exchangeModel.createTransaction(
 				isApplyingBuy ? applyingOrderRow.id : orderRow.id,
 				isApplyingBuy ? orderRow.id : applyingOrderRow.id,
 				transactionAmount.toFixed(),
 				orderRow.type,
 				orderData.hex_raw_proposal,
+				{
+					transaction,
+				},
 			);
 
 			sendUpdateOrderMessage(io, orderRow.pair_id.toString());
 
-			return { success: true };
+			return { success: true, data: { transactionId: transactionRow.id } };
 		} catch (err) {
 			console.log(err);
 			return { success: false, data: 'Internal error' };
