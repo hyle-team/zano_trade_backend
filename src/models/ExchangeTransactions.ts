@@ -324,18 +324,30 @@ class ExchangeModel {
 		amount: string,
 		creator: string,
 		hex_raw_proposal: string,
-	) {
+		{
+			transaction,
+		}: {
+			transaction: SequelizeTransaction;
+		},
+	): Promise<Transaction> {
 		const timestamp = Date.now();
 
-		await Transaction.create({
-			buy_order_id,
-			sell_order_id,
-			amount,
-			timestamp,
-			status: 'pending',
-			creator: creator === 'buy' ? 'buy' : 'sell',
-			hex_raw_proposal,
-		});
+		const transactionRow = await Transaction.create(
+			{
+				buy_order_id,
+				sell_order_id,
+				amount,
+				timestamp,
+				status: 'pending',
+				creator: creator === 'buy' ? 'buy' : 'sell',
+				hex_raw_proposal,
+			},
+			{
+				transaction,
+			},
+		);
+
+		return transactionRow;
 	}
 
 	// async rejectTransaction(body: ConfirmTransactionBody) {
