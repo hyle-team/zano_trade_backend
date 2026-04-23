@@ -12,8 +12,6 @@ export enum OrderStatus {
 	// eslint-disable-next-line no-unused-vars
 	ACTIVE = 'active',
 	// eslint-disable-next-line no-unused-vars
-	ZERO = 'zero',
-	// eslint-disable-next-line no-unused-vars
 	FINISHED = 'finished',
 }
 
