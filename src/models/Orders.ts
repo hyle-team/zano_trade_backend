@@ -384,39 +384,37 @@ class OrdersModel {
 			const applyTips: ApplyTip[] = [];
 
 			for (const order of orders.reverse()) {
-				if (order.status !== 'zero') {
-					const matchedOrders = await this.getMatchedOrders(
-						order,
-						parseInt(body.pairId, 10),
-						userRow.id,
-					);
+				const matchedOrders = await this.getMatchedOrders(
+					order,
+					parseInt(body.pairId, 10),
+					userRow.id,
+				);
 
-					for (const matchedOrder of matchedOrders) {
-						if (!applyTips.some((e) => e.id === matchedOrder.id)) {
-							const opponentRow = await User.findByPk(matchedOrder.user_id);
+				for (const matchedOrder of matchedOrders) {
+					if (!applyTips.some((e) => e.id === matchedOrder.id)) {
+						const opponentRow = await User.findByPk(matchedOrder.user_id);
 
-							if (!opponentRow) throw new Error('Invalid user id in order row.');
+						if (!opponentRow) throw new Error('Invalid user id in order row.');
 
-							applyTips.push({
-								id: matchedOrder.id,
-								left: Decimal.min(
-									new Decimal(matchedOrder.left),
-									new Decimal(order.left),
-								).toFixed(),
-								price: matchedOrder.price,
-								user: {
-									...(opponentRow.toJSON() || {}),
-									id: undefined,
-									favourite_currencies: undefined,
-								},
-								timestamp: matchedOrder.timestamp,
-								type: matchedOrder.type,
-								total: matchedOrder.total,
-								connected_order_id: order.id,
-								transaction: false,
-								isInstant: dexModel.isBotActive(matchedOrder.id),
-							});
-						}
+						applyTips.push({
+							id: matchedOrder.id,
+							left: Decimal.min(
+								new Decimal(matchedOrder.left),
+								new Decimal(order.left),
+							).toFixed(),
+							price: matchedOrder.price,
+							user: {
+								...(opponentRow.toJSON() || {}),
+								id: undefined,
+								favourite_currencies: undefined,
+							},
+							timestamp: matchedOrder.timestamp,
+							type: matchedOrder.type,
+							total: matchedOrder.total,
+							connected_order_id: order.id,
+							transaction: false,
+							isInstant: dexModel.isBotActive(matchedOrder.id),
+						});
 					}
 				}
 			}
@@ -635,7 +633,7 @@ class OrdersModel {
 					});
 
 					for (const transaction of connectedTransactions) {
-						await exchangeModel.returnTransactionAmount(transaction.id, t);
+						await exchangeModel.rejectTransaction(transaction.id, t);
 					}
 
 					await Order.update(
@@ -792,10 +790,6 @@ class OrdersModel {
 			const orderLeft = new Decimal(orderRow.left);
 			const applyingOrderLeft = new Decimal(applyingOrderRow.left);
 
-			const orderMinPerApplyAmount = orderRow.min_per_apply_amount
-				? new Decimal(orderRow.min_per_apply_amount)
-				: null;
-
 			const applyingOrderMaxPerApplyAmount = applyingOrderRow.max_per_apply_amount
 				? new Decimal(applyingOrderRow.max_per_apply_amount)
 				: null;
@@ -825,54 +819,6 @@ class OrdersModel {
 				for orderRow: ${orderRow.id} 
 				and applyingOrderRow: ${applyingOrderRow.id}`,
 			);
-
-			console.log(
-				`Order Row Left: ${orderLeft.toString()} 
-				Applying Order Row Left: ${applyingOrderLeft.toString()}`,
-			);
-
-			console.log(
-				`Order Row Left After: ${orderLeft.minus(transactionAmount).toNumber()} 
-				Applying Order Row Left After: ${applyingOrderLeft.minus(transactionAmount).toNumber()}`,
-			);
-
-			const orderNewLeft = orderLeft.minus(transactionAmount);
-			const applyingOrderNewLeft = applyingOrderLeft.minus(transactionAmount);
-
-			await Order.update(
-				{ left: orderNewLeft.toFixed() },
-				{ where: { id: orderRow.id }, transaction },
-			);
-
-			await Order.update(
-				{
-					left: applyingOrderNewLeft.toFixed(),
-				},
-				{
-					where: {
-						id: applyingOrderRow.id,
-					},
-					transaction,
-				},
-			);
-
-			const orderAmountExceeded =
-				orderMinPerApplyAmount !== null
-					? orderNewLeft.lt(orderMinPerApplyAmount)
-					: orderNewLeft.lte(0);
-
-			if (orderAmountExceeded) {
-				await Order.update({ status: 'zero' }, { where: { id: orderRow.id } });
-			}
-
-			const applyingOrderAmountExceeded =
-				applyingOrderMinPerApplyAmount !== null
-					? applyingOrderNewLeft.lt(applyingOrderMinPerApplyAmount)
-					: applyingOrderNewLeft.lte(0);
-
-			if (applyingOrderAmountExceeded) {
-				await Order.update({ status: 'zero' }, { where: { id: applyingOrderRow.id } });
-			}
 
 			const transactionRow = await exchangeModel.createTransaction(
 				isApplyingBuy ? applyingOrderRow.id : orderRow.id,
@@ -1105,7 +1051,7 @@ class OrdersModel {
 					});
 
 					for (const tx of connectedTransactions) {
-						await exchangeModel.returnTransactionAmount(tx.id, transaction);
+						await exchangeModel.rejectTransaction(tx.id, transaction);
 					}
 
 					await Order.update(
