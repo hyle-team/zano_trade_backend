@@ -742,7 +742,14 @@ class OrdersModel {
 	}
 
 	static APPLY_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
-	async applyOrder(body: ApplyOrderBody) {
+	async applyOrder(
+		body: ApplyOrderBody,
+		{
+			transaction,
+		}: {
+			transaction: SequelizeTransaction;
+		},
+	) {
 		try {
 			const { userData } = body;
 			const { orderData } = body;
@@ -832,7 +839,10 @@ class OrdersModel {
 			const orderNewLeft = orderLeft.minus(transactionAmount);
 			const applyingOrderNewLeft = applyingOrderLeft.minus(transactionAmount);
 
-			await Order.update({ left: orderNewLeft.toFixed() }, { where: { id: orderRow.id } });
+			await Order.update(
+				{ left: orderNewLeft.toFixed() },
+				{ where: { id: orderRow.id }, transaction },
+			);
 
 			await Order.update(
 				{
@@ -842,6 +852,7 @@ class OrdersModel {
 					where: {
 						id: applyingOrderRow.id,
 					},
+					transaction,
 				},
 			);
 
@@ -863,17 +874,20 @@ class OrdersModel {
 				await Order.update({ status: 'zero' }, { where: { id: applyingOrderRow.id } });
 			}
 
-			await exchangeModel.createTransaction(
+			const transactionRow = await exchangeModel.createTransaction(
 				isApplyingBuy ? applyingOrderRow.id : orderRow.id,
 				isApplyingBuy ? orderRow.id : applyingOrderRow.id,
 				transactionAmount.toFixed(),
 				orderRow.type,
 				orderData.hex_raw_proposal,
+				{
+					transaction,
+				},
 			);
 
 			sendUpdateOrderMessage(io, orderRow.pair_id.toString());
 
-			return { success: true };
+			return { success: true, data: { transactionId: transactionRow.id } };
 		} catch (err) {
 			console.log(err);
 			return { success: false, data: 'Internal error' };

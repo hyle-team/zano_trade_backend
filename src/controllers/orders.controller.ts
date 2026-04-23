@@ -441,13 +441,15 @@ class OrdersController {
 			if (!isFull)
 				return res.status(400).send({ success: false, data: 'Invalid order data' });
 
-			const result = await ordersModel.applyOrder(req.body);
+			await sequelize.transaction(async (transaction) => {
+				const result = await ordersModel.applyOrder(req.body, { transaction });
 
-			if (result.data === 'Invalid order data') return res.status(400).send(result);
+				if (result.data === 'Invalid order data') return res.status(400).send(result);
 
-			if (result.data === 'Internal error') return res.status(500).send(result);
+				if (result.data === 'Internal error') return res.status(500).send(result);
 
-			res.status(200).send(result);
+				res.status(200).send(result);
+			});
 		} catch (err) {
 			console.log(err);
 			res.status(500).send({ success: false, data: 'Unhandled error' });
