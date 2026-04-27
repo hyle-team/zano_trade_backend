@@ -75,6 +75,7 @@ Transaction.init(
 
 Order.hasMany(Transaction, {
 	foreignKey: 'buy_order_id',
+	as: 'buy_order',
 });
 
 Transaction.belongsTo(Order, {
@@ -83,6 +84,7 @@ Transaction.belongsTo(Order, {
 
 Order.hasMany(Transaction, {
 	foreignKey: 'sell_order_id',
+	as: 'sell_order',
 });
 
 Transaction.belongsTo(Order, {

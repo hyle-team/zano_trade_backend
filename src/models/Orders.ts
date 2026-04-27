@@ -40,13 +40,16 @@ class OrdersModel {
 	}
 
 	async getMatchedOrders(order: Order, pairId: number, requestUserId: number) {
+		const matchedOrderType = order.type === OrderType.BUY ? OrderType.SELL : OrderType.BUY;
+		const transactionAlias = order.type === OrderType.BUY ? 'sell_orders' : 'buy_orders';
+
 		const matchedOrdersWithoutLeftFilter = await Order.findAll({
 			where: {
 				pair_id: pairId,
-				type: order.type === 'buy' ? 'sell' : 'buy',
+				type: matchedOrderType,
 				status: 'active',
 				price: {
-					[order.type === 'buy' ? Op.lte : Op.gte]: order.price,
+					[order.type === OrderType.BUY ? Op.lte : Op.gte]: order.price,
 				},
 				user_id: {
 					[Op.ne]: requestUserId,
@@ -54,9 +57,22 @@ class OrdersModel {
 				min_per_apply_amount: {
 					[Op.or]: [{ [Op.is]: null }, { [Op.lte]: order.left }],
 				},
+				[`$${transactionAlias}.id$`]: {
+					[Op.is]: null,
+				},
 			},
 			order: [['timestamp', 'ASC']],
 			include: [
+				{
+					model: Transaction,
+					as: transactionAlias,
+					attributes: [],
+					required: false,
+					where:
+						order.type === OrderType.BUY
+							? { buy_order_id: order.id }
+							: { sell_order_id: order.id },
+				},
 				{
 					model: Pair,
 					as: 'pair',
