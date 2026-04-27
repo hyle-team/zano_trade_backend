@@ -440,6 +440,9 @@ class OrdersModel {
 					where: {
 						[order.type === 'buy' ? 'buy_order_id' : 'sell_order_id']: order.id,
 						status: 'pending',
+						amount: {
+							[Op.lte]: order.left,
+						},
 						creator: {
 							[Op.ne]: order.type === 'buy' ? 'buy' : 'sell',
 						},
@@ -451,25 +454,30 @@ class OrdersModel {
 						order.type === 'buy' ? transaction.sell_order_id : transaction.buy_order_id,
 					);
 
-					const opponentRow = matchedOrder && (await User.findByPk(matchedOrder.user_id));
+					if (
+						matchedOrder &&
+						new Decimal(transaction.amount).lessThanOrEqualTo(matchedOrder.left)
+					) {
+						const opponentRow = await User.findByPk(matchedOrder.user_id);
 
-					if (matchedOrder && opponentRow?.address) {
-						applyTips.push({
-							id: transaction.id,
-							left: transaction.amount,
-							price: matchedOrder.price,
-							user: {
-								...(opponentRow.toJSON() || {}),
-								id: undefined,
-								favourite_currencies: undefined,
-							},
-							type: matchedOrder.type,
-							total: matchedOrder.total,
-							connected_order_id: order.id,
-							transaction: true,
-							hex_raw_proposal: transaction.hex_raw_proposal,
-							isInstant: dexModel.isBotActive(matchedOrder.id),
-						});
+						if (opponentRow?.address) {
+							applyTips.push({
+								id: transaction.id,
+								left: transaction.amount,
+								price: matchedOrder.price,
+								user: {
+									...(opponentRow.toJSON() || {}),
+									id: undefined,
+									favourite_currencies: undefined,
+								},
+								type: matchedOrder.type,
+								total: matchedOrder.total,
+								connected_order_id: order.id,
+								transaction: true,
+								hex_raw_proposal: transaction.hex_raw_proposal,
+								isInstant: dexModel.isBotActive(matchedOrder.id),
+							});
+						}
 					}
 				}
 			}
