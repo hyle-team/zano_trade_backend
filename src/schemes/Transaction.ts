@@ -1,6 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
 import sequelize from '../sequelize';
-import Order from './Order';
 
 class Transaction extends Model {
 	declare readonly id: number;
@@ -67,23 +66,5 @@ Transaction.init(
 		],
 	},
 );
-
-Order.hasMany(Transaction, {
-	foreignKey: 'buy_order_id',
-	as: 'buy_order',
-});
-
-Transaction.belongsTo(Order, {
-	foreignKey: 'buy_order_id',
-});
-
-Order.hasMany(Transaction, {
-	foreignKey: 'sell_order_id',
-	as: 'sell_order',
-});
-
-Transaction.belongsTo(Order, {
-	foreignKey: 'sell_order_id',
-});
 
 export default Transaction;
