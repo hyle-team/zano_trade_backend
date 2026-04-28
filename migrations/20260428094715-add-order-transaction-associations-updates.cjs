@@ -3,11 +3,25 @@ const ORDERS_TABLE_NAME = 'Orders';
 
 const TRANSACTIONS_TABLE_BUY_ORDER_ID_FKEY_NAME = 'Transactions_buy_order_id_fkey';
 const TRANSACTIONS_TABLE_SELL_ORDER_ID_FKEY_NAME = 'Transactions_sell_order_id_fkey';
-const TRANSACTIONS_TABLE_BUY_ORDER_ID_SELL_ORDER_ID_INDEX_NAME = 'transactions_buy_order_id_sell_order_id';
+const TRANSACTIONS_TABLE_FKEY_NAMES = [
+	TRANSACTIONS_TABLE_BUY_ORDER_ID_FKEY_NAME,
+	TRANSACTIONS_TABLE_SELL_ORDER_ID_FKEY_NAME,
+];
+
+async function getDeFactoApplied(queryInterface) {
+	const foreignKeyReferences = await queryInterface.getForeignKeyReferencesForTable(TRANSACTIONS_TABLE_NAME);
+	const foreignKeyNames = foreignKeyReferences.map(({ constraintName }) => constraintName);
+
+	return TRANSACTIONS_TABLE_FKEY_NAMES.every((constraintName) => foreignKeyNames.includes(constraintName));
+}
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
 	async up (queryInterface) {
+		const deFactoApplied = await getDeFactoApplied(queryInterface);
+
+		if (deFactoApplied) return;
+
 		await queryInterface.addConstraint(TRANSACTIONS_TABLE_NAME, {
 			fields: ['buy_order_id'],
 			type: 'foreign key',
@@ -27,21 +41,15 @@ module.exports = {
 				field: 'id',
 			},
 		});
-
-		await queryInterface.addIndex(TRANSACTIONS_TABLE_NAME, {
-			name: TRANSACTIONS_TABLE_BUY_ORDER_ID_SELL_ORDER_ID_INDEX_NAME,
-			fields: ['buy_order_id', 'sell_order_id'],
-			unique: true,
-			where: {
-				status: 'pending',
-			},
-		});
 	},
 
 	async down (queryInterface) {
+		const deFactoApplied = await getDeFactoApplied(queryInterface);
+
+		if (!deFactoApplied) return;
+
 		await queryInterface.removeConstraint(TRANSACTIONS_TABLE_NAME, TRANSACTIONS_TABLE_BUY_ORDER_ID_FKEY_NAME);
 		await queryInterface.removeConstraint(TRANSACTIONS_TABLE_NAME, TRANSACTIONS_TABLE_SELL_ORDER_ID_FKEY_NAME);
-		await queryInterface.removeIndex(TRANSACTIONS_TABLE_NAME, TRANSACTIONS_TABLE_BUY_ORDER_ID_SELL_ORDER_ID_INDEX_NAME);
 	}
 };
 
