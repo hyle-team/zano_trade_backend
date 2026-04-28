@@ -68,10 +68,12 @@ class OrdersModel {
 					as: transactionAlias,
 					attributes: [],
 					required: false,
-					where:
-						order.type === OrderType.BUY
+					where: {
+						status: 'pending',
+						...(order.type === OrderType.BUY
 							? { buy_order_id: order.id }
-							: { sell_order_id: order.id },
+							: { sell_order_id: order.id }),
+					},
 				},
 				{
 					model: Pair,
@@ -454,10 +456,12 @@ class OrdersModel {
 						order.type === 'buy' ? transaction.sell_order_id : transaction.buy_order_id,
 					);
 
-					if (
-						matchedOrder &&
-						new Decimal(transaction.amount).lessThanOrEqualTo(matchedOrder.left)
-					) {
+					const isTxValidResult = await exchangeModel.isTransactionValid({
+						transactionId: transaction.id,
+					});
+					const isTxValid = isTxValidResult.success && isTxValidResult.valid;
+
+					if (matchedOrder && isTxValid) {
 						const opponentRow = await User.findByPk(matchedOrder.user_id);
 
 						if (opponentRow?.address) {
@@ -763,7 +767,8 @@ class OrdersModel {
 		}
 	}
 
-	static APPLY_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
+	APPLY_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
+	APPLY_ORDER_ALREADY_APPLIED_MSG = 'This orders pair already has a pending apply';
 	async applyOrder(
 		body: ApplyOrderBody,
 		{
@@ -793,7 +798,7 @@ class OrdersModel {
 			});
 
 			if (!(orderRow && applyingOrderRow)) {
-				return { success: false, data: OrdersModel.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
 			const orderPrice = new Decimal(orderRow.price);
@@ -808,7 +813,7 @@ class OrdersModel {
 						orderPrice.equals(applyingOrderPrice))
 				)
 			) {
-				return { success: false, data: OrdersModel.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
 			const orderLeft = new Decimal(orderRow.left);
@@ -835,7 +840,19 @@ class OrdersModel {
 			const applyInvalid = txAmountLessThanMinPerApply;
 
 			if (applyInvalid) {
-				return { success: false, data: OrdersModel.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+			}
+
+			const existingTransactionRow = await Transaction.findOne({
+				where: {
+					buy_order_id: isApplyingBuy ? applyingOrderRow.id : orderRow.id,
+					sell_order_id: isApplyingBuy ? orderRow.id : applyingOrderRow.id,
+					status: 'pending',
+				},
+			});
+
+			if (existingTransactionRow) {
+				return { success: false, data: this.APPLY_ORDER_ALREADY_APPLIED_MSG };
 			}
 
 			console.log(

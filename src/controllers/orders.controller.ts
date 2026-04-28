@@ -446,6 +446,10 @@ class OrdersController {
 
 				if (result.data === 'Invalid order data') return res.status(400).send(result);
 
+				if (result.data === ordersModel.APPLY_ORDER_ALREADY_APPLIED_MSG) {
+					return res.status(400).send(result);
+				}
+
 				if (result.data === 'Internal error') return res.status(500).send(result);
 
 				res.status(200).send(result);

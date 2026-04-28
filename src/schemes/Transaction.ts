@@ -2,9 +2,6 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '../sequelize';
 import Order from './Order';
 
-const APPLY_TRANSACTION_BUY_SELL_ORDER_ID_UNIQUE_CONSTRAINT_NAME =
-	'apply_transaction_buy_sell_order_id_unique';
-
 class Transaction extends Model {
 	declare readonly id: number;
 
@@ -33,12 +30,10 @@ Transaction.init(
 		buy_order_id: {
 			type: DataTypes.INTEGER,
 			allowNull: false,
-			unique: APPLY_TRANSACTION_BUY_SELL_ORDER_ID_UNIQUE_CONSTRAINT_NAME,
 		},
 		sell_order_id: {
 			type: DataTypes.INTEGER,
 			allowNull: false,
-			unique: APPLY_TRANSACTION_BUY_SELL_ORDER_ID_UNIQUE_CONSTRAINT_NAME,
 		},
 		amount: {
 			type: DataTypes.STRING,
