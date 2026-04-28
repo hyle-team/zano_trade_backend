@@ -40,13 +40,16 @@ class OrdersModel {
 	}
 
 	async getMatchedOrders(order: Order, pairId: number, requestUserId: number) {
+		const matchedOrderType = order.type === OrderType.BUY ? OrderType.SELL : OrderType.BUY;
+		const transactionAlias = order.type === OrderType.BUY ? 'sell_orders' : 'buy_orders';
+
 		const matchedOrdersWithoutLeftFilter = await Order.findAll({
 			where: {
 				pair_id: pairId,
-				type: order.type === 'buy' ? 'sell' : 'buy',
+				type: matchedOrderType,
 				status: 'active',
 				price: {
-					[order.type === 'buy' ? Op.lte : Op.gte]: order.price,
+					[order.type === OrderType.BUY ? Op.lte : Op.gte]: order.price,
 				},
 				user_id: {
 					[Op.ne]: requestUserId,
@@ -54,9 +57,24 @@ class OrdersModel {
 				min_per_apply_amount: {
 					[Op.or]: [{ [Op.is]: null }, { [Op.lte]: order.left }],
 				},
+				[`$${transactionAlias}.id$`]: {
+					[Op.is]: null,
+				},
 			},
 			order: [['timestamp', 'ASC']],
 			include: [
+				{
+					model: Transaction,
+					as: transactionAlias,
+					attributes: [],
+					required: false,
+					where: {
+						status: 'pending',
+						...(order.type === OrderType.BUY
+							? { buy_order_id: order.id }
+							: { sell_order_id: order.id }),
+					},
+				},
 				{
 					model: Pair,
 					as: 'pair',
@@ -424,6 +442,9 @@ class OrdersModel {
 					where: {
 						[order.type === 'buy' ? 'buy_order_id' : 'sell_order_id']: order.id,
 						status: 'pending',
+						amount: {
+							[Op.lte]: order.left,
+						},
 						creator: {
 							[Op.ne]: order.type === 'buy' ? 'buy' : 'sell',
 						},
@@ -435,25 +456,32 @@ class OrdersModel {
 						order.type === 'buy' ? transaction.sell_order_id : transaction.buy_order_id,
 					);
 
-					const opponentRow = matchedOrder && (await User.findByPk(matchedOrder.user_id));
+					const isTxValidResult = await exchangeModel.isTransactionValid({
+						transactionId: transaction.id,
+					});
+					const isTxValid = isTxValidResult.success && isTxValidResult.valid;
 
-					if (matchedOrder && opponentRow?.address) {
-						applyTips.push({
-							id: transaction.id,
-							left: transaction.amount,
-							price: matchedOrder.price,
-							user: {
-								...(opponentRow.toJSON() || {}),
-								id: undefined,
-								favourite_currencies: undefined,
-							},
-							type: matchedOrder.type,
-							total: matchedOrder.total,
-							connected_order_id: order.id,
-							transaction: true,
-							hex_raw_proposal: transaction.hex_raw_proposal,
-							isInstant: dexModel.isBotActive(matchedOrder.id),
-						});
+					if (matchedOrder && isTxValid) {
+						const opponentRow = await User.findByPk(matchedOrder.user_id);
+
+						if (opponentRow?.address) {
+							applyTips.push({
+								id: transaction.id,
+								left: transaction.amount,
+								price: matchedOrder.price,
+								user: {
+									...(opponentRow.toJSON() || {}),
+									id: undefined,
+									favourite_currencies: undefined,
+								},
+								type: matchedOrder.type,
+								total: matchedOrder.total,
+								connected_order_id: order.id,
+								transaction: true,
+								hex_raw_proposal: transaction.hex_raw_proposal,
+								isInstant: dexModel.isBotActive(matchedOrder.id),
+							});
+						}
 					}
 				}
 			}
@@ -739,7 +767,8 @@ class OrdersModel {
 		}
 	}
 
-	static APPLY_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
+	APPLY_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
+	APPLY_ORDER_ALREADY_APPLIED_MSG = 'This orders pair already has a pending apply';
 	async applyOrder(
 		body: ApplyOrderBody,
 		{
@@ -769,7 +798,7 @@ class OrdersModel {
 			});
 
 			if (!(orderRow && applyingOrderRow)) {
-				return { success: false, data: OrdersModel.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
 			const orderPrice = new Decimal(orderRow.price);
@@ -784,7 +813,7 @@ class OrdersModel {
 						orderPrice.equals(applyingOrderPrice))
 				)
 			) {
-				return { success: false, data: OrdersModel.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
 			const orderLeft = new Decimal(orderRow.left);
@@ -811,7 +840,19 @@ class OrdersModel {
 			const applyInvalid = txAmountLessThanMinPerApply;
 
 			if (applyInvalid) {
-				return { success: false, data: OrdersModel.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+			}
+
+			const existingTransactionRow = await Transaction.findOne({
+				where: {
+					buy_order_id: isApplyingBuy ? applyingOrderRow.id : orderRow.id,
+					sell_order_id: isApplyingBuy ? orderRow.id : applyingOrderRow.id,
+					status: 'pending',
+				},
+			});
+
+			if (existingTransactionRow) {
+				return { success: false, data: this.APPLY_ORDER_ALREADY_APPLIED_MSG };
 			}
 
 			console.log(

@@ -5,6 +5,7 @@ import type { Transaction as SequelizeTransaction } from 'sequelize';
 import CancelTransactionBody from '@/interfaces/bodies/exchange-transactions/CancelTransactionBody.js';
 import sequelize from '@/sequelize.js';
 import Order, { OrderStatus } from '@/schemes/Order';
+import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import { sendDeleteOrderMessage, sendUpdatePairStatsMessage } from '../socket/main.js';
 import ordersModel from './Orders.js';
 import userModel from './User.js';
@@ -549,6 +550,47 @@ class ExchangeModel {
 
 		return txRow?.toJSON();
 	}
+
+	isTransactionValid = async ({
+		transactionId,
+	}: {
+		transactionId: number;
+	}): Promise<
+	{ success: true; valid: boolean } | { success: false; reason: 'NO_TRANSACTION' }
+	> => {
+		const transactionRowWithOrders = (await Transaction.findOne({
+			where: { id: transactionId },
+			include: [
+				{
+					model: Order,
+					as: 'buy_order',
+				},
+				{
+					model: Order,
+					as: 'sell_order',
+				},
+			],
+		})) as TransactionWithOrders;
+
+		if (!transactionRowWithOrders) {
+			return { success: false, reason: 'NO_TRANSACTION' };
+		}
+
+		const buyOrder = transactionRowWithOrders.buy_order;
+		const sellOrder = transactionRowWithOrders.sell_order;
+
+		const isBuyOrderValid =
+			buyOrder.status === OrderStatus.ACTIVE &&
+			new Decimal(buyOrder.left).greaterThanOrEqualTo(transactionRowWithOrders.amount);
+		const isSellOrderValid =
+			sellOrder.status === OrderStatus.ACTIVE &&
+			new Decimal(sellOrder.left).greaterThanOrEqualTo(transactionRowWithOrders.amount);
+
+		const isTransactionValid =
+			transactionRowWithOrders.status === 'pending' && isBuyOrderValid && isSellOrderValid;
+
+		return { success: true, valid: isTransactionValid };
+	};
 }
 
 const exchangeModel = new ExchangeModel();
