@@ -63,6 +63,14 @@ Transaction.init(
 			{ fields: ['buy_order_id', 'status'] },
 			{ fields: ['sell_order_id', 'status'] },
 			{ fields: ['timestamp'] },
+			{
+				name: 'transactions_buy_order_id_sell_order_id',
+				fields: ['buy_order_id', 'sell_order_id'],
+				unique: true,
+				where: {
+					status: 'pending',
+				},
+			},
 		],
 	},
 );
