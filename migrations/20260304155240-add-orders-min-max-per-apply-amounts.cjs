@@ -1,10 +1,21 @@
 const ORDERS_TABLE_NAME = 'Orders';
 const MIN_PER_APPLY_AMOUNT_COLUMN_NAME = 'min_per_apply_amount';
 const MAX_PER_APPLY_AMOUNT_COLUMN_NAME = 'max_per_apply_amount';
+const COLUMN_NAMES = [MIN_PER_APPLY_AMOUNT_COLUMN_NAME, MAX_PER_APPLY_AMOUNT_COLUMN_NAME];
+
+async function getDeFactoApplied(queryInterface) {
+	const tableDescription = await queryInterface.describeTable(ORDERS_TABLE_NAME);
+
+	return COLUMN_NAMES.every((columnName) => Boolean(tableDescription[columnName]));
+}
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
 	async up (queryInterface, Sequelize) {
+		const deFactoApplied = await getDeFactoApplied(queryInterface);
+
+		if (deFactoApplied) return;
+
 		await queryInterface.addColumn(ORDERS_TABLE_NAME, MIN_PER_APPLY_AMOUNT_COLUMN_NAME, {
 			type: Sequelize.DataTypes.STRING,
 			allowNull: true,
@@ -19,6 +30,10 @@ module.exports = {
 	},
 
 	async down (queryInterface) {
+		const deFactoApplied = await getDeFactoApplied(queryInterface);
+
+		if (!deFactoApplied) return;
+
 		await queryInterface.removeColumn(ORDERS_TABLE_NAME, MIN_PER_APPLY_AMOUNT_COLUMN_NAME);
 
 		await queryInterface.removeColumn(ORDERS_TABLE_NAME, MAX_PER_APPLY_AMOUNT_COLUMN_NAME);
