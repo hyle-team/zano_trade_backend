@@ -26,6 +26,8 @@ module.exports = {
 			fields: ['buy_order_id'],
 			type: 'foreign key',
 			name: TRANSACTIONS_TABLE_BUY_ORDER_ID_FKEY_NAME,
+			onDelete: 'CASCADE',
+			onUpdate: 'CASCADE',
 			references: {
 				table: ORDERS_TABLE_NAME,
 				field: 'id',
@@ -36,6 +38,8 @@ module.exports = {
 			fields: ['sell_order_id'],
 			type: 'foreign key',
 			name: TRANSACTIONS_TABLE_SELL_ORDER_ID_FKEY_NAME,
+			onDelete: 'CASCADE',
+			onUpdate: 'CASCADE',
 			references: {
 				table: ORDERS_TABLE_NAME,
 				field: 'id',
