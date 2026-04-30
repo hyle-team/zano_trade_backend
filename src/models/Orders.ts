@@ -442,9 +442,6 @@ class OrdersModel {
 					where: {
 						[order.type === 'buy' ? 'buy_order_id' : 'sell_order_id']: order.id,
 						status: 'pending',
-						amount: {
-							[Op.lte]: order.left,
-						},
 						creator: {
 							[Op.ne]: order.type === 'buy' ? 'buy' : 'sell',
 						},
