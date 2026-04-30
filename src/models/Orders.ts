@@ -409,31 +409,29 @@ class OrdersModel {
 				);
 
 				for (const matchedOrder of matchedOrders) {
-					if (!applyTips.some((e) => e.id === matchedOrder.id)) {
-						const opponentRow = await User.findByPk(matchedOrder.user_id);
+					const opponentRow = await User.findByPk(matchedOrder.user_id);
 
-						if (!opponentRow) throw new Error('Invalid user id in order row.');
+					if (!opponentRow) throw new Error('Invalid user id in order row.');
 
-						applyTips.push({
-							id: matchedOrder.id,
-							left: Decimal.min(
-								new Decimal(matchedOrder.left),
-								new Decimal(order.left),
-							).toFixed(),
-							price: matchedOrder.price,
-							user: {
-								...(opponentRow.toJSON() || {}),
-								id: undefined,
-								favourite_currencies: undefined,
-							},
-							timestamp: matchedOrder.timestamp,
-							type: matchedOrder.type,
-							total: matchedOrder.total,
-							connected_order_id: order.id,
-							transaction: false,
-							isInstant: dexModel.isBotActive(matchedOrder.id),
-						});
-					}
+					applyTips.push({
+						id: matchedOrder.id,
+						left: Decimal.min(
+							new Decimal(matchedOrder.left),
+							new Decimal(order.left),
+						).toFixed(),
+						price: matchedOrder.price,
+						user: {
+							...(opponentRow.toJSON() || {}),
+							id: undefined,
+							favourite_currencies: undefined,
+						},
+						timestamp: matchedOrder.timestamp,
+						type: matchedOrder.type,
+						total: matchedOrder.total,
+						connected_order_id: order.id,
+						transaction: false,
+						isInstant: dexModel.isBotActive(matchedOrder.id),
+					});
 				}
 			}
 
