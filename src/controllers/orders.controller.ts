@@ -90,11 +90,23 @@ class OrdersController {
 					data: CreateOrderErrorCode.INVALID_ORDER_DATA,
 				});
 
-			if (result.data === 'Same order')
-				return res.status(400).send({
+			if (result.data === 'Same order') {
+				res.status(400).send({
 					success: false,
 					data: CreateOrderErrorCode.SAME_ORDER,
 				});
+
+				return;
+			}
+
+			if (result.data === 'Too many orders') {
+				res.status(400).send({
+					success: false,
+					data: CreateOrderErrorCode.TOO_MANY_ORDERS,
+				});
+
+				return;
+			}
 
 			if (result.data === 'Internal error') {
 				throw new Error('orderModel.createOrder returned Internal error');
@@ -120,6 +132,8 @@ class OrdersController {
 					user_id: createdOrder.userId,
 					status: createdOrder.status,
 					left: createdOrder.left,
+					minPerApplyAmount: createdOrder.minPerApplyAmount,
+					maxPerApplyAmount: createdOrder.maxPerApplyAmount,
 					hasNotification: createdOrder.hasNotification,
 					immediateMatch: createdOrder.immediateMatch,
 				},
@@ -249,6 +263,7 @@ class OrdersController {
 			const { totalItemsCount } = result;
 
 			const userOrders = result.data.map((order) => {
+				console.log('order', order);
 				const mappedOrder: GetUserOrdersResOrderData = {
 					id: order.id,
 					type: order.type,
@@ -261,6 +276,8 @@ class OrdersController {
 					user_id: order.user_id,
 					status: order.status,
 					left: order.left,
+					max_per_apply_amount: order.max_per_apply_amount,
+					min_per_apply_amount: order.min_per_apply_amount,
 					hasNotification: order.hasNotification,
 					pair: {
 						id: order.pair.id,
@@ -428,6 +445,10 @@ class OrdersController {
 				const result = await ordersModel.applyOrder(req.body, { transaction });
 
 				if (result.data === 'Invalid order data') return res.status(400).send(result);
+
+				if (result.data === ordersModel.APPLY_ORDER_ALREADY_APPLIED_MSG) {
+					return res.status(400).send(result);
+				}
 
 				if (result.data === 'Internal error') return res.status(500).send(result);
 

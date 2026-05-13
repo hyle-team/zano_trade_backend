@@ -12,8 +12,6 @@ export enum OrderStatus {
 	// eslint-disable-next-line no-unused-vars
 	ACTIVE = 'active',
 	// eslint-disable-next-line no-unused-vars
-	ZERO = 'zero',
-	// eslint-disable-next-line no-unused-vars
 	FINISHED = 'finished',
 }
 
@@ -42,6 +40,10 @@ class Order extends Model {
 	declare left: string;
 
 	declare hasNotification: boolean;
+
+	declare min_per_apply_amount: string | null;
+
+	declare max_per_apply_amount: string | null;
 
 	declare readonly createdAt: Date;
 
@@ -95,6 +97,16 @@ Order.init(
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: false,
+		},
+		min_per_apply_amount: {
+			type: DataTypes.STRING,
+			allowNull: true,
+			defaultValue: null,
+		},
+		max_per_apply_amount: {
+			type: DataTypes.STRING,
+			allowNull: true,
+			defaultValue: null,
 		},
 	},
 	{

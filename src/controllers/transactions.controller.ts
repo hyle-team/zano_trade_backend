@@ -2,11 +2,7 @@ import { Request, Response } from 'express';
 import Transaction from '@/schemes/Transaction.js';
 import GetMyTransactionsBody from '@/interfaces/bodies/exchange-transactions/GetMyTransactionsBody.js';
 import { Op } from 'sequelize';
-import {
-	OrderWithAllTransactions,
-	OrderWithBuyOrders,
-	OrderWithUser,
-} from '@/interfaces/database/modifiedRequests';
+import { OrderWithAllTransactions, OrderWithUser } from '@/interfaces/database/modifiedRequests';
 import User from '@/schemes/User.js';
 import CancelTransactionBody from '@/interfaces/bodies/exchange-transactions/CancelTransactionBody.js';
 import exchangeModel from '../models/ExchangeTransactions.js';
@@ -230,35 +226,51 @@ class TransactionsController {
 				],
 			})) as OrderWithUser[];
 
-			const txsWithFinalizerData = flatTxs.map((tx) => {
-				const targetOrderID = tx.creator === 'buy' ? tx.sell_order_id : tx.buy_order_id;
-				const orderData = connectedOrders.find((order) => order.id === targetOrderID);
+			const txsWithFinalizerData = (
+				await Promise.all(
+					flatTxs.map(async (tx) => {
+						const isValidResult = await exchangeModel.isTransactionValid({
+							transactionId: tx.id,
+						});
+						const isValid = isValidResult.success && isValidResult.valid;
 
-				const finalizer = orderData ? orderData.user : null;
+						if (!isValid) {
+							return undefined;
+						}
 
-				return {
-					id: tx.id,
-					buy_order_id: tx.buy_order_id,
-					sell_order_id: tx.sell_order_id,
-					amount: tx.amount,
-					price: tx.price,
-					timestamp: tx.timestamp,
-					status: tx.status,
-					creator: tx.creator,
-					hex_raw_proposal: tx.hex_raw_proposal,
-					createdAt: tx.createdAt,
-					updatedAt: tx.updatedAt,
+						const targetOrderID =
+							tx.creator === 'buy' ? tx.sell_order_id : tx.buy_order_id;
+						const orderData = connectedOrders.find(
+							(order) => order.id === targetOrderID,
+						);
 
-					finalizer: !finalizer
-						? null
-						: {
-							id: finalizer.id,
-							alias: finalizer.alias,
-							address: finalizer.address,
-							order_id: targetOrderID,
-						},
-				};
-			});
+						const finalizer = orderData ? orderData.user : null;
+
+						return {
+							id: tx.id,
+							buy_order_id: tx.buy_order_id,
+							sell_order_id: tx.sell_order_id,
+							amount: tx.amount,
+							price: tx.price,
+							timestamp: tx.timestamp,
+							status: tx.status,
+							creator: tx.creator,
+							hex_raw_proposal: tx.hex_raw_proposal,
+							createdAt: tx.createdAt,
+							updatedAt: tx.updatedAt,
+
+							finalizer: !finalizer
+								? null
+								: {
+									id: finalizer.id,
+									alias: finalizer.alias,
+									address: finalizer.address,
+									order_id: targetOrderID,
+								},
+						};
+					}),
+				)
+			).filter((tx) => tx !== undefined);
 
 			res.send({
 				success: true,

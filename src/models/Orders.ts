@@ -19,7 +19,7 @@ import {
 } from '../socket/main.js';
 import io from '../server.js';
 import ApplyTip from '../interfaces/responses/orders/ApplyTip.js';
-import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody.js';
+import CreateOrderBody, { CreateOrderType } from '../interfaces/bodies/orders/CreateOrderBody.js';
 import GetUserOrdersPageBody from '../interfaces/bodies/orders/GetUserOrdersPageBody.js';
 import CancelOrderBody from '../interfaces/bodies/orders/CancelOrderBody.js';
 import ApplyOrderBody from '../interfaces/bodies/orders/ApplyOrderBody.js';
@@ -40,20 +40,41 @@ class OrdersModel {
 	}
 
 	async getMatchedOrders(order: Order, pairId: number, requestUserId: number) {
-		const matchedOrders = await Order.findAll({
+		const matchedOrderType = order.type === OrderType.BUY ? OrderType.SELL : OrderType.BUY;
+		const transactionAlias = order.type === OrderType.BUY ? 'sell_orders' : 'buy_orders';
+
+		const matchedOrdersWithoutLeftFilter = await Order.findAll({
 			where: {
 				pair_id: pairId,
-				type: order.type === 'buy' ? 'sell' : 'buy',
+				type: matchedOrderType,
 				status: 'active',
 				price: {
-					[order.type === 'buy' ? Op.lte : Op.gte]: order.price,
+					[order.type === OrderType.BUY ? Op.lte : Op.gte]: order.price,
 				},
 				user_id: {
 					[Op.ne]: requestUserId,
 				},
+				min_per_apply_amount: {
+					[Op.or]: [{ [Op.is]: null }, { [Op.lte]: order.left }],
+				},
+				[`$${transactionAlias}.id$`]: {
+					[Op.is]: null,
+				},
 			},
 			order: [['timestamp', 'ASC']],
 			include: [
+				{
+					model: Transaction,
+					as: transactionAlias,
+					attributes: [],
+					required: false,
+					where: {
+						status: 'pending',
+						...(order.type === OrderType.BUY
+							? { buy_order_id: order.id }
+							: { sell_order_id: order.id }),
+					},
+				},
 				{
 					model: Pair,
 					as: 'pair',
@@ -63,9 +84,23 @@ class OrdersModel {
 			],
 		});
 
+		const matchedOrders = matchedOrdersWithoutLeftFilter.filter((matched) => {
+			if (matched.min_per_apply_amount === null) {
+				return true;
+			}
+
+			return new Decimal(matched.left).greaterThanOrEqualTo(
+				new Decimal(matched.min_per_apply_amount),
+			);
+		});
+
 		return matchedOrders;
 	}
 
+	static MAX_ORDERS_PER_USER_PER_PAIR = 10;
+
+	static CREATE_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
+	static CREATE_ORDER_TOO_MANY_ORDERS_MSG = `Too many orders`;
 	async createOrder(body: CreateOrderBody): Promise<
 	| {
 		success: false;
@@ -85,6 +120,8 @@ class OrdersModel {
 			userId: number;
 			status: string;
 			left: string;
+			minPerApplyAmount: string | null;
+			maxPerApplyAmount: string | null;
 			hasNotification: boolean;
 			immediateMatch?: true;
 		};
@@ -97,11 +134,48 @@ class OrdersModel {
 			const pair = await dexModel.getPairRow(parseInt(orderData.pairId, 10));
 			const firstCurrency = await Currency.findByPk(pair?.first_currency_id);
 
-			if (!pair || !firstCurrency) return { success: false, data: 'Invalid order data' };
+			if (!pair || !firstCurrency)
+				return { success: false, data: OrdersModel.CREATE_ORDER_INVALID_ORDER_DATA_MSG };
 
 			const userRow = await userModel.getUserRow(userData.address);
 
 			if (!userRow) throw new Error('Invalid address from token.');
+
+			const amount = new Decimal(orderData.amount);
+			const minPerApplyAmount =
+				orderData.minPerApplyAmount !== undefined
+					? new Decimal(orderData.minPerApplyAmount)
+					: null;
+			const maxPerApplyAmount =
+				orderData.maxPerApplyAmount !== undefined
+					? new Decimal(orderData.maxPerApplyAmount)
+					: null;
+
+			const amountLessThanZero = amount.lessThanOrEqualTo(0);
+			const minPerApplyLessThanZero =
+				minPerApplyAmount !== null ? minPerApplyAmount.lessThanOrEqualTo(0) : false;
+			const maxPerApplyLessThanZero =
+				maxPerApplyAmount !== null ? maxPerApplyAmount.lessThanOrEqualTo(0) : false;
+			const minPerApplyGreaterThanAmount =
+				minPerApplyAmount !== null ? minPerApplyAmount.greaterThan(amount) : false;
+			const maxPerApplyGreaterThanAmount =
+				maxPerApplyAmount !== null ? maxPerApplyAmount.greaterThan(amount) : false;
+			const minPerApplyGreaterThanMaxPerApply =
+				minPerApplyAmount !== null && maxPerApplyAmount !== null
+					? minPerApplyAmount.greaterThan(maxPerApplyAmount)
+					: false;
+
+			const amountsInvalid =
+				amountLessThanZero ||
+				minPerApplyLessThanZero ||
+				maxPerApplyLessThanZero ||
+				minPerApplyGreaterThanAmount ||
+				maxPerApplyGreaterThanAmount ||
+				minPerApplyGreaterThanMaxPerApply;
+
+			if (amountsInvalid) {
+				return { success: false, data: OrdersModel.CREATE_ORDER_INVALID_ORDER_DATA_MSG };
+			}
 
 			const timestamp = Date.now();
 			const firstCurrencyDecimalPoint =
@@ -119,6 +193,24 @@ class OrdersModel {
 
 			console.log(firstCurrencyDecimalPoint);
 
+			const existingOrdersCount = await Order.count({
+				where: {
+					user_id: userRow.id,
+					pair_id: orderData.pairId,
+					type: orderData.type === CreateOrderType.BUY ? OrderType.BUY : OrderType.SELL,
+					status: {
+						[Op.ne]: OrderStatus.FINISHED,
+					},
+				},
+			});
+
+			if (existingOrdersCount >= OrdersModel.MAX_ORDERS_PER_USER_PER_PAIR) {
+				return {
+					success: false,
+					data: OrdersModel.CREATE_ORDER_TOO_MANY_ORDERS_MSG,
+				};
+			}
+
 			const newOrder = await Order.create({
 				type: orderData.type === 'buy' ? 'buy' : 'sell',
 				timestamp,
@@ -133,6 +225,10 @@ class OrdersModel {
 				user_id: userRow.id,
 				status: 'active',
 				left: new Decimal(orderData.amount).toFixed(),
+				min_per_apply_amount:
+					minPerApplyAmount !== null ? minPerApplyAmount.toFixed() : null,
+				max_per_apply_amount:
+					maxPerApplyAmount !== null ? maxPerApplyAmount.toFixed() : null,
 			});
 
 			if (!newOrder) throw new Error('DB error while creating new order.');
@@ -205,6 +301,8 @@ class OrdersModel {
 						userId: newOrder.user_id,
 						status: newOrder.status,
 						left: newOrder.left,
+						minPerApplyAmount: newOrder.min_per_apply_amount,
+						maxPerApplyAmount: newOrder.max_per_apply_amount,
 						hasNotification: newOrder.hasNotification,
 
 						immediateMatch: true,
@@ -226,6 +324,8 @@ class OrdersModel {
 					userId: newOrder.user_id,
 					status: newOrder.status,
 					left: newOrder.left,
+					minPerApplyAmount: newOrder.min_per_apply_amount,
+					maxPerApplyAmount: newOrder.max_per_apply_amount,
 					hasNotification: newOrder.hasNotification,
 				},
 			};
@@ -302,40 +402,36 @@ class OrdersModel {
 			const applyTips: ApplyTip[] = [];
 
 			for (const order of orders.reverse()) {
-				if (order.status !== 'zero') {
-					const matchedOrders = await this.getMatchedOrders(
-						order,
-						parseInt(body.pairId, 10),
-						userRow.id,
-					);
+				const matchedOrders = await this.getMatchedOrders(
+					order,
+					parseInt(body.pairId, 10),
+					userRow.id,
+				);
 
-					for (const matchedOrder of matchedOrders) {
-						if (!applyTips.some((e) => e.id === matchedOrder.id)) {
-							const opponentRow = await User.findByPk(matchedOrder.user_id);
+				for (const matchedOrder of matchedOrders) {
+					const opponentRow = await User.findByPk(matchedOrder.user_id);
 
-							if (!opponentRow) throw new Error('Invalid user id in order row.');
+					if (!opponentRow) throw new Error('Invalid user id in order row.');
 
-							applyTips.push({
-								id: matchedOrder.id,
-								left: Decimal.min(
-									new Decimal(matchedOrder.left),
-									new Decimal(order.left),
-								).toFixed(),
-								price: matchedOrder.price,
-								user: {
-									...(opponentRow.toJSON() || {}),
-									id: undefined,
-									favourite_currencies: undefined,
-								},
-								timestamp: matchedOrder.timestamp,
-								type: matchedOrder.type,
-								total: matchedOrder.total,
-								connected_order_id: order.id,
-								transaction: false,
-								isInstant: dexModel.isBotActive(matchedOrder.id),
-							});
-						}
-					}
+					applyTips.push({
+						id: matchedOrder.id,
+						left: Decimal.min(
+							new Decimal(matchedOrder.left),
+							new Decimal(order.left),
+						).toFixed(),
+						price: matchedOrder.price,
+						user: {
+							...(opponentRow.toJSON() || {}),
+							id: undefined,
+							favourite_currencies: undefined,
+						},
+						timestamp: matchedOrder.timestamp,
+						type: matchedOrder.type,
+						total: matchedOrder.total,
+						connected_order_id: order.id,
+						transaction: false,
+						isInstant: dexModel.isBotActive(matchedOrder.id),
+					});
 				}
 			}
 
@@ -355,25 +451,32 @@ class OrdersModel {
 						order.type === 'buy' ? transaction.sell_order_id : transaction.buy_order_id,
 					);
 
-					const opponentRow = matchedOrder && (await User.findByPk(matchedOrder.user_id));
+					const isTxValidResult = await exchangeModel.isTransactionValid({
+						transactionId: transaction.id,
+					});
+					const isTxValid = isTxValidResult.success && isTxValidResult.valid;
 
-					if (matchedOrder && opponentRow?.address) {
-						applyTips.push({
-							id: transaction.id,
-							left: transaction.amount,
-							price: matchedOrder.price,
-							user: {
-								...(opponentRow.toJSON() || {}),
-								id: undefined,
-								favourite_currencies: undefined,
-							},
-							type: matchedOrder.type,
-							total: matchedOrder.total,
-							connected_order_id: order.id,
-							transaction: true,
-							hex_raw_proposal: transaction.hex_raw_proposal,
-							isInstant: dexModel.isBotActive(matchedOrder.id),
-						});
+					if (matchedOrder && isTxValid) {
+						const opponentRow = await User.findByPk(matchedOrder.user_id);
+
+						if (opponentRow?.address) {
+							applyTips.push({
+								id: transaction.id,
+								left: transaction.amount,
+								price: matchedOrder.price,
+								user: {
+									...(opponentRow.toJSON() || {}),
+									id: undefined,
+									favourite_currencies: undefined,
+								},
+								type: matchedOrder.type,
+								total: matchedOrder.total,
+								connected_order_id: order.id,
+								transaction: true,
+								hex_raw_proposal: transaction.hex_raw_proposal,
+								isInstant: dexModel.isBotActive(matchedOrder.id),
+							});
+						}
 					}
 				}
 			}
@@ -424,6 +527,8 @@ class OrdersModel {
 				status: string;
 				left: string;
 				hasNotification: boolean;
+				min_per_apply_amount: string | null;
+				max_per_apply_amount: string | null;
 
 				pair: PairWithCurrencies;
 
@@ -485,6 +590,8 @@ class OrdersModel {
 				user_id: e.user_id,
 				status: e.status,
 				left: e.left,
+				min_per_apply_amount: e.min_per_apply_amount,
+				max_per_apply_amount: e.max_per_apply_amount,
 				hasNotification: e.hasNotification,
 
 				pair: e.pair,
@@ -549,7 +656,7 @@ class OrdersModel {
 					});
 
 					for (const transaction of connectedTransactions) {
-						await exchangeModel.returnTransactionAmount(transaction.id, t);
+						await exchangeModel.rejectTransaction(transaction.id, t);
 					}
 
 					await Order.update(
@@ -655,6 +762,8 @@ class OrdersModel {
 		}
 	}
 
+	APPLY_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
+	APPLY_ORDER_ALREADY_APPLIED_MSG = 'This orders pair already has a pending apply';
 	async applyOrder(
 		body: ApplyOrderBody,
 		{
@@ -683,67 +792,69 @@ class OrdersModel {
 				},
 			});
 
-			if (
-				!(
-					orderRow &&
-					applyingOrderRow &&
-					orderRow.pair_id === applyingOrderRow.pair_id &&
-					orderRow.type !== applyingOrderRow.type &&
-					((orderRow.type === 'buy') === orderRow.price >= applyingOrderRow.price ||
-						orderRow.price === applyingOrderRow.price)
-				)
-			) {
-				return { success: false, data: 'Invalid order data' };
+			if (!(orderRow && applyingOrderRow)) {
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
-			const transactionAmount = Decimal.min(orderRow.left, applyingOrderRow.left);
+			const orderPrice = new Decimal(orderRow.price);
+			const applyingOrderPrice = new Decimal(applyingOrderRow.price);
+
+			if (
+				!(
+					orderRow.pair_id === applyingOrderRow.pair_id &&
+					orderRow.type !== applyingOrderRow.type &&
+					((orderRow.type === 'buy') ===
+						orderPrice.greaterThanOrEqualTo(applyingOrderPrice) ||
+						orderPrice.equals(applyingOrderPrice))
+				)
+			) {
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+			}
+
+			const orderLeft = new Decimal(orderRow.left);
+			const applyingOrderLeft = new Decimal(applyingOrderRow.left);
+
+			const applyingOrderMaxPerApplyAmount = applyingOrderRow.max_per_apply_amount
+				? new Decimal(applyingOrderRow.max_per_apply_amount)
+				: null;
+			const applyingOrderMinPerApplyAmount = applyingOrderRow.min_per_apply_amount
+				? new Decimal(applyingOrderRow.min_per_apply_amount)
+				: null;
+
+			const transactionAmount = Decimal.min(
+				orderLeft,
+				applyingOrderLeft,
+				applyingOrderMaxPerApplyAmount ?? Infinity,
+			);
 			const isApplyingBuy = applyingOrderRow.type === 'buy';
+
+			const txAmountLessThanMinPerApply = applyingOrderMinPerApplyAmount
+				? transactionAmount.lessThan(applyingOrderMinPerApplyAmount)
+				: false;
+
+			const applyInvalid = txAmountLessThanMinPerApply;
+
+			if (applyInvalid) {
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+			}
+
+			const existingTransactionRow = await Transaction.findOne({
+				where: {
+					buy_order_id: isApplyingBuy ? applyingOrderRow.id : orderRow.id,
+					sell_order_id: isApplyingBuy ? orderRow.id : applyingOrderRow.id,
+					status: 'pending',
+				},
+			});
+
+			if (existingTransactionRow) {
+				return { success: false, data: this.APPLY_ORDER_ALREADY_APPLIED_MSG };
+			}
 
 			console.log(
 				`Transaction Amount: ${transactionAmount.toString()} 
 				for orderRow: ${orderRow.id} 
 				and applyingOrderRow: ${applyingOrderRow.id}`,
 			);
-
-			console.log(
-				`Order Row Left: ${orderRow.left.toString()} 
-				Applying Order Row Left: ${applyingOrderRow.left.toString()}`,
-			);
-
-			console.log(
-				`Order Row Left After: ${new Decimal(orderRow.left).minus(transactionAmount).toNumber()} 
-				Applying Order Row Left After: ${new Decimal(applyingOrderRow.left).minus(transactionAmount).toNumber()}`,
-			);
-
-			await Order.update(
-				{ left: new Decimal(orderRow.left).minus(transactionAmount).toNumber() },
-				{ where: { id: orderRow.id }, transaction },
-			);
-
-			await Order.update(
-				{
-					left: new Decimal(applyingOrderRow.left).minus(transactionAmount).toNumber(),
-				},
-				{
-					where: {
-						id: applyingOrderRow.id,
-					},
-					transaction,
-				},
-			);
-
-			const eps = new Decimal(1e-10);
-
-			if (new Decimal(orderRow.left).minus(transactionAmount).abs().lt(eps)) {
-				await Order.update({ status: 'zero' }, { where: { id: orderRow.id }, transaction });
-			}
-
-			if (new Decimal(applyingOrderRow.left).minus(transactionAmount).abs().lt(eps)) {
-				await Order.update(
-					{ status: 'zero' },
-					{ where: { id: applyingOrderRow.id }, transaction },
-				);
-			}
 
 			const transactionRow = await exchangeModel.createTransaction(
 				isApplyingBuy ? applyingOrderRow.id : orderRow.id,
@@ -976,7 +1087,7 @@ class OrdersModel {
 					});
 
 					for (const tx of connectedTransactions) {
-						await exchangeModel.returnTransactionAmount(tx.id, transaction);
+						await exchangeModel.rejectTransaction(tx.id, transaction);
 					}
 
 					await Order.update(
