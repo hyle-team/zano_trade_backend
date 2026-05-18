@@ -884,13 +884,28 @@ class OrdersModel {
 				return { success: false, data: 'Invalid pair data' };
 			}
 
+			const pairOrderIds = await Order.findAll({
+				where: { pair_id: pairId },
+				attributes: ['id'],
+				raw: true,
+			}).then((rows) => rows.map((r) => r.id));
+
+			if (pairOrderIds.length === 0) {
+				return { success: true, data: [] };
+			}
+
 			const transactions = (await Transaction.findAll({
-				where: { status: 'confirmed' },
+				where: {
+					status: 'confirmed',
+					[Op.or]: [
+						{ buy_order_id: { [Op.in]: pairOrderIds } },
+						{ sell_order_id: { [Op.in]: pairOrderIds } },
+					],
+				},
 				include: [
 					{
 						model: Order,
 						as: 'buy_order',
-						where: { pair_id: pairId },
 						include: [
 							{
 								model: User,
@@ -902,7 +917,6 @@ class OrdersModel {
 					{
 						model: Order,
 						as: 'sell_order',
-						where: { pair_id: pairId },
 						include: [
 							{
 								model: User,
