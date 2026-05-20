@@ -55,5 +55,8 @@
     "lint-staged": "^15.5.2",
     "prettier": "3.5.3",
     "sequelize-cli": "^6.6.2"
+  },
+  "overrides": {
+    "ws": "8.20.1"
   }
 }
