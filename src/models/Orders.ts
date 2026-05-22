@@ -43,14 +43,13 @@ class OrdersModel {
 		const matchedOrderType = order.type === OrderType.BUY ? OrderType.SELL : OrderType.BUY;
 		const transactionAlias = order.type === OrderType.BUY ? 'sell_orders' : 'buy_orders';
 
+		const priceSQLOperation = order.type === OrderType.BUY ? Op.lte : Op.gte;
+
 		const matchedOrdersWithoutLeftFilter = await Order.findAll({
 			where: {
 				pair_id: pairId,
 				type: matchedOrderType,
 				status: 'active',
-				price: {
-					[order.type === OrderType.BUY ? Op.lte : Op.gte]: order.price,
-				},
 				user_id: {
 					[Op.ne]: requestUserId,
 				},
@@ -60,6 +59,13 @@ class OrdersModel {
 				[`$${transactionAlias}.id$`]: {
 					[Op.is]: null,
 				},
+				[Op.and]: [
+					sequelize.where(
+						sequelize.cast(sequelize.col('price'), 'DECIMAL'),
+						priceSQLOperation,
+						sequelize.cast(order.price, 'DECIMAL'),
+					),
+				],
 			},
 			order: [['timestamp', 'ASC']],
 			include: [
