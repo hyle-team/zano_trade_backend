@@ -1,4 +1,4 @@
-import { Model, DataTypes } from 'sequelize';
+import Sequelize, { Model, DataTypes } from 'sequelize';
 import sequelize from '../sequelize';
 
 export enum OrderType {
@@ -115,6 +115,10 @@ Order.init(
 		timestamps: true,
 		indexes: [
 			{ fields: ['pair_id', 'type', 'status', 'price'] },
+			{
+				fields: ['pair_id', 'type', 'status', Sequelize.literal('((price)::decimal)')],
+				name: 'orders_pair_id_type_status_price-decimal',
+			},
 			{ fields: ['pair_id'] },
 			{ fields: ['user_id'] },
 			{ fields: ['timestamp'] },
