@@ -1,11 +1,15 @@
 import AuthData from '@/interfaces/bodies/user/AuthData';
 import axios from 'axios';
 
+if (process.env.DAEMON_URL === undefined || process.env.DAEMON_URL === '') {
+	throw new Error('DAEMON_URL is not defined in environment variables');
+}
+
 async function validateWallet(authData: AuthData) {
 	async function fetchZanoApi(method: string, params: object) {
 		try {
 			return await axios
-				.post('http://37.27.100.59:10500/json_rpc', {
+				.post(process.env.DAEMON_URL ?? '', {
 					id: 0,
 					jsonrpc: '2.0',
 					method,
