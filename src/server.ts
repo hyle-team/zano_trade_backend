@@ -83,6 +83,81 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	app.use(middleware.defaultRateLimit);
 
+	const FRONTEND_ORIGIN = process.env.FRONTEND_URL;
+
+	const AUTH_REQUIRED_ROUTES = [
+		'/api/user',
+		'/api/chats',
+		'/api/transactions',
+		'/api/admin',
+		'/api/check-auth',
+
+		'/api/offers/update',
+		'/api/offers/delete',
+		'/api/offers/get-one',
+
+		'/api/orders/create',
+		'/api/orders/get-user-page',
+		'/api/orders/get',
+		'/api/orders/cancel',
+		'/api/orders/apply-order',
+		'/api/orders/get-user-orders-pairs',
+		'/api/orders/cancel-all',
+
+		'/api/dex/renew-bot',
+	];
+
+	app.use((req, res, next) => {
+		if (req.method === 'OPTIONS') {
+			res.header('Access-Control-Allow-Origin', '*');
+
+			res.header(
+				'Access-Control-Allow-Headers',
+				'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+			);
+
+			res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+
+			return res.sendStatus(204);
+		}
+
+		const { origin } = req.headers;
+
+		const isProtectedRoute = AUTH_REQUIRED_ROUTES.some((route) => req.path.startsWith(route));
+
+		if (isProtectedRoute) {
+			const isServerRequest = !origin;
+
+			if (!isServerRequest && origin !== FRONTEND_ORIGIN) {
+				return res.status(403).send({
+					success: false,
+					message: 'CORS origin denied',
+				});
+			}
+
+			if (origin) {
+				res.header('Access-Control-Allow-Origin', origin);
+			}
+		} else {
+			res.header('Access-Control-Allow-Origin', '*');
+		}
+
+		res.header(
+			'Access-Control-Allow-Headers',
+			'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+		);
+		res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+		res.header('Referrer-Policy', 'same-origin');
+		res.header(
+			'Permissions-Policy',
+			['fullscreen=(self)', 'picture-in-picture=(self)'].join(', '),
+		);
+		res.header('X-Content-Type-Options', 'nosniff');
+		res.header('X-Frame-Options', 'SAMEORIGIN');
+
+		next();
+	});
+
 	app.use(express.json());
 	app.use(express.urlencoded({ extended: true }));
 
