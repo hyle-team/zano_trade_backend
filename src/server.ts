@@ -4,6 +4,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 
 import authMessagesCleanService from '@/workers/authMessagesCleanService';
+import cors from 'cors';
+import helmet from 'helmet';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
 import userRouter from './routes/user.router';
@@ -32,7 +34,13 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 app.set('trust proxy', 1);
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+	cors: {
+		origin: process.env.FRONTEND_URL,
+		methods: ['GET', 'POST'],
+		credentials: true,
+	},
+});
 
 // Log uncaught exceptions and unhandled promise rejections
 process.on('uncaughtException', (err) => {
@@ -108,52 +116,44 @@ process.on('unhandledRejection', (reason, promise) => {
 	];
 
 	app.use((req, res, next) => {
-		if (req.method === 'OPTIONS') {
-			res.header('Access-Control-Allow-Origin', '*');
-
-			res.header(
-				'Access-Control-Allow-Headers',
-				'Origin, X-Requested-With, Content-Type, Accept, Authorization',
-			);
-
-			res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-
-			return res.sendStatus(204);
-		}
-
-		const { origin } = req.headers;
-
 		const isProtectedRoute = AUTH_REQUIRED_ROUTES.some((route) => req.path.startsWith(route));
 
-		if (isProtectedRoute) {
-			const isServerRequest = !origin;
+		const corsOptions = {
+			origin: (
+				origin: string | undefined,
+				callback: (_err: Error | null, _allow?: boolean) => void,
+			) => {
+				// SSR / server-side requests
+				if (!origin) {
+					return callback(null, true);
+				}
 
-			if (!isServerRequest && origin !== FRONTEND_ORIGIN) {
-				return res.status(403).send({
-					success: false,
-					message: 'CORS origin denied',
-				});
-			}
+				// Public routes
+				if (!isProtectedRoute) {
+					return callback(null, true);
+				}
 
-			if (origin) {
-				res.header('Access-Control-Allow-Origin', origin);
-			}
-		} else {
-			res.header('Access-Control-Allow-Origin', '*');
-		}
+				// Protected routes
+				if (origin === FRONTEND_ORIGIN) {
+					return callback(null, true);
+				}
 
-		res.header(
-			'Access-Control-Allow-Headers',
-			'Origin, X-Requested-With, Content-Type, Accept, Authorization',
-		);
-		res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-		res.header('Referrer-Policy', 'same-origin');
-		res.header(
-			'Permissions-Policy',
-			['fullscreen=(self)', 'picture-in-picture=(self)'].join(', '),
-		);
-		res.header('X-Content-Type-Options', 'nosniff');
-		res.header('X-Frame-Options', 'SAMEORIGIN');
+				return callback(new Error('Not allowed by CORS'));
+			},
+			credentials: true,
+		};
+
+		cors(corsOptions)(req, res, next);
+	});
+
+	app.use(
+		helmet({
+			hsts: true,
+		}),
+	);
+
+	app.use((_req, res, next) => {
+		res.setHeader('Permissions-Policy', 'fullscreen=(self), picture-in-picture=(self)');
 
 		next();
 	});
