@@ -9,6 +9,7 @@ import authMessagesModel from '@/models/AuthMessages.js';
 import { AUTH_MESSAGE_EXPIRATION_TIME_MS } from 'shared/constants.js';
 import RequestAuthRes from '@/interfaces/responses/auth/RequestAuthRes.js';
 import sequelize from '@/sequelize.js';
+import AuthBody from '@/interfaces/bodies/auth/AuthBody.js';
 import validateWallet from '../methods/validateWallet.js';
 import userModel from '../models/User.js';
 
@@ -34,15 +35,10 @@ class AuthController {
 		});
 	};
 
-	async auth(req: Request, res: Response) {
+	async auth(req: Request<Record<string, never>, unknown, AuthBody>, res: Response) {
 		try {
 			const userData: AuthData = req.body.data;
-			const { neverExpires } = req.body;
-			const { address, alias, signature, message } = userData;
-
-			if (!address || !alias || !signature || !message) {
-				return res.status(400).send({ success: false, data: 'Invalid auth data' });
-			}
+			const { address, alias, message } = userData;
 
 			const authMessageRow = await authMessagesModel.findOne({
 				address,
@@ -82,11 +78,9 @@ class AuthController {
 						{ transaction },
 					);
 
-					token = jwt.sign(
-						{ ...userData },
-						process.env.JWT_SECRET || '',
-						neverExpires ? undefined : { expiresIn: '24h' },
-					);
+					token = jwt.sign({ ...userData }, process.env.JWT_SECRET || '', {
+						expiresIn: '24h',
+					});
 				}
 			});
 
