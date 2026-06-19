@@ -153,7 +153,7 @@ process.on('unhandledRejection', (reason, promise) => {
 	);
 
 	app.use((_req, res, next) => {
-		res.setHeader('Permissions-Policy', 'fullscreen=(self), picture-in-picture=(self)');
+		res.setHeader('Permissions-Policy', 'fullscreen=()');
 
 		next();
 	});
