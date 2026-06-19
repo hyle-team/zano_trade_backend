@@ -77,7 +77,7 @@ async function runNotificationMethods(
 function socketStart(io: Server) {
 	io.on('connection', (socket) => {
 		socket.use(socketMiddleware);
-		socket.use(verifyUser(['in-dex-notifications', 'out-dex-notifications']));
+		socket.use(verifyUser(['in-dex-notifications', 'out-dex-notifications', 'in-account']));
 
 		socket.on('in-account', (data: SocketData) => {
 			socket.join(`user${data.id}`);
