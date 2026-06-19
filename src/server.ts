@@ -4,6 +4,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 
 import authMessagesCleanService from '@/workers/authMessagesCleanService';
+import cors from 'cors';
+import helmet from 'helmet';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
 import userRouter from './routes/user.router';
@@ -32,7 +34,13 @@ const PORT = process.env.PORT || 3000;
 const app = express();
 app.set('trust proxy', 1);
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+	cors: {
+		origin: process.env.FRONTEND_URL,
+		methods: ['GET', 'POST'],
+		credentials: true,
+	},
+});
 
 // Log uncaught exceptions and unhandled promise rejections
 process.on('uncaughtException', (err) => {
@@ -82,6 +90,73 @@ process.on('unhandledRejection', (reason, promise) => {
 	socketStart(io);
 
 	app.use(middleware.defaultRateLimit);
+
+	const FRONTEND_ORIGIN = process.env.FRONTEND_URL;
+
+	const AUTH_REQUIRED_ROUTES = [
+		'/api/user',
+		'/api/chats',
+		'/api/transactions',
+		'/api/admin',
+		'/api/check-auth',
+
+		'/api/offers/update',
+		'/api/offers/delete',
+		'/api/offers/get-one',
+
+		'/api/orders/create',
+		'/api/orders/get-user-page',
+		'/api/orders/get',
+		'/api/orders/cancel',
+		'/api/orders/apply-order',
+		'/api/orders/get-user-orders-pairs',
+		'/api/orders/cancel-all',
+
+		'/api/dex/renew-bot',
+	];
+
+	app.use((req, res, next) => {
+		const isProtectedRoute = AUTH_REQUIRED_ROUTES.some((route) => req.path.startsWith(route));
+
+		const corsOptions = {
+			origin: (
+				origin: string | undefined,
+				callback: (_err: Error | null, _allow?: boolean) => void,
+			) => {
+				// SSR / server-side requests
+				if (!origin) {
+					return callback(null, true);
+				}
+
+				// Public routes
+				if (!isProtectedRoute) {
+					return callback(null, true);
+				}
+
+				// Protected routes
+				if (origin === FRONTEND_ORIGIN) {
+					return callback(null, true);
+				}
+
+				return callback(new Error('Not allowed by CORS'));
+			},
+			credentials: true,
+		};
+
+		cors(corsOptions)(req, res, next);
+	});
+
+	app.use(
+		helmet({
+			hsts: true,
+		}),
+	);
+
+	app.use((_req, res, next) => {
+		res.setHeader('Permissions-Policy', 'fullscreen=()');
+
+		next();
+	});
 
 	app.use(express.json());
 	app.use(express.urlencoded({ extended: true }));
