@@ -1,54 +1,52 @@
-import AuthData from '@/interfaces/bodies/user/AuthData';
-import axios from 'axios';
+import 'dotenv/config';
+// @ts-expect-error - Disabling TS error while importing /shared submodule
+// due to global tsconfig "moduleResolution" prop is set to "node"
+import { ServerWallet } from 'zano_web3/server';
 
 if (process.env.DAEMON_URL === undefined || process.env.DAEMON_URL === '') {
 	throw new Error('DAEMON_URL is not defined in environment variables');
 }
 
-async function validateWallet(authData: AuthData) {
-	async function fetchZanoApi(method: string, params: object) {
-		try {
-			return await axios
-				.post(process.env.DAEMON_URL ?? '', {
-					id: 0,
-					jsonrpc: '2.0',
-					method,
-					params,
-				})
-				.then((res) => res.data);
-		} catch (error) {
-			console.log(error);
-		}
-	}
+async function validateWallet({
+	originalMessage,
+	signedMessage,
+	signature,
+	address,
+	pkeyFromSignature,
+	alias,
+}: {
+	originalMessage: string;
+	signedMessage: string;
+	signature: string;
+	address: string;
+	pkeyFromSignature: string;
+	alias: string;
+}): Promise<boolean> {
+	const serverWallet = new ServerWallet({
+		daemonUrl: process.env.DAEMON_URL,
+		walletUrl: '',
+	});
 
-	const { message, address, alias, signature } = authData;
+	const isValidSignature = await serverWallet.validateSecureMessageSignature({
+		originalMessage,
+		signedMessage,
+		signature,
+		address,
+		pkeyFromSignature,
+	});
 
-	if (!message || !alias || !signature) {
+	if (!isValidSignature) {
 		return false;
 	}
 
-	const response = await fetchZanoApi('validate_signature', {
-		buff: Buffer.from(message).toString('base64'),
-		alias,
-		sig: signature,
-	});
+	const aliasDetailsResult = await serverWallet.getAliasDetails(alias);
 
-	const aliasOk = response?.result?.status === 'OK';
-
-	if (!aliasOk) {
-		return false;
-	}
-
-	const aliasDetailsResponse = await fetchZanoApi('get_alias_details', {
-		alias,
-	});
-
-	const aliasDetails = aliasDetailsResponse?.result?.alias_details;
+	const aliasDetails = aliasDetailsResult?.alias_details;
 	const aliasAddress = aliasDetails?.address;
 
 	const addressOk = !!aliasAddress && aliasAddress === address;
 
-	return aliasOk && addressOk;
+	return addressOk;
 }
 
 export default validateWallet;

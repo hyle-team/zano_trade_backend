@@ -28,7 +28,7 @@ AuthMessage.init(
 			allowNull: false,
 		},
 		message: {
-			type: DataTypes.STRING,
+			type: DataTypes.TEXT,
 			allowNull: false,
 		},
 		expires_at: {

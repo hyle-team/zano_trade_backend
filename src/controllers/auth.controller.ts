@@ -1,7 +1,9 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import { Request, Response } from 'express';
-import crypto from 'crypto';
+// @ts-expect-error - Disabling TS error while importing /shared submodule
+// due to global tsconfig "moduleResolution" prop is set to "node"
+import { generateSecureMessageForSigning } from 'zano_web3/shared';
 
 import AuthData from '@/interfaces/bodies/user/AuthData.js';
 import RequestAuthBody from '@/interfaces/bodies/auth/RequestAuthBody.js';
@@ -15,17 +17,47 @@ import userModel from '../models/User.js';
 
 dotenv.config();
 
+if (process.env.FRONTEND_BASE_URL === undefined || process.env.FRONTEND_BASE_URL === '') {
+	throw new Error('FRONTEND_BASE_URL is not defined in environment variables');
+}
+
 class AuthController {
 	requestAuth = async (req: Request, res: Response<RequestAuthRes>) => {
-		const { address, alias } = req.body as RequestAuthBody;
+		const { address, alias, path } = req.body as RequestAuthBody;
 
-		const message = crypto.randomUUID();
+		const frontendBaseUrlStr = process.env.FRONTEND_BASE_URL;
+
+		if (frontendBaseUrlStr === undefined) {
+			throw new Error('FRONTEND_BASE_URL is not defined in environment variables');
+		}
+
+		const frontendBaseUrl = new URL(frontendBaseUrlStr);
+		const { host } = frontendBaseUrl;
+
+		const fullUri = new URL(frontendBaseUrlStr);
+		fullUri.pathname = path;
+
+		const statement = `This is a authentication message of ${frontendBaseUrlStr}. Sign this message to authenticate in Zano Trade.`;
+
 		const expiresAt = new Date(Date.now() + AUTH_MESSAGE_EXPIRATION_TIME_MS);
+
+		const generateSecureMessageResult = generateSecureMessageForSigning({
+			domain: host,
+			address,
+			statement,
+			uri: fullUri.toString(),
+			nonce: crypto.randomUUID(),
+			expirationTime: expiresAt,
+		});
+
+		if (!generateSecureMessageResult.success) {
+			throw new Error('MESSAGE_SIGN_UNKNOWN_ERROR');
+		}
 
 		const authMessageRow = await authMessagesModel.create({
 			address,
 			alias,
-			message,
+			message: generateSecureMessageResult.message,
 			expiresAt,
 		});
 
@@ -38,7 +70,7 @@ class AuthController {
 	async auth(req: Request<Record<string, never>, unknown, AuthBody>, res: Response) {
 		try {
 			const userData: AuthData = req.body.data;
-			const { address, alias, message } = userData;
+			const { address, alias, message, pkey } = userData;
 
 			const authMessageRow = await authMessagesModel.findOne({
 				address,
@@ -57,7 +89,14 @@ class AuthController {
 				userData &&
 				userData.address &&
 				alias &&
-				(await validateWallet(userData))
+				(await validateWallet({
+					originalMessage: authMessageRow.message,
+					signedMessage: message,
+					signature: userData.signature,
+					address,
+					pkeyFromSignature: pkey,
+					alias,
+				}))
 			);
 			if (!dataValid) {
 				return res.status(400).send({ success: false, data: 'Invalid auth data' });
