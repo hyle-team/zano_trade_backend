@@ -39,7 +39,17 @@ async function validateWallet({
 		return false;
 	}
 
-	const aliasDetailsResult = await serverWallet.getAliasDetails(alias);
+	let aliasDetailsResult;
+
+	try {
+		aliasDetailsResult = await serverWallet.getAliasDetails(alias);
+	} catch (error) {
+		if (error instanceof Error && error.message.includes('Error fetching alias')) {
+			return false;
+		}
+
+		throw error;
+	}
 
 	const aliasDetails = aliasDetailsResult?.alias_details;
 	const aliasAddress = aliasDetails?.address;
