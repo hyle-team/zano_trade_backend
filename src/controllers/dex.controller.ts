@@ -95,18 +95,18 @@ class DexController {
 		return res.status(200).send(result);
 	}
 
-	async volumeStats(req: Request, res: Response) {
-		const { address, pairID, from, to } = req.body;
+	// async volumeStats(req: Request, res: Response) {
+	// 	const { address, pairID, from, to } = req.body;
 
-		if (!address || !pairID)
-			return res.status(400).send({ success: false, data: 'Invalid data' });
+	// 	if (!address || !pairID)
+	// 		return res.status(400).send({ success: false, data: 'Invalid data' });
 
-		const fromTimestamp = typeof from === 'number' ? from : 0;
-		const toTimestamp = typeof to === 'number' ? to : +Date.now();
+	// 	const fromTimestamp = typeof from === 'number' ? from : 0;
+	// 	const toTimestamp = typeof to === 'number' ? to : +Date.now();
 
-		const result = await dexModel.volumeStats(address, pairID, fromTimestamp, toTimestamp);
-		return res.status(200).send(result);
-	}
+	// 	const result = await dexModel.volumeStats(address, pairID, fromTimestamp, toTimestamp);
+	// 	return res.status(200).send(result);
+	// }
 
 	getAssetsPriceRates = async (req: Request, res: Response<GetAssetsPriceRatesRes>) => {
 		const { assetsIds } = req.body as GetAssetsPriceRatesBody;

@@ -17,18 +17,18 @@ import userModel from '../models/User.js';
 
 dotenv.config();
 
-if (process.env.FRONTEND_BASE_URL === undefined || process.env.FRONTEND_BASE_URL === '') {
-	throw new Error('FRONTEND_BASE_URL is not defined in environment variables');
+if (process.env.FRONTEND_URL === undefined || process.env.FRONTEND_URL === '') {
+	throw new Error('FRONTEND_URL is not defined in environment variables');
 }
 
 class AuthController {
 	requestAuth = async (req: Request, res: Response<RequestAuthRes>) => {
 		const { address, alias, path } = req.body as RequestAuthBody;
 
-		const frontendBaseUrlStr = process.env.FRONTEND_BASE_URL;
+		const frontendBaseUrlStr = process.env.FRONTEND_URL;
 
 		if (frontendBaseUrlStr === undefined) {
-			throw new Error('FRONTEND_BASE_URL is not defined in environment variables');
+			throw new Error('FRONTEND_URL is not defined in environment variables');
 		}
 
 		const frontendBaseUrl = new URL(frontendBaseUrlStr);
