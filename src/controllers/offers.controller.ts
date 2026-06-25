@@ -5,39 +5,9 @@ import DeleteBody from '../interfaces/bodies/offers/DeleteBody.js';
 import GetPageBody from '../interfaces/bodies/offers/GetPageBody.js';
 
 class OffersController {
-	async update(req: Request, res: Response) {
+	async update(req: Request<unknown, unknown, UpdateBody>, res: Response) {
 		try {
-			const { offerData } = req.body as UpdateBody;
-			const isFull = !!(
-				offerData &&
-				offerData?.price &&
-				offerData?.min &&
-				offerData?.max &&
-				offerData?.deposit_seller &&
-				offerData?.deposit_buyer &&
-				offerData?.type &&
-				offerData?.input_currency_id &&
-				offerData?.target_currency_id &&
-				offerData?.deposit_currency_id
-			);
-
-			const rangeCorrect =
-				offerData?.min > 0 &&
-				offerData?.min < 1000000000 &&
-				offerData?.max > 0 &&
-				offerData?.max < 1000000000 &&
-				offerData?.deposit_buyer > 0 &&
-				offerData?.deposit_buyer < 1000000000 &&
-				offerData?.deposit_seller > 0 &&
-				offerData?.deposit_seller < 1000000000 &&
-				offerData?.price > 0 &&
-				offerData?.price < 10000000000 &&
-				offerData?.min < offerData?.max;
-
-			if (!isFull || !rangeCorrect)
-				return res.status(400).send({ success: false, data: 'Invalid offer data' });
-
-			const result = await offersModel.update(req.body as UpdateBody);
+			const result = await offersModel.update(req.body);
 
 			if (result.success) {
 				return res.status(200).send(result);
@@ -81,14 +51,9 @@ class OffersController {
 		}
 	}
 
-	async getPage(req: Request, res: Response) {
+	async getPage(req: Request<unknown, unknown, GetPageBody>, res: Response) {
 		try {
-			const pageData = (req.body as GetPageBody).data;
-
-			if (!(pageData && pageData?.page && pageData?.type))
-				return res.status(400).send({ success: false, data: 'Invalid page data' });
-
-			const result = await offersModel.getPage((req.body as GetPageBody).data);
+			const result = await offersModel.getPage(req.body.data);
 
 			if (!result.success) return res.status(500).send(result);
 
