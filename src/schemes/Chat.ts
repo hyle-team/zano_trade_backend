@@ -13,9 +13,9 @@ class Chat extends Model {
 
 	declare status: string;
 
-	declare pay: number;
+	declare pay: string;
 
-	declare receive: number;
+	declare receive: string;
 
 	declare owner_deposit: string;
 
@@ -48,11 +48,11 @@ Chat.init(
 			allowNull: false,
 		},
 		pay: {
-			type: DataTypes.DOUBLE,
+			type: DataTypes.DECIMAL(40, 20),
 			allowNull: false,
 		},
 		receive: {
-			type: DataTypes.DOUBLE,
+			type: DataTypes.DECIMAL(40, 20),
 			allowNull: false,
 		},
 		owner_deposit: {
