@@ -1,3 +1,6 @@
+import { body } from 'express-validator';
+
+import { isNonNegativeDecimalString } from '@/methods/isNonNegativeDecimalString';
 import UserData from '../../common/UserData';
 
 interface CreateBody {
@@ -8,5 +11,11 @@ interface CreateBody {
 		receive: string;
 	};
 }
+
+export const createValidator = [
+	body('number').isString().custom(isNonNegativeDecimalString),
+	body('chatData.pay').isString().custom(isNonNegativeDecimalString),
+	body('chatData.receive').isString().custom(isNonNegativeDecimalString),
+];
 
 export default CreateBody;
