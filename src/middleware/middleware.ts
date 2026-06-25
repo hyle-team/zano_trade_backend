@@ -83,7 +83,7 @@ class Middleware {
 				data: 'Internal error',
 			});
 		} else {
-			next();
+			next(err);
 		}
 	};
 

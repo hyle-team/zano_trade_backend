@@ -3,4 +3,5 @@ export default interface AuthData {
 	alias: string;
 	signature: string;
 	message: string;
+	pkey: string;
 }

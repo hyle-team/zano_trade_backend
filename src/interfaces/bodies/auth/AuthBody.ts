@@ -6,6 +6,7 @@ type AuthBody = {
 		alias: string;
 		signature: string;
 		message: string;
+		pkey: string;
 	};
 };
 
@@ -14,6 +15,7 @@ export const authBodyValidator = [
 	body('data.alias').isString().notEmpty(),
 	body('data.signature').isString().notEmpty(),
 	body('data.message').isString().notEmpty(),
+	body('data.pkey').isString().notEmpty(),
 ];
 
 export default AuthBody;
