@@ -21,7 +21,9 @@ const defaultRateLimitMiddleware = rateLimit({
 class Middleware {
 	async verifyToken(req: Request, res: Response, next: NextFunction) {
 		try {
-			const userData = jwt.verify(req.body.token, env.JWT_SECRET) as UserData;
+			const userData = jwt.verify(req.body.token, env.JWT_SECRET, {
+				algorithms: ['HS256'],
+			}) as UserData;
 			req.body.userData = userData;
 			next();
 		} catch {
