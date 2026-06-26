@@ -1,6 +1,5 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
 import { Request, Response } from 'express';
 // @ts-expect-error - Disabling TS error while importing /shared submodule
 // due to global tsconfig "moduleResolution" prop is set to "node"
@@ -13,24 +12,15 @@ import { AUTH_MESSAGE_EXPIRATION_TIME_MS } from 'shared/constants.js';
 import RequestAuthRes from '@/interfaces/responses/auth/RequestAuthRes.js';
 import sequelize from '@/sequelize.js';
 import AuthBody from '@/interfaces/bodies/auth/AuthBody.js';
+import { env } from '@/config/env.js';
 import validateWallet from '../methods/validateWallet.js';
 import userModel from '../models/User.js';
-
-dotenv.config();
-
-if (process.env.FRONTEND_URL === undefined || process.env.FRONTEND_URL === '') {
-	throw new Error('FRONTEND_URL is not defined in environment variables');
-}
 
 class AuthController {
 	requestAuth = async (req: Request, res: Response<RequestAuthRes>) => {
 		const { address, alias, path } = req.body as RequestAuthBody;
 
-		const frontendBaseUrlStr = process.env.FRONTEND_URL;
-
-		if (frontendBaseUrlStr === undefined) {
-			throw new Error('FRONTEND_URL is not defined in environment variables');
-		}
+		const frontendBaseUrlStr = env.FRONTEND_URL;
 
 		const frontendBaseUrl = new URL(frontendBaseUrlStr);
 		const { host } = frontendBaseUrl;
@@ -118,7 +108,7 @@ class AuthController {
 						{ transaction },
 					);
 
-					token = jwt.sign({ ...userData }, process.env.JWT_SECRET || '', {
+					token = jwt.sign({ ...userData }, env.JWT_SECRET, {
 						expiresIn: '24h',
 					});
 				}

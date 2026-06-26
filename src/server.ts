@@ -1,12 +1,12 @@
 import 'express-async-errors';
-import 'dotenv/config';
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
-import authMessagesCleanService from '@/workers/authMessagesCleanService';
 import cors from 'cors';
 import helmet from 'helmet';
+import { env } from '@/config/env.js';
+import authMessagesCleanService from '@/workers/authMessagesCleanService';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
 import userRouter from './routes/user.router';
@@ -30,14 +30,12 @@ import { setupAssociations } from './schemes/Associations';
 import statsModel from './models/Stats';
 import ordersModerationService from './workers/ordersModerationService';
 
-const PORT = process.env.PORT || 3000;
-
 const app = express();
 app.set('trust proxy', 1);
 const server = http.createServer(app);
 const io = new Server(server, {
 	cors: {
-		origin: process.env.FRONTEND_URL,
+		origin: env.FRONTEND_URL,
 		methods: ['GET', 'POST'],
 		credentials: true,
 	},
@@ -78,8 +76,8 @@ process.on('unhandledRejection', (reason, promise) => {
 		await zanoRow.save();
 	}
 
-	if (process.env.OWNER_ALIAS) {
-		await User.update({ isAdmin: true }, { where: { alias: process.env.OWNER_ALIAS } });
+	if (env.OWNER_ALIAS) {
+		await User.update({ isAdmin: true }, { where: { alias: env.OWNER_ALIAS } });
 	}
 
 	assetsUpdateChecker.run();
@@ -92,7 +90,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	app.use(middleware.defaultRateLimit);
 
-	const FRONTEND_ORIGIN = process.env.FRONTEND_URL;
+	const FRONTEND_ORIGIN = env.FRONTEND_URL;
 
 	const AUTH_REQUIRED_ROUTES = [
 		'/api/user',
@@ -182,7 +180,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	app.use(middleware.resultGlobalErrorHandler);
 
-	server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+	server.listen(env.PORT, () => console.log(`Server is running on port ${env.PORT}`));
 })();
 
 export default io;

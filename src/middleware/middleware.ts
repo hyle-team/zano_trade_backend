@@ -3,6 +3,7 @@ import { ValidationChain, validationResult } from 'express-validator';
 import { rateLimit } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import User from '@/schemes/User';
+import { env } from '@/config/env.js';
 import UserData from '../interfaces/common/UserData';
 
 const defaultRateLimitMiddleware = rateLimit({
@@ -20,7 +21,7 @@ const defaultRateLimitMiddleware = rateLimit({
 class Middleware {
 	async verifyToken(req: Request, res: Response, next: NextFunction) {
 		try {
-			const userData = jwt.verify(req.body.token, process.env.JWT_SECRET || '') as UserData;
+			const userData = jwt.verify(req.body.token, env.JWT_SECRET) as UserData;
 			req.body.userData = userData;
 			next();
 		} catch {
@@ -40,7 +41,7 @@ class Middleware {
 		});
 
 		const isAdmin = userField && userField.isAdmin;
-		const isOwner = process.env.OWNER_ALIAS && process.env.OWNER_ALIAS === userField?.alias;
+		const isOwner = env.OWNER_ALIAS && env.OWNER_ALIAS === userField?.alias;
 
 		if (isAdmin || isOwner) {
 			next();

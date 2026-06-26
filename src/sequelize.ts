@@ -1,12 +1,13 @@
 import { Sequelize } from 'sequelize';
+import { env } from '@/config/env.js';
 
 const sequelize = new Sequelize({
 	dialect: 'postgres',
-	password: process.env.PGPASSWORD,
-	host: process.env.PGHOST,
-	username: process.env.PGUSER,
-	port: parseInt(process.env.PGPORT || '5432', 10),
-	database: process.env.PGDATABASE,
+	password: env.PGPASSWORD,
+	host: env.PGHOST,
+	username: env.PGUSER,
+	port: env.PGPORT,
+	database: env.PGDATABASE,
 	benchmark: true,
 	logging: (sql, timingMs) => {
 		if (typeof timingMs === 'number' && timingMs > 1000) {

@@ -1,11 +1,7 @@
-import 'dotenv/config';
 // @ts-expect-error - Disabling TS error while importing /shared submodule
 // due to global tsconfig "moduleResolution" prop is set to "node"
 import { ServerWallet } from 'zano_web3/server';
-
-if (process.env.DAEMON_URL === undefined || process.env.DAEMON_URL === '') {
-	throw new Error('DAEMON_URL is not defined in environment variables');
-}
+import { env } from '@/config/env.js';
 
 async function validateWallet({
 	originalMessage,
@@ -23,7 +19,7 @@ async function validateWallet({
 	alias: string;
 }): Promise<boolean> {
 	const serverWallet = new ServerWallet({
-		daemonUrl: process.env.DAEMON_URL,
+		daemonUrl: env.DAEMON_URL,
 		walletUrl: '',
 	});
 

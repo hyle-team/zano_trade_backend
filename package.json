@@ -39,7 +39,8 @@
     "ts-node": "^1.7.1",
     "tsx": "^4.15.7",
     "uuidv4": "^6.2.13",
-    "zano_web3": "^9.8.0-canary.0"
+    "zano_web3": "^9.8.0-canary.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/big.js": "^6.2.0",

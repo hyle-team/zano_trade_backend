@@ -1,5 +1,6 @@
 import { Event } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import { env } from '@/config/env.js';
 import chatsModel from '../models/Chats.js';
 import UserData from '../interfaces/common/UserData.js';
 
@@ -24,7 +25,7 @@ async function socketMiddleware(event: Event, next: (_err?: Error | undefined) =
 	let userData: UserData;
 
 	try {
-		userData = jwt.verify(data.token, process.env.JWT_SECRET || '') as UserData;
+		userData = jwt.verify(data.token, env.JWT_SECRET) as UserData;
 	} catch {
 		return next(new Error('Unauthorized'));
 	}
@@ -49,7 +50,7 @@ export function verifyUser(paths: string[]) {
 		let userData;
 
 		try {
-			userData = jwt.verify(data.token, process.env.JWT_SECRET || '') as UserData;
+			userData = jwt.verify(data.token, env.JWT_SECRET) as UserData;
 		} catch {
 			return next(new Error('Unauthorized'));
 		}
