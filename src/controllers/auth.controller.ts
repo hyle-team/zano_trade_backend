@@ -109,6 +109,7 @@ class AuthController {
 					);
 
 					token = jwt.sign({ ...userData }, env.JWT_SECRET, {
+						algorithm: 'HS256',
 						expiresIn: '24h',
 					});
 				}

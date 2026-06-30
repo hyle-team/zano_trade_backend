@@ -14,7 +14,7 @@ const envSchema = z.object({
 	PGPORT: z.coerce.number().int().positive().default(5432),
 
 	// Auth
-	JWT_SECRET: z.string().min(1),
+	JWT_SECRET: z.string().min(32),
 	OWNER_ALIAS: z.string().min(1).optional(),
 
 	// Zano daemon
