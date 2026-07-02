@@ -3,6 +3,8 @@ import { ValidationChain, validationResult } from 'express-validator';
 import { rateLimit } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
+import proxyaddr from 'proxy-addr';
+import z from 'zod';
 
 import User from '@/schemes/User';
 import { env } from '@/config/env.js';
@@ -114,6 +116,135 @@ class Middleware {
 			},
 		];
 	}
+
+	static readonly INVALID_BFF_IP_SIGNATURE_ERR_MSG = 'INVALID_BFF_IP_SIGNATURE';
+	bffTrustedProxyIpSignatureCheckMiddleware = async (
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): Promise<void> => {
+		try {
+			const SIGNATURE_HEADER = 'x-bff-client-ip-sig';
+			const SIGNATURE_TTL_MS = 15 * 1000; // 15 seconds
+
+			const payloadSchema = z.object({
+				ip: z.string().min(1),
+				index: z.number().int().nonnegative(),
+				method: z.string().min(1),
+				path: z.string().min(1),
+				iat: z.number().int(),
+			});
+
+			const signature = req.get(SIGNATURE_HEADER);
+
+			if (signature === undefined) {
+				next();
+				return;
+			}
+
+			const signatureKeyBuffer = Buffer.from(env.TRUSTED_PROXY_BFF_IP_SIGNATURE_KEY, 'utf-8');
+
+			let rawPayload;
+
+			try {
+				rawPayload = await new Promise((resolve, reject) => {
+					jwt.verify(
+						signature,
+						signatureKeyBuffer,
+						{ algorithms: ['HS256'] },
+						(err, payload) => {
+							if (err) {
+								reject(err);
+								return;
+							}
+
+							resolve(payload);
+						},
+					);
+				});
+			} catch (error) {
+				if (error instanceof jwt.JsonWebTokenError) {
+					throw new Error(Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG);
+				}
+
+				throw error;
+			}
+
+			let payload;
+
+			try {
+				payload = payloadSchema.parse(rawPayload);
+			} catch (error) {
+				if (error instanceof z.ZodError) {
+					throw new Error(Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG);
+				}
+
+				throw error;
+			}
+
+			const { ip, index: signaturePayloadIPIndex, method, path: jwtPath } = payload;
+
+			if (method !== req.method) {
+				throw new Error(Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG);
+			}
+
+			if (jwtPath !== req.path) {
+				throw new Error(Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG);
+			}
+
+			const xForwardedFor = req.headers['x-forwarded-for'];
+
+			if (typeof xForwardedFor !== 'string') {
+				throw new Error(Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG);
+			}
+
+			const xffEntries = xForwardedFor.split(',').map((s) => s.trim());
+
+			const autoTrustedProxyCount = env.TRUST_PROXY_DEPTH;
+			const bffIpIndex = xffEntries.length - autoTrustedProxyCount;
+			const expectedClientIpIndex = bffIpIndex - 1;
+
+			if (
+				xffEntries[signaturePayloadIPIndex] !== ip ||
+				xffEntries[expectedClientIpIndex] !== ip
+			) {
+				throw new Error(Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG);
+			}
+
+			const signatureIssuedAt = payload.iat * 1000;
+
+			const now = Date.now();
+
+			const isExpired = now > signatureIssuedAt + SIGNATURE_TTL_MS || now < signatureIssuedAt;
+
+			if (isExpired) {
+				throw new Error(Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG);
+			}
+
+			const newIPFormatted = proxyaddr(req, (_address, i) => i < env.TRUST_PROXY_DEPTH + 1);
+
+			Object.defineProperty(req, 'ip', {
+				get: () => newIPFormatted,
+				configurable: true,
+			});
+
+			next();
+		} catch (error) {
+			if (
+				error instanceof Error &&
+				error.message === Middleware.INVALID_BFF_IP_SIGNATURE_ERR_MSG
+			) {
+				res.status(500).send({
+					success: false,
+					data: 'Internal error',
+				});
+
+				return;
+			}
+
+			throw error;
+		}
+	};
 
 	expressJSONErrorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
 		const isExpressJSONError =

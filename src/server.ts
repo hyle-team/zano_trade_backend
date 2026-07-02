@@ -30,7 +30,7 @@ import statsModel from './models/Stats';
 import ordersModerationService from './workers/ordersModerationService';
 
 const app = express();
-app.set('trust proxy', 1);
+
 const server = http.createServer(app);
 const io = new Server(server, {
 	cors: {
@@ -85,9 +85,11 @@ process.on('unhandledRejection', (reason, promise) => {
 	exchangeModel.runPairStatsDaemon();
 	statsModel.init();
 
-	socketStart(io);
-
+	app.set('trust proxy', env.TRUST_PROXY_DEPTH);
+	app.use(middleware.bffTrustedProxyIpSignatureCheckMiddleware);
 	app.use(middleware.defaultRateLimit);
+
+	socketStart(io);
 
 	app.use(middleware.defaultCors);
 
