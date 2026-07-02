@@ -1,9 +1,8 @@
 import 'express-async-errors';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
-import cors from 'cors';
 import helmet from 'helmet';
 import { env } from '@/config/env.js';
 import authMessagesCleanService from '@/workers/authMessagesCleanService';
@@ -90,60 +89,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	app.use(middleware.defaultRateLimit);
 
-	const FRONTEND_ORIGIN = env.FRONTEND_URL;
-
-	const AUTH_REQUIRED_ROUTES = [
-		'/api/user',
-		'/api/chats',
-		'/api/transactions',
-		'/api/admin',
-		'/api/check-auth',
-
-		'/api/offers/update',
-		'/api/offers/delete',
-		'/api/offers/get-one',
-
-		'/api/orders/create',
-		'/api/orders/get-user-page',
-		'/api/orders/get',
-		'/api/orders/cancel',
-		'/api/orders/apply-order',
-		'/api/orders/get-user-orders-pairs',
-		'/api/orders/cancel-all',
-
-		'/api/dex/renew-bot',
-	];
-
-	app.use((req, res, next) => {
-		const isProtectedRoute = AUTH_REQUIRED_ROUTES.some((route) => req.path.startsWith(route));
-
-		const corsOptions = {
-			origin: (
-				origin: string | undefined,
-				callback: (_err: Error | null, _allow?: boolean) => void,
-			) => {
-				// SSR / server-side requests
-				if (!origin) {
-					return callback(null, true);
-				}
-
-				// Public routes
-				if (!isProtectedRoute) {
-					return callback(null, true);
-				}
-
-				// Protected routes
-				if (origin === FRONTEND_ORIGIN) {
-					return callback(null, true);
-				}
-
-				return callback(new Error('Not allowed by CORS'));
-			},
-			credentials: true,
-		};
-
-		cors(corsOptions)(req, res, next);
-	});
+	app.use(middleware.defaultCors);
 
 	app.use(
 		helmet({
@@ -174,7 +120,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	app.use('/api/admin', adminRouter);
 
-	app.post('/api/check-auth', middleware.verifyToken, async (req, res) =>
+	app.post('/api/check-auth', middleware.authGuard, async (req: Request, res: Response) =>
 		res.send({ success: true, userData: req.body.userData }),
 	);
 

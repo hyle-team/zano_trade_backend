@@ -8,7 +8,7 @@ import express from 'express';
 
 const adminRouter = express.Router();
 
-adminRouter.use(middleware.verifyToken, middleware.verifyAdmin);
+adminRouter.use(middleware.adminAuthGuard);
 
 adminRouter.post('/check-admin', (req, res) => {
 	res.send({ success: true, data: 'You are an admin' });

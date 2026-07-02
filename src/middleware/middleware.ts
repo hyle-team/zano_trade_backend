@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from 'express';
 import { ValidationChain, validationResult } from 'express-validator';
 import { rateLimit } from 'express-rate-limit';
 import jwt from 'jsonwebtoken';
+import cors from 'cors';
+
 import User from '@/schemes/User';
 import { env } from '@/config/env.js';
 import UserData from '../interfaces/common/UserData';
@@ -19,7 +21,34 @@ const defaultRateLimitMiddleware = rateLimit({
 });
 
 class Middleware {
-	async verifyToken(req: Request, res: Response, next: NextFunction) {
+	private corsProtectedRouteMiddleware = (
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	): void => {
+		const { origin } = req.headers;
+
+		// SSR / server-side requests (no Origin header) — allow
+		if (!origin) {
+			return next();
+		}
+
+		const frontendBaseUrl = new URL(env.FRONTEND_URL).toString();
+		const originUrl = new URL(origin).toString();
+
+		if (originUrl !== frontendBaseUrl) {
+			res.status(500).json({
+				success: false,
+				data: 'Internal error',
+			});
+			return;
+		}
+
+		// Allowed origin — let cors set the response headers, then continue
+		return cors({ origin, credentials: true })(req, res, next);
+	};
+
+	private verifyToken = async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const userData = jwt.verify(req.body.token, env.JWT_SECRET, {
 				algorithms: ['HS256'],
@@ -29,9 +58,9 @@ class Middleware {
 		} catch {
 			res.status(401).send({ success: false, data: 'Unauthorized (JWT)' });
 		}
-	}
+	};
 
-	async verifyAdmin(req: Request, res: Response, next: NextFunction) {
+	private verifyAdmin = async (req: Request, res: Response, next: NextFunction) => {
 		const userAlias = req?.body?.userData?.alias || null;
 
 		console.log(req?.body?.userData);
@@ -50,10 +79,21 @@ class Middleware {
 		} else {
 			res.status(401).send({ success: false, data: 'Unauthorized' });
 		}
-	}
+	};
+
+	authGuard = [this.corsProtectedRouteMiddleware.bind(this), this.verifyToken.bind(this)];
+
+	adminAuthGuard = [
+		this.corsProtectedRouteMiddleware.bind(this),
+		this.verifyToken.bind(this),
+		this.verifyAdmin.bind(this),
+	];
 
 	defaultRateLimit = async (req: Request, res: Response, next: NextFunction) =>
 		defaultRateLimitMiddleware(req, res, next);
+
+	defaultCors = cors({ credentials: true });
+
 	expressValidator(validators: ValidationChain[]) {
 		return [
 			...validators,

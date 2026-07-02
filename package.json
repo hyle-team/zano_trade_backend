@@ -8,7 +8,8 @@
     "start": "tsx ./src/server.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "type-check": "tsc --noEmit --incremental false"
   },
   "lint-staged": {
     "*.ts": [
