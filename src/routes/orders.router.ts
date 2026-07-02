@@ -19,7 +19,7 @@ ordersRouter.use(
 		'/orders/get-user-orders-pairs',
 		'/orders/cancel-all',
 	],
-	middleware.verifyToken,
+	middleware.authGuard,
 );
 
 ordersRouter.post(

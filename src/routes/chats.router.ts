@@ -13,7 +13,7 @@ chatsRouter.use(
 		'/chats/delete-chat',
 		'/chats/get-chat-chunk',
 	],
-	middleware.verifyToken,
+	middleware.authGuard,
 );
 chatsRouter.post(
 	'/chats/create',

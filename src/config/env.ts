@@ -22,6 +22,10 @@ const envSchema = z.object({
 
 	// Frontend
 	FRONTEND_URL: z.url(),
+
+	TRUSTED_PROXY_BFF_IP_SIGNATURE_KEY: z.string().min(32),
+
+	TRUST_PROXY_DEPTH: z.coerce.number().int().nonnegative().default(1),
 });
 
 const parsed = envSchema.safeParse(process.env);
