@@ -29,8 +29,18 @@ import ordersModerationService from './workers/ordersModerationService';
 
 const PORT = process.env.PORT || 3000;
 
+if (!process.env.TRUST_PROXY) {
+	throw new Error('TRUST_PROXY is not provided at .env file');
+}
+
+const trustProxy = Number(process.env.TRUST_PROXY);
+
+if (Number.isNaN(trustProxy)) {
+	throw new Error('TRUST_PROXY must be a number');
+}
+
 const app = express();
-app.set('trust proxy', 1);
+app.set('trust proxy', trustProxy);
 const server = http.createServer(app);
 const io = new Server(server);
 
