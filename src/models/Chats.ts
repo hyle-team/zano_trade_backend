@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { Decimal } from 'decimal.js';
 import userModel from './User.js';
 import offersModel from './Offers.js';
 import configModel from './Config.js';
@@ -66,10 +67,10 @@ class Chats {
 
 			const receiveAmount =
 				offerRow.type === 'buy'
-					? parseFloat(body.chatData.pay) / offerRow.price
-					: parseFloat(body.chatData.pay);
+					? new Decimal(body.chatData.pay).div(offerRow.price)
+					: new Decimal(body.chatData.pay);
 
-			if (offerRow.min > receiveAmount || offerRow.max < receiveAmount) {
+			if (receiveAmount.lessThan(offerRow.min) || receiveAmount.greaterThan(offerRow.max)) {
 				return { success: false, data: 'Invalid offer data' };
 			}
 
@@ -89,11 +90,11 @@ class Chats {
 				offer_number: body.number,
 				buyer_id: userRow.id,
 				status: 'chatting',
-				pay: parseFloat(body.chatData.pay),
+				pay: new Decimal(body.chatData.pay).toFixed(),
 				receive:
 					offerRow.type === 'buy'
-						? parseFloat(body.chatData.pay) / offerRow.price
-						: parseFloat(body.chatData.pay) * offerRow.price,
+						? new Decimal(body.chatData.pay).div(offerRow.price).toFixed()
+						: new Decimal(body.chatData.pay).mul(offerRow.price).toFixed(),
 			});
 
 			if (!chatRow) throw new Error('Chat not created (database)');

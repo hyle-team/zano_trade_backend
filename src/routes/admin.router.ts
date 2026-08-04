@@ -3,18 +3,19 @@ import Currency from '@/schemes/Currency';
 import Order from '@/schemes/Order';
 import Pair from '@/schemes/Pair';
 import User from '@/schemes/User';
+import { env } from '@/config/env.js';
 import express from 'express';
 
 const adminRouter = express.Router();
 
-adminRouter.use(middleware.verifyToken, middleware.verifyAdmin);
+adminRouter.use(middleware.adminAuthGuard);
 
 adminRouter.post('/check-admin', (req, res) => {
 	res.send({ success: true, data: 'You are an admin' });
 });
 
 adminRouter.post('/get-admins', async (req, res) => {
-	const owner = await User.findOne({ where: { alias: process.env.OWNER_ALIAS } });
+	const owner = await User.findOne({ where: { alias: env.OWNER_ALIAS } });
 
 	const admins = await User.findAll({
 		where: {
@@ -38,7 +39,7 @@ adminRouter.post('/delete-admin', async (req, res) => {
 		return res.send({ success: false, message: 'Admin not found' });
 	}
 
-	if (admin.alias === process.env.OWNER_ALIAS) {
+	if (admin.alias === env.OWNER_ALIAS) {
 		return res.send({ success: false, message: "You can't delete owner" });
 	}
 

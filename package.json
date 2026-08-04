@@ -8,7 +8,8 @@
     "start": "tsx ./src/server.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "type-check": "tsc --noEmit --incremental false"
   },
   "lint-staged": {
     "*.ts": [
@@ -19,23 +20,29 @@
   "dependencies": {
     "axios": "^1.4.0",
     "big.js": "^6.2.1",
+    "cors": "^2.8.6",
     "crypto-js": "^4.1.1",
     "decimal.js": "^10.4.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
     "express-rate-limit": "^8.2.1",
     "express-validator": "^7.3.1",
+    "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.0",
     "nanoid": "^5.1.5",
     "node-fetch": "^3.3.1",
     "nodemon": "^3.1.10",
     "pg": "^8.10.0",
+    "proxy-addr": "^2.0.7",
     "sequelize": "^6.37.3",
     "sha256": "^0.2.0",
     "socket.io": "^4.6.1",
     "ts-node": "^1.7.1",
     "tsx": "^4.15.7",
-    "uuidv4": "^6.2.13"
+    "uuidv4": "^6.2.13",
+    "zano_web3": "^9.8.0-canary.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/big.js": "^6.2.0",
@@ -43,6 +50,7 @@
     "@types/express": "^4.17.17",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/pg": "^8.10.2",
+    "@types/proxy-addr": "^2.0.3",
     "@types/sha256": "^0.2.0",
     "@typescript-eslint/eslint-plugin": "^5.55.0",
     "cross-env": "^7.0.3",

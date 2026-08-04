@@ -229,7 +229,6 @@ class StatsModel {
 		const totalTvl = filteredActivePairs.reduce((acc, pair) => {
 			const price = prices[pair.pair_id.toString()];
 			const supply = currentSupplies[pair.pair_id.toString()] || '0';
-			console.log(`Pair ID: ${pair.pair_id}, Price: ${price}, Supply: ${supply}`);
 
 			const pairTvl = new Decimal(price).mul(new Decimal(supply));
 			return acc.add(pairTvl);

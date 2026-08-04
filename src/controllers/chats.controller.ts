@@ -6,19 +6,9 @@ import GetAllChatsBody from '../interfaces/bodies/chats/GetAllChatsBody.js';
 import DeleteChatBody from '../interfaces/bodies/chats/DeleteChatBody.js';
 
 class ChatsController {
-	async create(req: Request, res: Response) {
+	async create(req: Request<unknown, unknown, CreateBody>, res: Response) {
 		try {
-			const { number } = req.body as CreateBody;
-			const { chatData } = req.body as CreateBody;
-
-			const rangeAcceptable =
-				parseFloat(chatData.receive) >= 0 &&
-				parseFloat(chatData.receive) <= 100000000000000000;
-
-			if (!(number && chatData && chatData.pay && chatData.receive && rangeAcceptable))
-				return res.status(400).send({ success: false, data: 'Invalid offer data' });
-
-			const result = await chatsModel.create(req.body as CreateBody);
+			const result = await chatsModel.create(req.body);
 
 			if (result.success) {
 				return res.status(200).send(result);

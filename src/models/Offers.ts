@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { Decimal } from 'decimal.js';
 import DeleteBody from '../interfaces/bodies/offers/DeleteBody.js';
 import { PageData } from '../interfaces/bodies/offers/GetPageBody.js';
 import UpdateBody from '../interfaces/bodies/offers/UpdateBody.js';
@@ -108,11 +109,11 @@ class OffersModel {
 
 				await Offer.create({
 					number: offerNumber,
-					price: body.offerData.price,
-					min: body.offerData.min,
-					max: body.offerData.max,
-					deposit_seller: body.offerData.deposit_seller,
-					deposit_buyer: body.offerData.deposit_buyer,
+					price: new Decimal(body.offerData.price).toFixed(),
+					min: new Decimal(body.offerData.min).toFixed(),
+					max: new Decimal(body.offerData.max).toFixed(),
+					deposit_seller: new Decimal(body.offerData.deposit_seller).toFixed(),
+					deposit_buyer: new Decimal(body.offerData.deposit_buyer).toFixed(),
 					user_id: userRow.id,
 					timestamp: Date.now(),
 					type: body.offerData.type === 'buy' ? 'buy' : 'sell',
@@ -188,11 +189,9 @@ class OffersModel {
 				target_currency_id: pageData.target_currency_id
 					? pageData.target_currency_id
 					: { [Op.gt]: 0 },
-				price:
-					// eslint-disable-next-line no-self-compare
-					pageData.price || 0 > 0
-						? { [Op.lte]: pageData.price }
-						: { [Op.gt]: pageData.price },
+				price: new Decimal(pageData.price !== undefined ? pageData.price : 0).greaterThan(0)
+					? { [Op.lte]: pageData.price }
+					: { [Op.gt]: pageData.price },
 			};
 
 			const count = await Offer.count({
@@ -210,11 +209,9 @@ class OffersModel {
 				target_currency_id: pageData.target_currency_id
 					? pageData.target_currency_id
 					: { [Op.gt]: 0 },
-				price:
-					// eslint-disable-next-line no-self-compare
-					pageData.price || 0 > 0
-						? { [Op.lte]: pageData.price }
-						: { [Op.gt]: pageData.price },
+				price: new Decimal(pageData.price !== undefined ? pageData.price : 0).greaterThan(0)
+					? { [Op.lte]: pageData.price }
+					: { [Op.gt]: pageData.price },
 			};
 
 			const orderCondition = ['price', pageData.priceDescending ? 'DESC' : 'ASC'];

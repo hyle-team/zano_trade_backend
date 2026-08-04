@@ -1,4 +1,5 @@
 import express from 'express';
+import { createValidator } from '@/interfaces/bodies/chats/CreateBody.js';
 import chatsController from '../controllers/chats.controller.js';
 import middleware from '../middleware/middleware.js';
 
@@ -12,9 +13,13 @@ chatsRouter.use(
 		'/chats/delete-chat',
 		'/chats/get-chat-chunk',
 	],
-	middleware.verifyToken,
+	middleware.authGuard,
 );
-chatsRouter.post('/chats/create', chatsController.create);
+chatsRouter.post(
+	'/chats/create',
+	middleware.expressValidator(createValidator),
+	chatsController.create,
+);
 chatsRouter.post('/chats/get-chat', chatsController.getChat);
 chatsRouter.post('/chats/get-chat-chunk', chatsController.getChatChunk);
 chatsRouter.post('/chats/get-all-chats', chatsController.getAllChats);

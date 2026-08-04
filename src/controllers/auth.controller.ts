@@ -1,7 +1,9 @@
-import jwt from 'jsonwebtoken';
-import dotenv from 'dotenv';
-import { Request, Response } from 'express';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import { Request, Response } from 'express';
+// @ts-expect-error - Disabling TS error while importing /shared submodule
+// due to global tsconfig "moduleResolution" prop is set to "node"
+import { generateSecureMessageForSigning } from 'zano_web3/shared';
 
 import AuthData from '@/interfaces/bodies/user/AuthData.js';
 import RequestAuthBody from '@/interfaces/bodies/auth/RequestAuthBody.js';
@@ -9,22 +11,44 @@ import authMessagesModel from '@/models/AuthMessages.js';
 import { AUTH_MESSAGE_EXPIRATION_TIME_MS } from 'shared/constants.js';
 import RequestAuthRes from '@/interfaces/responses/auth/RequestAuthRes.js';
 import sequelize from '@/sequelize.js';
+import AuthBody from '@/interfaces/bodies/auth/AuthBody.js';
+import { env } from '@/config/env.js';
 import validateWallet from '../methods/validateWallet.js';
 import userModel from '../models/User.js';
 
-dotenv.config();
-
 class AuthController {
 	requestAuth = async (req: Request, res: Response<RequestAuthRes>) => {
-		const { address, alias } = req.body as RequestAuthBody;
+		const { address, alias, path } = req.body as RequestAuthBody;
 
-		const message = crypto.randomUUID();
+		const frontendBaseUrlStr = env.FRONTEND_URL;
+
+		const frontendBaseUrl = new URL(frontendBaseUrlStr);
+		const { host } = frontendBaseUrl;
+
+		const fullUri = new URL(frontendBaseUrlStr);
+		fullUri.pathname = path;
+
+		const statement = `This is a authentication message of ${frontendBaseUrlStr}. Sign this message to authenticate in Zano Trade.`;
+
 		const expiresAt = new Date(Date.now() + AUTH_MESSAGE_EXPIRATION_TIME_MS);
+
+		const generateSecureMessageResult = generateSecureMessageForSigning({
+			domain: host,
+			address,
+			statement,
+			uri: fullUri.toString(),
+			nonce: crypto.randomUUID(),
+			expirationTime: expiresAt,
+		});
+
+		if (!generateSecureMessageResult.success) {
+			throw new Error('MESSAGE_SIGN_UNKNOWN_ERROR');
+		}
 
 		const authMessageRow = await authMessagesModel.create({
 			address,
 			alias,
-			message,
+			message: generateSecureMessageResult.message,
 			expiresAt,
 		});
 
@@ -34,15 +58,11 @@ class AuthController {
 		});
 	};
 
-	async auth(req: Request, res: Response) {
+	async auth(req: Request<Record<string, never>, unknown, AuthBody>, res: Response) {
 		try {
 			const userData: AuthData = req.body.data;
 			const { neverExpires } = req.body;
-			const { address, alias, signature, message } = userData;
-
-			if (!address || !alias || !signature || !message) {
-				return res.status(400).send({ success: false, data: 'Invalid auth data' });
-			}
+			const { address, alias, message, pkey } = userData;
 
 			const authMessageRow = await authMessagesModel.findOne({
 				address,
@@ -61,7 +81,14 @@ class AuthController {
 				userData &&
 				userData.address &&
 				alias &&
-				(await validateWallet(userData))
+				(await validateWallet({
+					originalMessage: authMessageRow.message,
+					signedMessage: message,
+					signature: userData.signature,
+					address,
+					pkeyFromSignature: pkey,
+					alias,
+				}))
 			);
 			if (!dataValid) {
 				return res.status(400).send({ success: false, data: 'Invalid auth data' });
@@ -84,8 +111,10 @@ class AuthController {
 
 					token = jwt.sign(
 						{ ...userData },
-						process.env.JWT_SECRET || '',
-						neverExpires ? undefined : { expiresIn: '24h' },
+						env.JWT_SECRET,
+						neverExpires
+							? { algorithm: 'HS256' }
+							: { algorithm: 'HS256', expiresIn: '24h' },
 					);
 				}
 			});

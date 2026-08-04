@@ -5,15 +5,15 @@ import Chat from './Chat';
 class Offer extends Model {
 	declare readonly id: number;
 
-	declare price: number;
+	declare price: string;
 
-	declare min: number;
+	declare min: string;
 
-	declare max: number;
+	declare max: string;
 
-	declare deposit_seller: number;
+	declare deposit_seller: string;
 
-	declare deposit_buyer: number;
+	declare deposit_buyer: string;
 
 	declare user_id: number;
 
@@ -42,23 +42,23 @@ Offer.init(
 	{
 		id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 		price: {
-			type: DataTypes.DOUBLE,
+			type: DataTypes.DECIMAL(40, 20),
 			allowNull: false,
 		},
 		min: {
-			type: DataTypes.DOUBLE,
+			type: DataTypes.DECIMAL(40, 20),
 			allowNull: false,
 		},
 		max: {
-			type: DataTypes.DOUBLE,
+			type: DataTypes.DECIMAL(40, 20),
 			allowNull: false,
 		},
 		deposit_seller: {
-			type: DataTypes.DOUBLE,
+			type: DataTypes.DECIMAL(40, 20),
 			allowNull: false,
 		},
 		deposit_buyer: {
-			type: DataTypes.DOUBLE,
+			type: DataTypes.DECIMAL(40, 20),
 			allowNull: false,
 		},
 		user_id: {

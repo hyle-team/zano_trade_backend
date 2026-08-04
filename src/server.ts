@@ -1,8 +1,10 @@
-import 'dotenv/config';
-import express from 'express';
+import 'express-async-errors';
+import express, { Request, Response } from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 
+import helmet from 'helmet';
+import { env } from '@/config/env.js';
 import authMessagesCleanService from '@/workers/authMessagesCleanService';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
@@ -27,22 +29,16 @@ import { setupAssociations } from './schemes/Associations';
 import statsModel from './models/Stats';
 import ordersModerationService from './workers/ordersModerationService';
 
-const PORT = process.env.PORT || 3000;
-
-if (!process.env.TRUST_PROXY) {
-	throw new Error('TRUST_PROXY is not provided at .env file');
-}
-
-const trustProxy = Number(process.env.TRUST_PROXY);
-
-if (Number.isNaN(trustProxy)) {
-	throw new Error('TRUST_PROXY must be a number');
-}
-
 const app = express();
-app.set('trust proxy', trustProxy);
+
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+	cors: {
+		origin: env.FRONTEND_URL,
+		methods: ['GET', 'POST'],
+		credentials: true,
+	},
+});
 
 // Log uncaught exceptions and unhandled promise rejections
 process.on('uncaughtException', (err) => {
@@ -79,8 +75,8 @@ process.on('unhandledRejection', (reason, promise) => {
 		await zanoRow.save();
 	}
 
-	if (process.env.OWNER_ALIAS) {
-		await User.update({ isAdmin: true }, { where: { alias: process.env.OWNER_ALIAS } });
+	if (env.OWNER_ALIAS) {
+		await User.update({ isAdmin: true }, { where: { alias: env.OWNER_ALIAS } });
 	}
 
 	assetsUpdateChecker.run();
@@ -89,81 +85,22 @@ process.on('unhandledRejection', (reason, promise) => {
 	exchangeModel.runPairStatsDaemon();
 	statsModel.init();
 
-	socketStart(io);
-
+	app.set('trust proxy', env.TRUST_PROXY_DEPTH);
+	app.use(middleware.bffTrustedProxyIpSignatureCheckMiddleware);
 	app.use(middleware.defaultRateLimit);
 
-	const FRONTEND_ORIGIN = process.env.FRONTEND_URL;
+	socketStart(io);
 
-	const AUTH_REQUIRED_ROUTES = [
-		'/api/user',
-		'/api/chats',
-		'/api/transactions',
-		'/api/admin',
-		'/api/check-auth',
+	app.use(middleware.defaultCors);
 
-		'/api/offers/update',
-		'/api/offers/delete',
-		'/api/offers/get-one',
+	app.use(
+		helmet({
+			hsts: true,
+		}),
+	);
 
-		'/api/orders/create',
-		'/api/orders/get-user-page',
-		'/api/orders/get',
-		'/api/orders/cancel',
-		'/api/orders/apply-order',
-		'/api/orders/get-user-orders-pairs',
-		'/api/orders/cancel-all',
-
-		'/api/dex/renew-bot',
-	];
-
-	app.use((req, res, next) => {
-		if (req.method === 'OPTIONS') {
-			res.header('Access-Control-Allow-Origin', '*');
-
-			res.header(
-				'Access-Control-Allow-Headers',
-				'Origin, X-Requested-With, Content-Type, Accept, Authorization',
-			);
-
-			res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-
-			return res.sendStatus(204);
-		}
-
-		const { origin } = req.headers;
-
-		const isProtectedRoute = AUTH_REQUIRED_ROUTES.some((route) => req.path.startsWith(route));
-
-		if (isProtectedRoute) {
-			const isServerRequest = !origin;
-
-			if (!isServerRequest && origin !== FRONTEND_ORIGIN) {
-				return res.status(403).send({
-					success: false,
-					message: 'CORS origin denied',
-				});
-			}
-
-			if (origin) {
-				res.header('Access-Control-Allow-Origin', origin);
-			}
-		} else {
-			res.header('Access-Control-Allow-Origin', '*');
-		}
-
-		res.header(
-			'Access-Control-Allow-Headers',
-			'Origin, X-Requested-With, Content-Type, Accept, Authorization',
-		);
-		res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-		res.header('Referrer-Policy', 'same-origin');
-		res.header(
-			'Permissions-Policy',
-			['fullscreen=(self)', 'picture-in-picture=(self)'].join(', '),
-		);
-		res.header('X-Content-Type-Options', 'nosniff');
-		res.header('X-Frame-Options', 'SAMEORIGIN');
+	app.use((_req, res, next) => {
+		res.setHeader('Permissions-Policy', 'fullscreen=()');
 
 		next();
 	});
@@ -185,13 +122,13 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	app.use('/api/admin', adminRouter);
 
-	app.post('/api/check-auth', middleware.verifyToken, async (req, res) =>
+	app.post('/api/check-auth', middleware.authGuard, async (req: Request, res: Response) =>
 		res.send({ success: true, userData: req.body.userData }),
 	);
 
 	app.use(middleware.resultGlobalErrorHandler);
 
-	server.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+	server.listen(env.PORT, () => console.log(`Server is running on port ${env.PORT}`));
 })();
 
 export default io;

@@ -1,54 +1,58 @@
-import AuthData from '@/interfaces/bodies/user/AuthData';
-import axios from 'axios';
+// @ts-expect-error - Disabling TS error while importing /shared submodule
+// due to global tsconfig "moduleResolution" prop is set to "node"
+import { ServerWallet } from 'zano_web3/server';
+import { env } from '@/config/env.js';
 
-if (process.env.DAEMON_URL === undefined || process.env.DAEMON_URL === '') {
-	throw new Error('DAEMON_URL is not defined in environment variables');
-}
+async function validateWallet({
+	originalMessage,
+	signedMessage,
+	signature,
+	address,
+	pkeyFromSignature,
+	alias,
+}: {
+	originalMessage: string;
+	signedMessage: string;
+	signature: string;
+	address: string;
+	pkeyFromSignature: string;
+	alias: string;
+}): Promise<boolean> {
+	const serverWallet = new ServerWallet({
+		daemonUrl: env.DAEMON_URL,
+		walletUrl: '',
+	});
 
-async function validateWallet(authData: AuthData) {
-	async function fetchZanoApi(method: string, params: object) {
-		try {
-			return await axios
-				.post(process.env.DAEMON_URL ?? '', {
-					id: 0,
-					jsonrpc: '2.0',
-					method,
-					params,
-				})
-				.then((res) => res.data);
-		} catch (error) {
-			console.log(error);
+	const isValidSignature = await serverWallet.validateSecureMessageSignature({
+		originalMessage,
+		signedMessage,
+		signature,
+		address,
+		pkeyFromSignature,
+	});
+
+	if (!isValidSignature) {
+		return false;
+	}
+
+	let aliasDetailsResult;
+
+	try {
+		aliasDetailsResult = await serverWallet.getAliasDetails(alias);
+	} catch (error) {
+		if (error instanceof Error && error.message.includes('Error fetching alias')) {
+			return false;
 		}
+
+		throw error;
 	}
 
-	const { message, address, alias, signature } = authData;
-
-	if (!message || !alias || !signature) {
-		return false;
-	}
-
-	const response = await fetchZanoApi('validate_signature', {
-		buff: Buffer.from(message).toString('base64'),
-		alias,
-		sig: signature,
-	});
-
-	const aliasOk = response?.result?.status === 'OK';
-
-	if (!aliasOk) {
-		return false;
-	}
-
-	const aliasDetailsResponse = await fetchZanoApi('get_alias_details', {
-		alias,
-	});
-
-	const aliasDetails = aliasDetailsResponse?.result?.alias_details;
+	const aliasDetails = aliasDetailsResult?.alias_details;
 	const aliasAddress = aliasDetails?.address;
 
 	const addressOk = !!aliasAddress && aliasAddress === address;
 
-	return aliasOk && addressOk;
+	return addressOk;
 }
 
 export default validateWallet;

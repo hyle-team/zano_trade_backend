@@ -4,7 +4,7 @@ import middleware from '../middleware/middleware.js';
 
 const transactionsRouter = express.Router();
 
-transactionsRouter.use('/transactions/*', middleware.verifyToken);
+transactionsRouter.use('/transactions/*', middleware.authGuard);
 
 transactionsRouter.post('/transactions/confirm', transactionsController.confirmTransaction);
 transactionsRouter.post(
