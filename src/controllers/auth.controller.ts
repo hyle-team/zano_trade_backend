@@ -61,6 +61,7 @@ class AuthController {
 	async auth(req: Request<Record<string, never>, unknown, AuthBody>, res: Response) {
 		try {
 			const userData: AuthData = req.body.data;
+			const { neverExpires } = req.body;
 			const { address, alias, message, pkey } = userData;
 
 			const authMessageRow = await authMessagesModel.findOne({
@@ -108,10 +109,13 @@ class AuthController {
 						{ transaction },
 					);
 
-					token = jwt.sign({ ...userData }, env.JWT_SECRET, {
-						algorithm: 'HS256',
-						expiresIn: '24h',
-					});
+					token = jwt.sign(
+						{ ...userData },
+						env.JWT_SECRET,
+						neverExpires
+							? { algorithm: 'HS256' }
+							: { algorithm: 'HS256', expiresIn: '24h' },
+					);
 				}
 			});
 

@@ -8,6 +8,7 @@ type AuthBody = {
 		message: string;
 		pkey: string;
 	};
+	neverExpires?: boolean;
 };
 
 export const authBodyValidator = [
@@ -16,6 +17,7 @@ export const authBodyValidator = [
 	body('data.signature').isString().notEmpty(),
 	body('data.message').isString().notEmpty(),
 	body('data.pkey').isString().notEmpty(),
+	body('neverExpires').optional().isBoolean(),
 ];
 
 export default AuthBody;
