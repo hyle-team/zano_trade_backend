@@ -4,6 +4,7 @@ import { createOrderValidator } from '@/interfaces/bodies/orders/CreateOrderBody
 import { getUserOrdersValidator } from '@/interfaces/bodies/orders/GetUserOrdersBody.js';
 import { getUserOrdersAllPairsValidator } from '@/interfaces/bodies/orders/GetUserOrdersAllPairsBody.js';
 import { cancelAllValidator } from '@/interfaces/bodies/orders/CancelAllBody.js';
+import { getAllOrdersByAddressValidator } from '@/interfaces/bodies/orders/GetAllOrdersByAddressBody.js';
 import middleware from '../middleware/middleware.js';
 import ordersController from '../controllers/orders.controller.js';
 
@@ -21,6 +22,8 @@ ordersRouter.use(
 	],
 	middleware.authGuard,
 );
+
+ordersRouter.use(['/orders/get-all-by-address'], middleware.integrationKeyAuthGuard);
 
 ordersRouter.post(
 	'/orders/create',
@@ -49,6 +52,11 @@ ordersRouter.patch(
 	'/orders/cancel-all',
 	middleware.expressValidator(cancelAllValidator),
 	ordersController.cancelAll.bind(ordersController),
+);
+ordersRouter.patch(
+	'/orders/get-all-by-address',
+	middleware.expressValidator(getAllOrdersByAddressValidator),
+	ordersController.getAllOrdersByAddress.bind(ordersController),
 );
 
 export default ordersRouter;
