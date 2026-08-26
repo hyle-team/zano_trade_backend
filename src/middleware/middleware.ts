@@ -25,6 +25,17 @@ const defaultRateLimitMiddleware = rateLimit({
 	legacyHeaders: false,
 });
 
+const narrowRateLimitMiddleware = rateLimit({
+	windowMs: 60 * 1000, // 1 minute
+	max: 60, // limit each IP to 60 requests per windowMs (1 request/second)
+	message: {
+		success: false,
+		data: 'Too many requests from this IP, please try again later.',
+	},
+	standardHeaders: true,
+	legacyHeaders: false,
+});
+
 class Middleware {
 	private corsProtectedRouteMiddleware = (
 		req: Request,
@@ -117,6 +128,9 @@ class Middleware {
 
 	defaultRateLimit = async (req: Request, res: Response, next: NextFunction) =>
 		defaultRateLimitMiddleware(req, res, next);
+
+	narrowRateLimit = async (req: Request, res: Response, next: NextFunction) =>
+		narrowRateLimitMiddleware(req, res, next);
 
 	defaultCors = cors({ credentials: true });
 

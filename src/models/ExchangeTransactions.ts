@@ -683,6 +683,109 @@ class ExchangeModel {
 			data: transactions,
 		};
 	};
+
+	static readonly CONFIRMED_TRANSACTION_WITHOUT_FINALIZE_TIMESTAMP =
+		'CONFIRMED_TRANSACTION_WITHOUT_FINALIZE_TIMESTAMP';
+	getAllTransactionsConfirmedByAddress = async ({
+		address,
+		offset,
+		count,
+		order,
+	}: {
+		address: string;
+		offset: number;
+		count: number;
+		order: 'newest' | 'oldest';
+	}): Promise<{
+		success: true;
+		totalItemsCount: number;
+		data: {
+			id: number;
+			buy_order_id: number;
+			sell_order_id: number;
+			amount: string;
+			timestamp: number;
+			finalize_timestamp: number;
+			status: 'confirmed';
+			creator: 'buy' | 'sell';
+			hex_raw_proposal: string;
+		}[];
+	}> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			return {
+				success: true,
+				totalItemsCount: 0,
+				data: [],
+			};
+		}
+
+		const userOrderIds = await Order.findAll({
+			where: { user_id: userRow.id },
+			attributes: ['id'],
+			raw: true,
+		}).then((rows) => rows.map((row) => row.id));
+
+		if (userOrderIds.length === 0) {
+			return {
+				success: true,
+				totalItemsCount: 0,
+				data: [],
+			};
+		}
+
+		const transactionsSelectWhereClause: WhereOptions = {
+			status: 'confirmed',
+			finalize_timestamp: { [Op.ne]: null },
+			[Op.or]: [
+				{ creator: 'buy', sell_order_id: { [Op.in]: userOrderIds } },
+				{ creator: 'sell', buy_order_id: { [Op.in]: userOrderIds } },
+			],
+		};
+
+		const totalItemsCount = await Transaction.count({
+			where: transactionsSelectWhereClause,
+		});
+
+		const sortDirection = order === 'newest' ? 'DESC' : 'ASC';
+
+		const transactionRows = await Transaction.findAll({
+			where: transactionsSelectWhereClause,
+			order: [
+				['finalize_timestamp', sortDirection],
+				['id', sortDirection],
+			],
+			limit: count,
+			offset,
+		});
+
+		const transactions = transactionRows.map((e) => {
+			const finalizeTimestamp = e.finalize_timestamp;
+
+			if (finalizeTimestamp === null) {
+				throw new Error(ExchangeModel.CONFIRMED_TRANSACTION_WITHOUT_FINALIZE_TIMESTAMP);
+			}
+
+			return {
+				id: e.id,
+				buy_order_id: e.buy_order_id,
+				sell_order_id: e.sell_order_id,
+				amount: e.amount,
+				timestamp: e.timestamp,
+				finalize_timestamp: finalizeTimestamp,
+				status: 'confirmed' as const,
+				creator: e.creator,
+				hex_raw_proposal: e.hex_raw_proposal,
+			};
+		});
+
+		return {
+			success: true,
+			totalItemsCount,
+			data: transactions,
+		};
+	};
 }
 
 const exchangeModel = new ExchangeModel();
