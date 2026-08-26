@@ -276,7 +276,7 @@ class ExchangeModel {
 		if (!transactionRow) return console.error('Transaction row not found.');
 
 		await Transaction.update(
-			{ status: 'rejected', rejected_at: new Date() },
+			{ status: 'rejected', finalize_timestamp: Date.now() },
 			{
 				where: { id: transactionRow.id, status: 'pending' },
 				transaction: sequelizeTransaction,
@@ -417,7 +417,10 @@ class ExchangeModel {
 			const isBuyOrderFinished = newBuyOrderLeft.equals('0');
 			const isSellOrderFinished = newSellOrderLeft.equals('0');
 
-			await Transaction.update({ status: 'confirmed' }, { where: { id: transactionId } });
+			await Transaction.update(
+				{ status: 'confirmed', finalize_timestamp: Date.now() },
+				{ where: { id: transactionId } },
+			);
 
 			await Order.update(
 				{
