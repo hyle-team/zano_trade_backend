@@ -1139,6 +1139,88 @@ class OrdersModel {
 
 		return { success: true };
 	};
+
+	getAllOrdersByAddress = async ({
+		address,
+		offset,
+		count,
+		order,
+	}: {
+		address: string;
+		offset: number;
+		count: number;
+		order: 'newest' | 'oldest';
+	}): Promise<{
+		success: true;
+		totalItemsCount: number;
+		data: {
+			id: number;
+			type: string;
+			timestamp: number;
+			side: string;
+			price: string;
+			amount: string;
+			total: string;
+			pair_id: number;
+			user_id: number;
+			status: string;
+			left: string;
+			min_per_apply_amount: string | null;
+			max_per_apply_amount: string | null;
+		}[];
+	}> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			return {
+				success: true,
+				totalItemsCount: 0,
+				data: [],
+			};
+		}
+
+		const ordersSelectWhereClause: WhereOptions = {
+			user_id: userRow.id,
+		};
+
+		const totalItemsCount = await Order.count({
+			where: ordersSelectWhereClause,
+		});
+
+		const sortDirection = order === 'newest' ? 'DESC' : 'ASC';
+
+		const orderRows = await Order.findAll({
+			where: ordersSelectWhereClause,
+			order: [
+				['timestamp', sortDirection],
+				['id', sortDirection],
+			],
+			limit: count,
+			offset,
+		});
+
+		const orders = orderRows.map((e) => ({
+			id: e.id,
+			type: e.type,
+			timestamp: e.timestamp,
+			side: e.side,
+			price: e.price,
+			amount: e.amount,
+			total: e.total,
+			pair_id: e.pair_id,
+			user_id: e.user_id,
+			status: e.status,
+			left: e.left,
+			min_per_apply_amount: e.min_per_apply_amount,
+			max_per_apply_amount: e.max_per_apply_amount,
+		}));
+
+		return {
+			success: true,
+			totalItemsCount,
+			data: orders,
+		};
+	};
 }
 
 const ordersModel = new OrdersModel();

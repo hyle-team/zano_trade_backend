@@ -18,6 +18,8 @@ class Transaction extends Model {
 
 	declare hex_raw_proposal: string;
 
+	declare finalize_timestamp: number | null;
+
 	declare readonly createdAt: Date;
 
 	declare readonly updatedAt: Date;
@@ -54,6 +56,11 @@ Transaction.init(
 			type: DataTypes.TEXT,
 			allowNull: false,
 		},
+		finalize_timestamp: {
+			type: DataTypes.BIGINT,
+			allowNull: true,
+			defaultValue: null,
+		},
 	},
 	{
 		sequelize,
@@ -63,6 +70,7 @@ Transaction.init(
 			{ fields: ['buy_order_id', 'status'] },
 			{ fields: ['sell_order_id', 'status'] },
 			{ fields: ['timestamp'] },
+			{ name: 'transactions_finalize_timestamp', fields: ['finalize_timestamp'] },
 			{
 				name: 'transactions_buy_order_id_sell_order_id',
 				fields: ['buy_order_id', 'sell_order_id'],

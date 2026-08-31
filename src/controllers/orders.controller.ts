@@ -15,6 +15,13 @@ import GetUserOrdersAllPairsRes, {
 import CancelAllBody, { CancelAllBodyOrderType } from '@/interfaces/bodies/orders/CancelAllBody';
 import sequelize from '@/sequelize';
 import CancelAllRes, { CancelAllErrorCode } from '@/interfaces/responses/orders/CancelAllRes';
+import GetAllOrdersByAddressBody, {
+	GetAllOrdersByAddressBodyOrder,
+} from '@/interfaces/bodies/orders/GetAllOrdersByAddressBody';
+import GetAllOrdersByAddressRes, {
+	GetAllOrdersByAddressErrorCode,
+	GetAllOrdersByAddressResOrderData,
+} from '@/interfaces/responses/orders/GetAllOrdersByAddressRes';
 import candlesModel from '../models/Candles';
 import ordersModel from '../models/Orders';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody';
@@ -525,6 +532,55 @@ class OrdersController {
 			});
 		}
 	}
+
+	getAllOrdersByAddress = async (req: Request, res: Response<GetAllOrdersByAddressRes>) => {
+		try {
+			const body = req.body as GetAllOrdersByAddressBody;
+			const { address, offset, count, order } = body;
+
+			const serviceOrder: 'newest' | 'oldest' =
+				order === GetAllOrdersByAddressBodyOrder.NEWEST ? 'newest' : 'oldest';
+
+			const result = await ordersModel.getAllOrdersByAddress({
+				address,
+				offset,
+				count,
+				order: serviceOrder,
+			});
+
+			const { totalItemsCount } = result;
+
+			const orders: GetAllOrdersByAddressResOrderData[] = result.data.map(
+				(serviceOrderData) => ({
+					id: serviceOrderData.id,
+					type: serviceOrderData.type,
+					timestamp: serviceOrderData.timestamp,
+					side: serviceOrderData.side,
+					price: serviceOrderData.price,
+					amount: serviceOrderData.amount,
+					total: serviceOrderData.total,
+					pair_id: serviceOrderData.pair_id,
+					user_id: serviceOrderData.user_id,
+					status: serviceOrderData.status,
+					left: serviceOrderData.left,
+					min_per_apply_amount: serviceOrderData.min_per_apply_amount,
+					max_per_apply_amount: serviceOrderData.max_per_apply_amount,
+				}),
+			);
+
+			res.status(200).send({
+				success: true,
+				totalItemsCount,
+				data: orders,
+			});
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({
+				success: false,
+				data: GetAllOrdersByAddressErrorCode.UNHANDLED_ERROR,
+			});
+		}
+	};
 }
 
 const ordersController = new OrdersController();

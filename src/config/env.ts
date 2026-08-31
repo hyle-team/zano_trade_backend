@@ -26,6 +26,8 @@ const envSchema = z.object({
 	TRUSTED_PROXY_BFF_IP_SIGNATURE_KEY: z.string().min(32),
 
 	TRUST_PROXY_DEPTH: z.coerce.number().int().nonnegative().default(1),
+
+	INTEGRATION_KEY: z.string().min(32),
 });
 
 const parsed = envSchema.safeParse(process.env);

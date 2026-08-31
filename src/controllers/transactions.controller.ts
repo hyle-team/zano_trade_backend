@@ -5,6 +5,20 @@ import { Op } from 'sequelize';
 import { OrderWithAllTransactions, OrderWithUser } from '@/interfaces/database/modifiedRequests';
 import User from '@/schemes/User.js';
 import CancelTransactionBody from '@/interfaces/bodies/exchange-transactions/CancelTransactionBody.js';
+import GetAllTransactionsByAddressBody, {
+	GetAllTransactionsByAddressBodyOrder,
+} from '@/interfaces/bodies/exchange-transactions/GetAllTransactionsByAddressBody.js';
+import GetAllTransactionsByAddressRes, {
+	GetAllTransactionsByAddressErrorCode,
+	GetAllTransactionsByAddressResTransactionData,
+} from '@/interfaces/responses/exchange-transactions/GetAllTransactionsByAddressRes.js';
+import GetAllTransactionsConfirmedByAddressBody, {
+	GetAllTransactionsConfirmedByAddressBodyOrder,
+} from '@/interfaces/bodies/exchange-transactions/GetAllTransactionsConfirmedByAddressBody.js';
+import GetAllTransactionsConfirmedByAddressRes, {
+	GetAllTransactionsConfirmedByAddressErrorCode,
+	GetAllTransactionsConfirmedByAddressResTransactionData,
+} from '@/interfaces/responses/exchange-transactions/GetAllTransactionsConfirmedByAddressRes.js';
 import exchangeModel from '../models/ExchangeTransactions.js';
 import ConfirmTransactionBody from '../interfaces/bodies/exchange-transactions/ConfirmTransactionBody.js';
 import GetActiveTxByOrdersIdsBody from '../interfaces/bodies/exchange-transactions/GetActiveTxByOrdersIdsBody.js';
@@ -296,6 +310,102 @@ class TransactionsController {
 			return res.status(500).send({ success: false, data: 'Unhandled error' });
 		}
 	}
+
+	getAllTransactionsByAddress = async (
+		req: Request,
+		res: Response<GetAllTransactionsByAddressRes>,
+	) => {
+		try {
+			const body = req.body as GetAllTransactionsByAddressBody;
+			const { address, offset, count, order } = body;
+
+			const serviceOrder: 'newest' | 'oldest' =
+				order === GetAllTransactionsByAddressBodyOrder.NEWEST ? 'newest' : 'oldest';
+
+			const result = await exchangeModel.getAllTransactionsByAddress({
+				address,
+				offset,
+				count,
+				order: serviceOrder,
+			});
+
+			const { totalItemsCount } = result;
+
+			const transactions: GetAllTransactionsByAddressResTransactionData[] = result.data.map(
+				(serviceTransactionData) => ({
+					id: serviceTransactionData.id,
+					buy_order_id: serviceTransactionData.buy_order_id,
+					sell_order_id: serviceTransactionData.sell_order_id,
+					amount: serviceTransactionData.amount,
+					timestamp: serviceTransactionData.timestamp,
+					status: serviceTransactionData.status,
+					creator: serviceTransactionData.creator,
+					hex_raw_proposal: serviceTransactionData.hex_raw_proposal,
+				}),
+			);
+
+			res.status(200).send({
+				success: true,
+				totalItemsCount,
+				data: transactions,
+			});
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({
+				success: false,
+				data: GetAllTransactionsByAddressErrorCode.UNHANDLED_ERROR,
+			});
+		}
+	};
+
+	getAllTransactionsConfirmedByAddress = async (
+		req: Request,
+		res: Response<GetAllTransactionsConfirmedByAddressRes>,
+	) => {
+		try {
+			const body = req.body as GetAllTransactionsConfirmedByAddressBody;
+			const { address, offset, count, order } = body;
+
+			const serviceOrder: 'newest' | 'oldest' =
+				order === GetAllTransactionsConfirmedByAddressBodyOrder.NEWEST
+					? 'newest'
+					: 'oldest';
+
+			const result = await exchangeModel.getAllTransactionsConfirmedByAddress({
+				address,
+				offset,
+				count,
+				order: serviceOrder,
+			});
+
+			const { totalItemsCount } = result;
+
+			const transactions: GetAllTransactionsConfirmedByAddressResTransactionData[] =
+				result.data.map((serviceTransactionData) => ({
+					id: serviceTransactionData.id,
+					buy_order_id: serviceTransactionData.buy_order_id,
+					sell_order_id: serviceTransactionData.sell_order_id,
+					amount: serviceTransactionData.amount,
+					timestamp: serviceTransactionData.timestamp,
+					finalize_timestamp: serviceTransactionData.finalize_timestamp,
+					status: serviceTransactionData.status,
+					creator: serviceTransactionData.creator,
+					hex_raw_proposal: serviceTransactionData.hex_raw_proposal,
+				}));
+
+			res.status(200).send({
+				success: true,
+				totalItemsCount,
+				data: transactions,
+			});
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({
+				success: false,
+				data: GetAllTransactionsConfirmedByAddressErrorCode.UNHANDLED_ERROR,
+			});
+		}
+	};
 }
 
 const transactionsController = new TransactionsController();

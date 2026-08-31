@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { ValidationChain, validationResult } from 'express-validator';
 import { rateLimit } from 'express-rate-limit';
+import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import proxyaddr from 'proxy-addr';
@@ -10,9 +11,23 @@ import User from '@/schemes/User';
 import { env } from '@/config/env.js';
 import UserData from '../interfaces/common/UserData';
 
+const sha256 = (value: string): Buffer =>
+	crypto.createHash('sha256').update(value, 'utf8').digest();
+
 const defaultRateLimitMiddleware = rateLimit({
 	windowMs: 10 * 60 * 1000, // 10 minutes
 	max: 6000, // limit each IP to 6000 requests per windowMs (10 requests/second)
+	message: {
+		success: false,
+		data: 'Too many requests from this IP, please try again later.',
+	},
+	standardHeaders: true,
+	legacyHeaders: false,
+});
+
+const narrowRateLimitMiddleware = rateLimit({
+	windowMs: 60 * 1000, // 1 minute
+	max: 60, // limit each IP to 60 requests per windowMs (1 request/second)
 	message: {
 		success: false,
 		data: 'Too many requests from this IP, please try again later.',
@@ -82,6 +97,25 @@ class Middleware {
 		}
 	};
 
+	private readonly INTEGRATION_KEY_HEADER_NAME = 'x-integration-key';
+
+	private readonly INTEGRATION_KEY_HASH = sha256(env.INTEGRATION_KEY);
+
+	private verifyIntegrationKey = async (req: Request, res: Response, next: NextFunction) => {
+		const providedKey = req.headers[this.INTEGRATION_KEY_HEADER_NAME];
+
+		const isValid =
+			typeof providedKey === 'string' &&
+			crypto.timingSafeEqual(sha256(providedKey), this.INTEGRATION_KEY_HASH);
+
+		if (!isValid) {
+			res.status(401).send({ success: false, data: 'Unauthorized' });
+			return;
+		}
+
+		next();
+	};
+
 	authGuard = [this.corsProtectedRouteMiddleware.bind(this), this.verifyToken.bind(this)];
 
 	adminAuthGuard = [
@@ -90,8 +124,13 @@ class Middleware {
 		this.verifyAdmin.bind(this),
 	];
 
+	integrationKeyAuthGuard = [this.verifyIntegrationKey.bind(this)];
+
 	defaultRateLimit = async (req: Request, res: Response, next: NextFunction) =>
 		defaultRateLimitMiddleware(req, res, next);
+
+	narrowRateLimit = async (req: Request, res: Response, next: NextFunction) =>
+		narrowRateLimitMiddleware(req, res, next);
 
 	defaultCors = cors({ credentials: true });
 
