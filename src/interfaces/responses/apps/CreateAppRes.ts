@@ -8,10 +8,7 @@ export type CreateAppSuccessRes = {
 	data: CreateAppResAppData;
 };
 
-export enum CreateAppErrorCode {
-	// eslint-disable-next-line no-unused-vars
-	UNHANDLED_ERROR = 'Unhandled error',
-}
+export enum CreateAppErrorCode {}
 
 export type CreateAppErrorRes = {
 	success: false;

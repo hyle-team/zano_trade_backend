@@ -1,6 +1,9 @@
 import { body } from 'express-validator';
 
+import UserData from '../../common/UserData';
+
 interface CreateAppBody {
+	userData: UserData;
 	name: string;
 }
 

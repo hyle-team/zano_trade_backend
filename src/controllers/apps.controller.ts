@@ -1,27 +1,32 @@
 import { Request, Response } from 'express';
 import CreateAppBody from '@/interfaces/bodies/apps/CreateAppBody.js';
-import CreateAppRes, { CreateAppErrorCode } from '@/interfaces/responses/apps/CreateAppRes.js';
-import appsModel from '../models/Apps.js';
+import CreateAppRes from '@/interfaces/responses/apps/CreateAppRes.js';
+import appsModel, { CreateAppModelErrorCode } from '../models/Apps.js';
 
 class AppsController {
 	create = async (req: Request, res: Response<CreateAppRes>) => {
-		try {
-			const body = req.body as CreateAppBody;
-			const { name } = body;
+		const body = req.body as CreateAppBody;
+		const { name, userData } = body;
 
-			const result = await appsModel.create({ name });
+		const result = await appsModel.create({ name, address: userData.address });
 
-			res.status(200).send({
-				success: true,
-				data: result.data,
-			});
-		} catch (err) {
-			console.log(err);
-			res.status(500).send({
-				success: false,
-				data: CreateAppErrorCode.UNHANDLED_ERROR,
-			});
+		if (!result.success) {
+			const errorCode = result.data;
+
+			if (errorCode === CreateAppModelErrorCode.USER_NOT_FOUND) {
+				throw new Error('JWT token of non-existent user');
+			} else {
+				const unhandledErrorCode: never = errorCode;
+				throw new Error(
+					`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+				);
+			}
 		}
+
+		res.status(200).send({
+			success: true,
+			data: result.data,
+		});
 	};
 }
 
