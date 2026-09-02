@@ -1,11 +1,13 @@
-import App from '../schemes/App.js';
-import userModel from './User.js';
+import App from '@/schemes/App.js';
+import userModel from '@/models/User.js';
+import '@/schemes/AppToken.js';
 
 export enum CreateAppModelErrorCode {
 	// eslint-disable-next-line no-unused-vars
 	USER_NOT_FOUND = 'User not found',
 }
 
+// TODO: move to separate file
 type CreateAppSuccessRes = {
 	success: true;
 	data: {
