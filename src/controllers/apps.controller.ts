@@ -5,6 +5,11 @@ import { CreateAppModelErrorCode } from '@/interfaces/models/Apps/responses/Crea
 import GetAllAppsBody from '@/interfaces/bodies/apps/GetAllAppsBody.js';
 import GetAllAppsRes from '@/interfaces/responses/apps/GetAllAppsRes.js';
 import { GetAllAppsModelErrorCode } from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
+import DeleteAppBody from '@/interfaces/bodies/apps/DeleteAppBody.js';
+import DeleteAppParams from '@/interfaces/params/apps/DeleteAppParams.js';
+import DeleteAppRes, { DeleteAppErrorCode } from '@/interfaces/responses/apps/DeleteAppRes.js';
+import { DeleteAppModelErrorCode } from '@/interfaces/models/Apps/responses/DeleteAppModelRes.js';
+import { Decimal } from 'decimal.js';
 import appsModel from '../models/Apps.js';
 
 class AppsController {
@@ -63,6 +68,46 @@ class AppsController {
 				throw new Error(
 					`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
 				);
+			}
+		}
+
+		res.status(200).send({
+			success: true,
+			data: result.data,
+		});
+	};
+
+	delete = async (req: Request, res: Response<DeleteAppRes>) => {
+		const body = req.body as DeleteAppBody;
+		const params = req.params as unknown as DeleteAppParams;
+
+		const { userData } = body;
+
+		const result = await appsModel.delete({
+			appId: new Decimal(params.appId).toNumber(),
+			address: userData.address,
+		});
+
+		if (!result.success) {
+			const errorCode = result.data;
+
+			switch (errorCode) {
+				case DeleteAppModelErrorCode.APP_NOT_FOUND:
+					res.status(400).send({
+						success: false,
+						data: DeleteAppErrorCode.APP_NOT_FOUND,
+					});
+					return;
+
+				case DeleteAppModelErrorCode.USER_NOT_FOUND:
+					throw new Error('JWT token of non-existent user');
+
+				default: {
+					const unhandledErrorCode: never = errorCode;
+					throw new Error(
+						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+					);
+				}
 			}
 		}
 

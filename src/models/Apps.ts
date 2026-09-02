@@ -13,6 +13,10 @@ import GetAllAppsModelParams from '@/interfaces/models/Apps/params/GetAllAppsMod
 import GetAllAppsModelRes, {
 	GetAllAppsModelErrorCode,
 } from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
+import DeleteAppModelParams from '@/interfaces/models/Apps/params/DeleteAppModelParams.js';
+import DeleteAppModelRes, {
+	DeleteAppModelErrorCode,
+} from '@/interfaces/models/Apps/responses/DeleteAppModelRes.js';
 import { Decimal } from 'decimal.js';
 
 class Apps {
@@ -78,6 +82,30 @@ class Apps {
 				api_key_exists: new Decimal(appRow.api_key_count).greaterThan(0),
 			})),
 		};
+	};
+
+	delete = async ({ appId, address }: DeleteAppModelParams): Promise<DeleteAppModelRes> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			return { success: false, data: DeleteAppModelErrorCode.USER_NOT_FOUND };
+		}
+
+		return sequelize.transaction(async (transaction) => {
+			const appRow = await App.findOne({
+				where: { id: appId, user_id: userRow.id },
+				transaction,
+			});
+
+			if (!appRow) {
+				return { success: false, data: DeleteAppModelErrorCode.APP_NOT_FOUND };
+			}
+
+			await AppToken.destroy({ where: { app_id: appRow.id }, transaction });
+			await appRow.destroy({ transaction });
+
+			return { success: true, data: { id: appId } };
+		});
 	};
 }
 
