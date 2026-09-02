@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import CreateAppBody from '@/interfaces/bodies/apps/CreateAppBody.js';
-import CreateAppRes from '@/interfaces/responses/apps/CreateAppRes.js';
+import CreateAppRes, { CreateAppErrorCode } from '@/interfaces/responses/apps/CreateAppRes.js';
 import { CreateAppModelErrorCode } from '@/interfaces/models/Apps/responses/CreateAppModelRes.js';
 import appsModel from '../models/Apps.js';
 
@@ -14,13 +14,27 @@ class AppsController {
 		if (!result.success) {
 			const errorCode = result.data;
 
-			if (errorCode === CreateAppModelErrorCode.USER_NOT_FOUND) {
-				throw new Error('JWT token of non-existent user');
-			} else {
-				const unhandledErrorCode: never = errorCode;
-				throw new Error(
-					`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
-				);
+			switch (errorCode) {
+				case CreateAppModelErrorCode.NAME_TAKEN:
+					res.status(400).send({ success: false, data: CreateAppErrorCode.NAME_TAKEN });
+					return;
+
+				case CreateAppModelErrorCode.APP_LIMIT_REACHED:
+					res.status(400).send({
+						success: false,
+						data: CreateAppErrorCode.APP_LIMIT_REACHED,
+					});
+					return;
+
+				case CreateAppModelErrorCode.USER_NOT_FOUND:
+					throw new Error('JWT token of non-existent user');
+
+				default: {
+					const unhandledErrorCode: never = errorCode;
+					throw new Error(
+						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+					);
+				}
 			}
 		}
 

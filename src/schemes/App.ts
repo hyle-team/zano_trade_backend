@@ -3,6 +3,8 @@ import { Model, DataTypes } from 'sequelize';
 import sequelize from '@/sequelize';
 import User from './User';
 
+export const APPS_USER_ID_NAME_UNIQUE_CONSTRAINT = 'apps_user_id_name_unique';
+
 class App extends Model {
 	declare readonly id: number;
 
@@ -21,17 +23,18 @@ App.init(
 		name: {
 			type: DataTypes.STRING,
 			allowNull: false,
+			unique: APPS_USER_ID_NAME_UNIQUE_CONSTRAINT,
 		},
 		user_id: {
 			type: DataTypes.INTEGER,
 			allowNull: false,
+			unique: APPS_USER_ID_NAME_UNIQUE_CONSTRAINT,
 		},
 	},
 	{
 		sequelize,
 		modelName: 'App',
 		timestamps: true,
-		indexes: [{ name: 'apps_name', fields: ['name'] }, { fields: ['user_id'] }],
 	},
 );
 

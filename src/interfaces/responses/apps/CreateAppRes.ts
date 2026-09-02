@@ -8,7 +8,10 @@ export type CreateAppSuccessRes = {
 	data: CreateAppResAppData;
 };
 
-export enum CreateAppErrorCode {}
+export enum CreateAppErrorCode {
+	NAME_TAKEN = 'Name taken',
+	APP_LIMIT_REACHED = 'App limit reached',
+}
 
 export type CreateAppErrorRes = {
 	success: false;

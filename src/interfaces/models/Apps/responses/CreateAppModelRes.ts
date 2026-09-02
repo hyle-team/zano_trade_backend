@@ -1,6 +1,7 @@
 export enum CreateAppModelErrorCode {
-	// eslint-disable-next-line no-unused-vars
 	USER_NOT_FOUND = 'User not found',
+	NAME_TAKEN = 'Name taken',
+	APP_LIMIT_REACHED = 'App limit reached',
 }
 
 export type CreateAppModelResAppData = {
