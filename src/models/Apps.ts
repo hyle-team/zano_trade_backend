@@ -1,36 +1,12 @@
 import App from '@/schemes/App.js';
 import userModel from '@/models/User.js';
-import '@/schemes/AppToken.js';
-
-export enum CreateAppModelErrorCode {
-	// eslint-disable-next-line no-unused-vars
-	USER_NOT_FOUND = 'User not found',
-}
-
-// TODO: move to separate file
-type CreateAppSuccessRes = {
-	success: true;
-	data: {
-		id: number;
-		name: string;
-	};
-};
-
-type CreateAppErrorRes = {
-	success: false;
-	data: CreateAppModelErrorCode;
-};
-
-type CreateAppRes = CreateAppSuccessRes | CreateAppErrorRes;
+import CreateAppModelParams from '@/interfaces/models/Apps/params/CreateAppModelParams.js';
+import CreateAppModelRes, {
+	CreateAppModelErrorCode,
+} from '@/interfaces/models/Apps/responses/CreateAppModelRes.js';
 
 class Apps {
-	create = async ({
-		name,
-		address,
-	}: {
-		name: string;
-		address: string;
-	}): Promise<CreateAppRes> => {
+	create = async ({ name, address }: CreateAppModelParams): Promise<CreateAppModelRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {

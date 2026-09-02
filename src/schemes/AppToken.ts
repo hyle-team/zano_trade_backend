@@ -10,7 +10,7 @@ class AppToken extends Model {
 
 	declare value: string;
 
-	declare issued_at: number;
+	declare issued_at: Date;
 }
 
 AppToken.init(

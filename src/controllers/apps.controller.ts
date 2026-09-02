@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import CreateAppBody from '@/interfaces/bodies/apps/CreateAppBody.js';
 import CreateAppRes from '@/interfaces/responses/apps/CreateAppRes.js';
-import appsModel, { CreateAppModelErrorCode } from '../models/Apps.js';
+import { CreateAppModelErrorCode } from '@/interfaces/models/Apps/responses/CreateAppModelRes.js';
+import appsModel from '../models/Apps.js';
 
 class AppsController {
 	create = async (req: Request, res: Response<CreateAppRes>) => {
