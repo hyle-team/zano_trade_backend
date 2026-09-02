@@ -13,4 +13,6 @@ appsRouter.post(
 	appsController.create.bind(appsController),
 );
 
+appsRouter.patch('/', appsController.getAll.bind(appsController));
+
 export default appsRouter;
