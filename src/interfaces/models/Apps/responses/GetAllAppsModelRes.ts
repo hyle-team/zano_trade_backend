@@ -5,7 +5,7 @@ export enum GetAllAppsModelErrorCode {
 export type GetAllAppsModelResAppData = {
 	id: number;
 	name: string;
-	api_key_exists: boolean;
+	apiKeyExists: boolean;
 };
 
 export type GetAllAppsModelSuccessRes = {

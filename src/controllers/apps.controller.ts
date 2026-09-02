@@ -5,6 +5,10 @@ import { CreateAppModelErrorCode } from '@/interfaces/models/Apps/responses/Crea
 import GetAllAppsBody from '@/interfaces/bodies/apps/GetAllAppsBody.js';
 import GetAllAppsRes from '@/interfaces/responses/apps/GetAllAppsRes.js';
 import { GetAllAppsModelErrorCode } from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
+import GetAppBody from '@/interfaces/bodies/apps/GetAppBody.js';
+import GetAppParams from '@/interfaces/params/apps/GetAppParams.js';
+import GetAppRes, { GetAppErrorCode } from '@/interfaces/responses/apps/GetAppRes.js';
+import { GetAppModelErrorCode } from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
 import DeleteAppBody from '@/interfaces/bodies/apps/DeleteAppBody.js';
 import DeleteAppParams from '@/interfaces/params/apps/DeleteAppParams.js';
 import DeleteAppRes, { DeleteAppErrorCode } from '@/interfaces/responses/apps/DeleteAppRes.js';
@@ -74,6 +78,50 @@ class AppsController {
 		res.status(200).send({
 			success: true,
 			data: result.data,
+		});
+	};
+
+	getOne = async (req: Request, res: Response<GetAppRes>) => {
+		const body = req.body as GetAppBody;
+		const params = req.params as unknown as GetAppParams;
+
+		const { userData } = body;
+
+		const result = await appsModel.getOne({
+			appId: new Decimal(params.appId).toNumber(),
+			address: userData.address,
+		});
+
+		if (!result.success) {
+			const errorCode = result.data;
+
+			switch (errorCode) {
+				case GetAppModelErrorCode.APP_NOT_FOUND:
+					res.status(400).send({
+						success: false,
+						data: GetAppErrorCode.APP_NOT_FOUND,
+					});
+					return;
+
+				case GetAppModelErrorCode.USER_NOT_FOUND:
+					throw new Error('JWT token of non-existent user');
+
+				default: {
+					const unhandledErrorCode: never = errorCode;
+					throw new Error(
+						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+					);
+				}
+			}
+		}
+
+		res.status(200).send({
+			success: true,
+			data: {
+				id: result.data.id,
+				name: result.data.name,
+				apiKeyExists: result.data.apiKey !== null,
+			},
 		});
 	};
 

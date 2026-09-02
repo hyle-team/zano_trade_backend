@@ -13,6 +13,10 @@ import GetAllAppsModelParams from '@/interfaces/models/Apps/params/GetAllAppsMod
 import GetAllAppsModelRes, {
 	GetAllAppsModelErrorCode,
 } from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
+import GetAppModelParams from '@/interfaces/models/Apps/params/GetAppModelParams.js';
+import GetAppModelRes, {
+	GetAppModelErrorCode,
+} from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
 import DeleteAppModelParams from '@/interfaces/models/Apps/params/DeleteAppModelParams.js';
 import DeleteAppModelRes, {
 	DeleteAppModelErrorCode,
@@ -79,8 +83,33 @@ class Apps {
 			data: appRows.map((appRow) => ({
 				id: appRow.id,
 				name: appRow.name,
-				api_key_exists: new Decimal(appRow.api_key_count).greaterThan(0),
+				apiKeyExists: new Decimal(appRow.api_key_count).greaterThan(0),
 			})),
+		};
+	};
+
+	getOne = async ({ appId, address }: GetAppModelParams): Promise<GetAppModelRes> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			return { success: false, data: GetAppModelErrorCode.USER_NOT_FOUND };
+		}
+
+		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
+
+		if (!appRow) {
+			return { success: false, data: GetAppModelErrorCode.APP_NOT_FOUND };
+		}
+
+		const tokenRow = await AppToken.findOne({ where: { app_id: appRow.id } });
+
+		return {
+			success: true,
+			data: {
+				id: appRow.id,
+				name: appRow.name,
+				apiKey: tokenRow ? { issuedAt: tokenRow.issued_at } : null,
+			},
 		};
 	};
 

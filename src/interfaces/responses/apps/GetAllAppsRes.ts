@@ -1,7 +1,7 @@
 export type GetAllAppsResAppData = {
 	id: number;
 	name: string;
-	api_key_exists: boolean;
+	apiKeyExists: boolean;
 };
 
 export type GetAllAppsSuccessRes = {
