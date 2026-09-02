@@ -9,6 +9,12 @@ import GetAppBody from '@/interfaces/bodies/apps/GetAppBody.js';
 import GetAppParams from '@/interfaces/params/apps/GetAppParams.js';
 import GetAppRes, { GetAppErrorCode } from '@/interfaces/responses/apps/GetAppRes.js';
 import { GetAppModelErrorCode } from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
+import UpdateAppNameBody from '@/interfaces/bodies/apps/UpdateAppNameBody.js';
+import UpdateAppNameParams from '@/interfaces/params/apps/UpdateAppNameParams.js';
+import UpdateAppNameRes, {
+	UpdateAppNameErrorCode,
+} from '@/interfaces/responses/apps/UpdateAppNameRes.js';
+import { UpdateAppNameModelErrorCode } from '@/interfaces/models/Apps/responses/UpdateAppNameModelRes.js';
 import DeleteAppBody from '@/interfaces/bodies/apps/DeleteAppBody.js';
 import DeleteAppParams from '@/interfaces/params/apps/DeleteAppParams.js';
 import DeleteAppRes, { DeleteAppErrorCode } from '@/interfaces/responses/apps/DeleteAppRes.js';
@@ -122,6 +128,54 @@ class AppsController {
 				name: result.data.name,
 				apiKeyExists: result.data.apiKey !== null,
 			},
+		});
+	};
+
+	updateName = async (req: Request, res: Response<UpdateAppNameRes>) => {
+		const body = req.body as UpdateAppNameBody;
+		const params = req.params as unknown as UpdateAppNameParams;
+
+		const { name, userData } = body;
+
+		const result = await appsModel.updateName({
+			appId: new Decimal(params.appId).toNumber(),
+			address: userData.address,
+			name,
+		});
+
+		if (!result.success) {
+			const errorCode = result.data;
+
+			switch (errorCode) {
+				case UpdateAppNameModelErrorCode.APP_NOT_FOUND:
+					res.status(400).send({
+						success: false,
+						data: UpdateAppNameErrorCode.APP_NOT_FOUND,
+					});
+					return;
+
+				case UpdateAppNameModelErrorCode.NAME_TAKEN:
+					res.status(400).send({
+						success: false,
+						data: UpdateAppNameErrorCode.NAME_TAKEN,
+					});
+					return;
+
+				case UpdateAppNameModelErrorCode.USER_NOT_FOUND:
+					throw new Error('JWT token of non-existent user');
+
+				default: {
+					const unhandledErrorCode: never = errorCode;
+					throw new Error(
+						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+					);
+				}
+			}
+		}
+
+		res.status(200).send({
+			success: true,
+			data: result.data,
 		});
 	};
 

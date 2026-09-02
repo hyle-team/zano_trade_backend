@@ -5,6 +5,8 @@ import appsController from '@/controllers/apps.controller.js';
 import middleware from '@/middleware/middleware';
 import { deleteAppParamsValidator } from '@/interfaces/params/apps/DeleteAppParams';
 import { getAppParamsValidator } from '@/interfaces/params/apps/GetAppParams';
+import { updateAppNameValidator } from '@/interfaces/bodies/apps/UpdateAppNameBody';
+import { updateAppNameParamsValidator } from '@/interfaces/params/apps/UpdateAppNameParams';
 
 const appsRouter = express.Router();
 
@@ -22,6 +24,12 @@ appsRouter.patch(
 	'/get/:appId',
 	middleware.expressValidator(getAppParamsValidator),
 	appsController.getOne.bind(appsController),
+);
+
+appsRouter.put(
+	'/:appId',
+	middleware.expressValidator([...updateAppNameParamsValidator, ...updateAppNameValidator]),
+	appsController.updateName.bind(appsController),
 );
 
 appsRouter.delete(

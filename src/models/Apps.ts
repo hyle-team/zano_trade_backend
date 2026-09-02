@@ -17,6 +17,10 @@ import GetAppModelParams from '@/interfaces/models/Apps/params/GetAppModelParams
 import GetAppModelRes, {
 	GetAppModelErrorCode,
 } from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
+import UpdateAppNameModelParams from '@/interfaces/models/Apps/params/UpdateAppNameModelParams.js';
+import UpdateAppNameModelRes, {
+	UpdateAppNameModelErrorCode,
+} from '@/interfaces/models/Apps/responses/UpdateAppNameModelRes.js';
 import DeleteAppModelParams from '@/interfaces/models/Apps/params/DeleteAppModelParams.js';
 import DeleteAppModelRes, {
 	DeleteAppModelErrorCode,
@@ -111,6 +115,37 @@ class Apps {
 				apiKey: tokenRow ? { issuedAt: tokenRow.issued_at } : null,
 			},
 		};
+	};
+
+	updateName = async ({
+		appId,
+		address,
+		name,
+	}: UpdateAppNameModelParams): Promise<UpdateAppNameModelRes> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			return { success: false, data: UpdateAppNameModelErrorCode.USER_NOT_FOUND };
+		}
+
+		try {
+			const [affectedRowsCount] = await App.update(
+				{ name },
+				{ where: { id: appId, user_id: userRow.id } },
+			);
+
+			if (affectedRowsCount === 0) {
+				return { success: false, data: UpdateAppNameModelErrorCode.APP_NOT_FOUND };
+			}
+
+			return { success: true, data: { id: appId, name } };
+		} catch (error) {
+			if (error instanceof UniqueConstraintError) {
+				return { success: false, data: UpdateAppNameModelErrorCode.NAME_TAKEN };
+			}
+
+			throw error;
+		}
 	};
 
 	delete = async ({ appId, address }: DeleteAppModelParams): Promise<DeleteAppModelRes> => {
