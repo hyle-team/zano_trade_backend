@@ -7,6 +7,8 @@ import { deleteAppParamsValidator } from '@/interfaces/params/apps/DeleteAppPara
 import { getAppParamsValidator } from '@/interfaces/params/apps/GetAppParams';
 import { updateAppNameValidator } from '@/interfaces/bodies/apps/UpdateAppNameBody';
 import { updateAppNameParamsValidator } from '@/interfaces/params/apps/UpdateAppNameParams';
+import { createAppTokenParamsValidator } from '@/interfaces/params/app-tokens/CreateAppTokenParams';
+import { regenerateAppTokenParamsValidator } from '@/interfaces/params/app-tokens/RegenerateAppTokenParams';
 
 const appsRouter = express.Router();
 
@@ -36,6 +38,18 @@ appsRouter.delete(
 	'/:appId',
 	middleware.expressValidator(deleteAppParamsValidator),
 	appsController.delete.bind(appsController),
+);
+
+appsRouter.post(
+	'/:appId/api-key',
+	middleware.expressValidator(createAppTokenParamsValidator),
+	appsController.createApiKey.bind(appsController),
+);
+
+appsRouter.put(
+	'/:appId/api-key',
+	middleware.expressValidator(regenerateAppTokenParamsValidator),
+	appsController.regenerateApiKey.bind(appsController),
 );
 
 export default appsRouter;
