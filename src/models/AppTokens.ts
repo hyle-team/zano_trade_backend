@@ -8,6 +8,10 @@ import CreateAppTokenModelParams from '@/interfaces/models/AppTokens/params/Crea
 import CreateAppTokenModelRes, {
 	CreateAppTokenModelErrorCode,
 } from '@/interfaces/models/AppTokens/responses/CreateAppTokenModelRes.js';
+import GetAppTokenModelParams from '@/interfaces/models/AppTokens/params/GetAppTokenModelParams.js';
+import GetAppTokenModelRes, {
+	GetAppTokenModelErrorCode,
+} from '@/interfaces/models/AppTokens/responses/GetAppTokenModelRes.js';
 import RegenerateAppTokenModelParams from '@/interfaces/models/AppTokens/params/RegenerateAppTokenModelParams.js';
 import RegenerateAppTokenModelRes, {
 	RegenerateAppTokenModelErrorCode,
@@ -94,6 +98,34 @@ class AppTokens {
 			data: {
 				value,
 				issuedAt,
+			},
+		};
+	};
+
+	getOne = async ({ appId, address }: GetAppTokenModelParams): Promise<GetAppTokenModelRes> => {
+		const userRow = await userModel.getUserRow(address);
+
+		if (!userRow) {
+			return { success: false, data: GetAppTokenModelErrorCode.USER_NOT_FOUND };
+		}
+
+		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
+
+		if (!appRow) {
+			return { success: false, data: GetAppTokenModelErrorCode.APP_NOT_FOUND };
+		}
+
+		const tokenRow = await AppToken.findOne({ where: { app_id: appRow.id } });
+
+		if (!tokenRow) {
+			return { success: false, data: GetAppTokenModelErrorCode.API_KEY_NOT_FOUND };
+		}
+
+		return {
+			success: true,
+			data: {
+				value: tokenRow.value,
+				issuedAt: tokenRow.issued_at,
 			},
 		};
 	};

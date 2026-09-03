@@ -25,6 +25,12 @@ import CreateAppTokenRes, {
 	CreateAppTokenErrorCode,
 } from '@/interfaces/responses/app-tokens/CreateAppTokenRes.js';
 import { CreateAppTokenModelErrorCode } from '@/interfaces/models/AppTokens/responses/CreateAppTokenModelRes.js';
+import GetAppTokenBody from '@/interfaces/bodies/app-tokens/GetAppTokenBody.js';
+import GetAppTokenParams from '@/interfaces/params/app-tokens/GetAppTokenParams.js';
+import GetAppTokenRes, {
+	GetAppTokenErrorCode,
+} from '@/interfaces/responses/app-tokens/GetAppTokenRes.js';
+import { GetAppTokenModelErrorCode } from '@/interfaces/models/AppTokens/responses/GetAppTokenModelRes.js';
 import RegenerateAppTokenBody from '@/interfaces/bodies/app-tokens/RegenerateAppTokenBody.js';
 import RegenerateAppTokenParams from '@/interfaces/params/app-tokens/RegenerateAppTokenParams.js';
 import RegenerateAppTokenRes, {
@@ -309,6 +315,53 @@ class AppsController {
 					return;
 
 				case RegenerateAppTokenModelErrorCode.USER_NOT_FOUND:
+					throw new Error('JWT token of non-existent user');
+
+				default: {
+					const unhandledErrorCode: never = errorCode;
+					throw new Error(
+						`Unhandled app tokens model error: ${JSON.stringify(unhandledErrorCode)}`,
+					);
+				}
+			}
+		}
+
+		res.status(200).send({
+			success: true,
+			data: result.data,
+		});
+	};
+
+	getApiKey = async (req: Request, res: Response<GetAppTokenRes>) => {
+		const body = req.body as GetAppTokenBody;
+		const params = req.params as unknown as GetAppTokenParams;
+
+		const { userData } = body;
+
+		const result = await appTokensModel.getOne({
+			appId: new Decimal(params.appId).toNumber(),
+			address: userData.address,
+		});
+
+		if (!result.success) {
+			const errorCode = result.data;
+
+			switch (errorCode) {
+				case GetAppTokenModelErrorCode.APP_NOT_FOUND:
+					res.status(400).send({
+						success: false,
+						data: GetAppTokenErrorCode.APP_NOT_FOUND,
+					});
+					return;
+
+				case GetAppTokenModelErrorCode.API_KEY_NOT_FOUND:
+					res.status(400).send({
+						success: false,
+						data: GetAppTokenErrorCode.API_KEY_NOT_FOUND,
+					});
+					return;
+
+				case GetAppTokenModelErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {

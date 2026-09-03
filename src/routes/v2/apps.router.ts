@@ -9,6 +9,7 @@ import { updateAppNameValidator } from '@/interfaces/bodies/apps/UpdateAppNameBo
 import { updateAppNameParamsValidator } from '@/interfaces/params/apps/UpdateAppNameParams';
 import { createAppTokenParamsValidator } from '@/interfaces/params/app-tokens/CreateAppTokenParams';
 import { regenerateAppTokenParamsValidator } from '@/interfaces/params/app-tokens/RegenerateAppTokenParams';
+import { getAppTokenParamsValidator } from '@/interfaces/params/app-tokens/GetAppTokenParams';
 
 const appsRouter = express.Router();
 
@@ -50,6 +51,12 @@ appsRouter.put(
 	'/:appId/api-key',
 	middleware.expressValidator(regenerateAppTokenParamsValidator),
 	appsController.regenerateApiKey.bind(appsController),
+);
+
+appsRouter.patch(
+	'/:appId/api-key/get',
+	middleware.expressValidator(getAppTokenParamsValidator),
+	appsController.getApiKey.bind(appsController),
 );
 
 export default appsRouter;
