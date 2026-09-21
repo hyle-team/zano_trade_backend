@@ -7,8 +7,8 @@ const generateKeyPair = promisify(crypto.generateKeyPair);
 const MAX_CIPHER_DATA_BYTES_LENGTH = 64 * 1024;
 const MAX_CIPHER_DATA_LENGTH_ERR_MSG = 'MAX_CIPHER_DATA_LENGTH_ERR';
 
-export class AsymmetricEncryptionHelper {
-	static generateKeysPair = async (): Promise<{
+class AsymmetricEncryptionHelper {
+	generateKeysPair = async (): Promise<{
 		publicKeyHex: string;
 		privateKeyHex: string;
 	}> => {
@@ -30,7 +30,7 @@ export class AsymmetricEncryptionHelper {
 		};
 	};
 
-	static encrypt = async ({
+	encrypt = async ({
 		plainData,
 		publicKeyHex,
 	}: {
@@ -84,7 +84,7 @@ export class AsymmetricEncryptionHelper {
 		};
 	};
 
-	static decrypt = async ({
+	decrypt = async ({
 		cipherDataHex,
 		intermediateEncryptionPublicKeyHex,
 		privateKeyHex,
@@ -146,3 +146,5 @@ export class AsymmetricEncryptionHelper {
 		};
 	};
 }
+
+export const asymmetricEncryptionHelper = new AsymmetricEncryptionHelper();
