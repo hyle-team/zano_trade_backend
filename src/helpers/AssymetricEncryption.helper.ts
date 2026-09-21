@@ -1,12 +1,18 @@
 import CryptoJS from 'crypto-js';
 import crypto from 'node:crypto';
+import { promisify } from 'node:util';
+
+const generateKeyPair = promisify(crypto.generateKeyPair);
+
+const MAX_CIPHER_DATA_BYTES_LENGTH = 64 * 1024;
+const MAX_CIPHER_DATA_LENGTH_ERR_MSG = 'MAX_CIPHER_DATA_LENGTH_ERR';
 
 export class AsymmetricEncryptionHelper {
-	static generateKeyPairs = async (): Promise<{
+	static generateKeysPair = async (): Promise<{
 		publicKeyHex: string;
 		privateKeyHex: string;
 	}> => {
-		const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
+		const { publicKey, privateKey } = await generateKeyPair('rsa', {
 			modulusLength: 2048,
 			publicKeyEncoding: {
 				type: 'spki',
@@ -34,6 +40,16 @@ export class AsymmetricEncryptionHelper {
 		cipherDataHex: string[];
 		intermediateEncryptionPublicKeyHex: string;
 	}> => {
+		const plainDataBytesLength = plainData.reduce(
+			(totalBytesLength, plaintext) =>
+				totalBytesLength + Buffer.byteLength(plaintext, 'utf8'),
+			0,
+		);
+
+		if (plainDataBytesLength > MAX_CIPHER_DATA_BYTES_LENGTH) {
+			throw new Error(MAX_CIPHER_DATA_LENGTH_ERR_MSG);
+		}
+
 		const AESKey = CryptoJS.lib.WordArray.random(32);
 		const AESInitializationVector = CryptoJS.lib.WordArray.random(32);
 
@@ -79,6 +95,16 @@ export class AsymmetricEncryptionHelper {
 	}): Promise<{
 		plainData: string[];
 	}> => {
+		const cipherDataBytesLength = cipherDataHex.reduce(
+			(totalBytesLength, cipherTextHex) =>
+				totalBytesLength + Math.ceil(cipherTextHex.length / 2),
+			0,
+		);
+
+		if (cipherDataBytesLength > MAX_CIPHER_DATA_BYTES_LENGTH) {
+			throw new Error(MAX_CIPHER_DATA_LENGTH_ERR_MSG);
+		}
+
 		const RSAPrivateKeyObject = crypto.createPrivateKey({
 			key: Buffer.from(privateKeyHex, 'hex'),
 			format: 'der',
