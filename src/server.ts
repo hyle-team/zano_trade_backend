@@ -9,6 +9,7 @@ import authMessagesCleanService from '@/workers/authMessagesCleanService';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
 import userRouter from './routes/user.router';
+import appsRouter from './routes/v2/apps.router';
 import middleware from './middleware/middleware';
 import configRouter from './routes/config.router';
 import chatsRouter from './routes/chats.router';
@@ -48,6 +49,10 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
 	console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });
+
+const apiV2Router = express.Router();
+
+apiV2Router.use('/apps', appsRouter);
 
 (async () => {
 	await initdb();
@@ -119,6 +124,8 @@ process.on('unhandledRejection', (reason, promise) => {
 		transactionsRouter,
 		statsRouter,
 	]);
+
+	app.use('/api/v2', apiV2Router);
 
 	app.use('/api/admin', adminRouter);
 
