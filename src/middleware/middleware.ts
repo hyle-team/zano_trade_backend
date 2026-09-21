@@ -14,17 +14,6 @@ import UserData from '../interfaces/common/UserData';
 const sha256 = (value: string): Buffer =>
 	crypto.createHash('sha256').update(value, 'utf8').digest();
 
-const defaultRateLimitMiddleware = rateLimit({
-	windowMs: 10 * 60 * 1000, // 10 minutes
-	max: 6000, // limit each IP to 6000 requests per windowMs (10 requests/second)
-	message: {
-		success: false,
-		data: 'Too many requests from this IP, please try again later.',
-	},
-	standardHeaders: true,
-	legacyHeaders: false,
-});
-
 const narrowRateLimitMiddleware = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
 	max: 60, // limit each IP to 60 requests per windowMs (1 request/second)
@@ -101,12 +90,18 @@ class Middleware {
 
 	private readonly INTEGRATION_KEY_HASH = sha256(env.INTEGRATION_KEY);
 
-	private verifyIntegrationKey = async (req: Request, res: Response, next: NextFunction) => {
-		const providedKey = req.headers[this.INTEGRATION_KEY_HEADER_NAME];
+	private isIntegrationRequest(req: Request): boolean {
+		const providedKey = req.get(this.INTEGRATION_KEY_HEADER_NAME);
 
-		const isValid =
-			typeof providedKey === 'string' &&
-			crypto.timingSafeEqual(sha256(providedKey), this.INTEGRATION_KEY_HASH);
+		if (!providedKey) {
+			return false;
+		}
+
+		return crypto.timingSafeEqual(sha256(providedKey), this.INTEGRATION_KEY_HASH);
+	}
+
+	private verifyIntegrationKey = async (req: Request, res: Response, next: NextFunction) => {
+		const isValid = this.isIntegrationRequest(req);
 
 		if (!isValid) {
 			res.status(401).send({ success: false, data: 'Unauthorized' });
@@ -126,8 +121,29 @@ class Middleware {
 
 	integrationKeyAuthGuard = [this.verifyIntegrationKey.bind(this)];
 
-	defaultRateLimit = async (req: Request, res: Response, next: NextFunction) =>
-		defaultRateLimitMiddleware(req, res, next);
+	defaultRateLimit = rateLimit({
+		windowMs: 10 * 60 * 1000, // 10 minutes
+		max: 6000, // limit each IP to 6000 requests per windowMs (10 requests/second)
+		message: {
+			success: false,
+			data: 'Too many requests from this IP, please try again later.',
+		},
+		standardHeaders: true,
+		legacyHeaders: false,
+		skip: (req: Request) => this.isIntegrationRequest(req),
+	});
+
+	integrationRateLimit = rateLimit({
+		windowMs: 1e3, // 1 second
+		limit: 1000, // limit each IP to 1000 requests per windowMs (1000 request/second)
+		message: {
+			success: false,
+			data: 'Too many requests from this IP, please try again later.',
+		},
+		standardHeaders: true,
+		legacyHeaders: false,
+		skip: (req: Request) => !this.isIntegrationRequest(req),
+	});
 
 	narrowRateLimit = async (req: Request, res: Response, next: NextFunction) =>
 		narrowRateLimitMiddleware(req, res, next);
