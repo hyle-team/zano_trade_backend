@@ -109,6 +109,8 @@ process.on('unhandledRejection', (reason, promise) => {
 	app.use(express.json());
 	app.use(express.urlencoded({ extended: true }));
 
+	app.use(middleware.optionalIntegrationKeyAuthGuard);
+
 	app.use('/api', [
 		authRouter,
 		offersRouter,
