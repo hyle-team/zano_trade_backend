@@ -90,10 +90,12 @@ class Middleware {
 
 	private readonly INTEGRATION_KEY_HASH = sha256(env.INTEGRATION_KEY);
 
-	private validateIntegrationRequest(req: Request): {
+	private validateIntegrationRequest = (
+		req: Request,
+	): {
 		isIntegrationRequest: boolean;
 		isValidKey: boolean;
-	} {
+	} => {
 		const providedKey = req.get(this.INTEGRATION_KEY_HEADER_NAME);
 
 		if (providedKey === undefined) {
@@ -103,13 +105,13 @@ class Middleware {
 		const isValidKey = crypto.timingSafeEqual(sha256(providedKey), this.INTEGRATION_KEY_HASH);
 
 		return { isIntegrationRequest: true, isValidKey };
-	}
+	};
 
-	private isAuthorizedIntegrationRequest(req: Request): boolean {
+	private isAuthorizedIntegrationRequest = (req: Request): boolean => {
 		const { isIntegrationRequest, isValidKey } = this.validateIntegrationRequest(req);
 
 		return isIntegrationRequest && isValidKey;
-	}
+	};
 
 	private verifyRequiredIntegrationRequestMiddleware = (
 		req: Request,
