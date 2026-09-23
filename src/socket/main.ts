@@ -1,6 +1,10 @@
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
+import { RateLimiterMemory } from 'rate-limiter-flexible';
+import proxyaddr from 'proxy-addr';
+
 import UserSocketData from '@/interfaces/special/socket-data/UserSocketData.js';
 import { PairStats } from '@/interfaces/responses/orders/GetPairStatsRes.js';
+import { env } from '@/config/env.js';
 import chatsModel from '../models/Chats.js';
 import processController from '../controllers/process.controller.js';
 import socketMiddleware, { verifyUser } from '../middleware/socket.js';
@@ -37,6 +41,32 @@ type ProcessResult =
 		success: boolean;
 		[key: string]: unknown;
 	  };
+
+const socketConnectionRateLimiter = new RateLimiterMemory({
+	points: 120,
+	duration: 1,
+});
+
+function getSocketClientIp(socket: Socket) {
+	const clientIp = proxyaddr(socket.request, (_, i) => i < env.TRUST_PROXY_DEPTH);
+
+	return clientIp;
+}
+
+const socketRateLimiterMiddleware = (socket: Socket, next: (_err?: Error) => void) => {
+	const clientIp = getSocketClientIp(socket);
+
+	socketConnectionRateLimiter
+		.consume(clientIp)
+		.then(() => next())
+		.catch(() => {
+			next(
+				new Error(
+					'Too many socket connections and events attempts. Please try again later.',
+				),
+			);
+		});
+};
 
 async function runNotificationMethods(
 	io: Server,
@@ -75,7 +105,11 @@ async function runNotificationMethods(
 }
 
 function socketStart(io: Server) {
+	io.use((socket, next) => socketRateLimiterMiddleware(socket, next));
+
 	io.on('connection', (socket) => {
+		socket.use((_, next) => socketRateLimiterMiddleware(socket, next));
+
 		socket.use(socketMiddleware);
 		socket.use(verifyUser(['in-dex-notifications', 'out-dex-notifications', 'in-account']));
 
