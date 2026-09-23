@@ -53,6 +53,8 @@ function getSocketClientIp(socket: Socket) {
 	return clientIp;
 }
 
+const TOO_MANY_REQUESTS_ERROR_MESSAGE = 'TOO_MANY_REQUESTS';
+
 const socketRateLimiterMiddleware = (socket: Socket, next: (_err?: Error) => void) => {
 	const clientIp = getSocketClientIp(socket);
 
@@ -60,11 +62,7 @@ const socketRateLimiterMiddleware = (socket: Socket, next: (_err?: Error) => voi
 		.consume(clientIp)
 		.then(() => next())
 		.catch(() => {
-			next(
-				new Error(
-					'Too many socket connections and events attempts. Please try again later.',
-				),
-			);
+			next(new Error(TOO_MANY_REQUESTS_ERROR_MESSAGE));
 		});
 };
 
@@ -158,6 +156,10 @@ function socketStart(io: Server) {
 		});
 
 		socket.on('error', (err) => {
+			if (err.message === TOO_MANY_REQUESTS_ERROR_MESSAGE) {
+				return;
+			}
+
 			console.log(err.message);
 		});
 
