@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ValidationChain, validationResult } from 'express-validator';
 import { rateLimit } from 'express-rate-limit';
-import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import proxyaddr from 'proxy-addr';
@@ -9,10 +8,13 @@ import z from 'zod';
 
 import User from '@/schemes/User';
 import { env } from '@/config/env.js';
+import { sha256 } from 'shared/utils';
+import {
+	validateIntegrationKey,
+	ValidateIntegrationKeyResult,
+} from '@/methods/validateIntegrationKey';
+import { INTEGRATION_KEY_HEADER_NAME } from 'shared/constants';
 import UserData from '../interfaces/common/UserData';
-
-const sha256 = (value: string): Buffer =>
-	crypto.createHash('sha256').update(value, 'utf8').digest();
 
 const narrowRateLimitMiddleware = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
@@ -86,25 +88,15 @@ class Middleware {
 		}
 	};
 
-	private readonly INTEGRATION_KEY_HEADER_NAME = 'x-integration-key';
-
 	private readonly INTEGRATION_KEY_HASH = sha256(env.INTEGRATION_KEY);
 
-	private validateIntegrationRequest = (
-		req: Request,
-	): {
-		isIntegrationRequest: boolean;
-		isValidKey: boolean;
-	} => {
-		const providedKey = req.get(this.INTEGRATION_KEY_HEADER_NAME);
+	private validateIntegrationRequest = (req: Request): ValidateIntegrationKeyResult => {
+		const providedKey = req.get(INTEGRATION_KEY_HEADER_NAME);
 
-		if (providedKey === undefined) {
-			return { isIntegrationRequest: false, isValidKey: false };
-		}
-
-		const isValidKey = crypto.timingSafeEqual(sha256(providedKey), this.INTEGRATION_KEY_HASH);
-
-		return { isIntegrationRequest: true, isValidKey };
+		return validateIntegrationKey({
+			providedKey,
+			expectedKeyHash: this.INTEGRATION_KEY_HASH,
+		});
 	};
 
 	private isAuthorizedIntegrationRequest = (req: Request): boolean => {

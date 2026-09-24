@@ -1,13 +1,16 @@
-import { Server, Socket } from 'socket.io';
-import { RateLimiterMemory } from 'rate-limiter-flexible';
-import proxyaddr from 'proxy-addr';
+import { Server } from 'socket.io';
 
 import UserSocketData from '@/interfaces/special/socket-data/UserSocketData.js';
 import { PairStats } from '@/interfaces/responses/orders/GetPairStatsRes.js';
-import { env } from '@/config/env.js';
+
 import chatsModel from '../models/Chats.js';
 import processController from '../controllers/process.controller.js';
-import socketMiddleware, { verifyUser } from '../middleware/socket.js';
+import socketMiddleware, {
+	socketRateLimiterMiddleware,
+	TOO_MANY_REQUESTS_ERROR_MESSAGE,
+	UNAUTHORIZED_ERROR_MESSAGE,
+	verifyUser,
+} from '../middleware/socket.js';
 import ChatSocketData from '../interfaces/special/socket-data/ChatSocketData.js';
 import SocketData from '../interfaces/special/socket-data/SocketData.js';
 import DepositSocketData from '../interfaces/special/socket-data/DepositSocketData.js';
@@ -41,30 +44,6 @@ type ProcessResult =
 		success: boolean;
 		[key: string]: unknown;
 	  };
-
-const socketConnectionRateLimiter = new RateLimiterMemory({
-	points: 120,
-	duration: 1,
-});
-
-function getSocketClientIp(socket: Socket) {
-	const clientIp = proxyaddr(socket.request, (_, i) => i < env.TRUST_PROXY_DEPTH);
-
-	return clientIp;
-}
-
-const TOO_MANY_REQUESTS_ERROR_MESSAGE = 'TOO_MANY_REQUESTS';
-
-const socketRateLimiterMiddleware = (socket: Socket, next: (_err?: Error) => void) => {
-	const clientIp = getSocketClientIp(socket);
-
-	socketConnectionRateLimiter
-		.consume(clientIp)
-		.then(() => next())
-		.catch(() => {
-			next(new Error(TOO_MANY_REQUESTS_ERROR_MESSAGE));
-		});
-};
 
 async function runNotificationMethods(
 	io: Server,
@@ -101,6 +80,8 @@ async function runNotificationMethods(
 		io.to(iterator).emit('refresh-request');
 	}
 }
+
+const expectedErrorMessages = [TOO_MANY_REQUESTS_ERROR_MESSAGE, UNAUTHORIZED_ERROR_MESSAGE];
 
 function socketStart(io: Server) {
 	io.use((socket, next) => socketRateLimiterMiddleware(socket, next));
@@ -156,7 +137,7 @@ function socketStart(io: Server) {
 		});
 
 		socket.on('error', (err) => {
-			if (err.message === TOO_MANY_REQUESTS_ERROR_MESSAGE) {
+			if (expectedErrorMessages.includes(err.message)) {
 				return;
 			}
 
