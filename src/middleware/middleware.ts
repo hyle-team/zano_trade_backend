@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ValidationChain, validationResult } from 'express-validator';
 import { rateLimit } from 'express-rate-limit';
-import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import cors from 'cors';
 import proxyaddr from 'proxy-addr';
@@ -9,10 +8,13 @@ import z from 'zod';
 
 import User from '@/schemes/User';
 import { env } from '@/config/env.js';
+import { sha256 } from 'shared/utils';
+import {
+	validateIntegrationKey,
+	ValidateIntegrationKeyResult,
+} from '@/methods/validateIntegrationKey';
+import { INTEGRATION_KEY_HEADER_NAME } from 'shared/constants';
 import UserData from '../interfaces/common/UserData';
-
-const sha256 = (value: string): Buffer =>
-	crypto.createHash('sha256').update(value, 'utf8').digest();
 
 const narrowRateLimitMiddleware = rateLimit({
 	windowMs: 60 * 1000, // 1 minute
@@ -86,24 +88,47 @@ class Middleware {
 		}
 	};
 
-	private readonly INTEGRATION_KEY_HEADER_NAME = 'x-integration-key';
-
 	private readonly INTEGRATION_KEY_HASH = sha256(env.INTEGRATION_KEY);
 
-	private isIntegrationRequest(req: Request): boolean {
-		const providedKey = req.get(this.INTEGRATION_KEY_HEADER_NAME);
+	private validateIntegrationRequest = (req: Request): ValidateIntegrationKeyResult => {
+		const providedKey = req.get(INTEGRATION_KEY_HEADER_NAME);
 
-		if (!providedKey) {
-			return false;
-		}
+		return validateIntegrationKey({
+			providedKey,
+			expectedKeyHash: this.INTEGRATION_KEY_HASH,
+		});
+	};
 
-		return crypto.timingSafeEqual(sha256(providedKey), this.INTEGRATION_KEY_HASH);
-	}
+	private isAuthorizedIntegrationRequest = (req: Request): boolean => {
+		const { isIntegrationRequest, isValidKey } = this.validateIntegrationRequest(req);
 
-	private verifyIntegrationKey = async (req: Request, res: Response, next: NextFunction) => {
-		const isValid = this.isIntegrationRequest(req);
+		return isIntegrationRequest && isValidKey;
+	};
+
+	private verifyRequiredIntegrationRequestMiddleware = (
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		const isValid = this.isAuthorizedIntegrationRequest(req);
 
 		if (!isValid) {
+			res.status(401).send({ success: false, data: 'Unauthorized' });
+			return;
+		}
+
+		next();
+	};
+
+	// Guards from inconsistent integration requests, not from public requests
+	private verifyOptionalIntegrationRequestMiddleware = (
+		req: Request,
+		res: Response,
+		next: NextFunction,
+	) => {
+		const { isIntegrationRequest, isValidKey } = this.validateIntegrationRequest(req);
+
+		if (isIntegrationRequest && !isValidKey) {
 			res.status(401).send({ success: false, data: 'Unauthorized' });
 			return;
 		}
@@ -119,7 +144,9 @@ class Middleware {
 		this.verifyAdmin.bind(this),
 	];
 
-	integrationKeyAuthGuard = [this.verifyIntegrationKey.bind(this)];
+	integrationKeyAuthGuard = [this.verifyRequiredIntegrationRequestMiddleware.bind(this)];
+
+	optionalIntegrationKeyAuthGuard = [this.verifyOptionalIntegrationRequestMiddleware.bind(this)];
 
 	defaultRateLimit = rateLimit({
 		windowMs: 10 * 60 * 1000, // 10 minutes
@@ -130,7 +157,7 @@ class Middleware {
 		},
 		standardHeaders: true,
 		legacyHeaders: false,
-		skip: (req: Request) => this.isIntegrationRequest(req),
+		skip: (req: Request) => this.isAuthorizedIntegrationRequest(req),
 	});
 
 	integrationRateLimit = rateLimit({
@@ -142,7 +169,7 @@ class Middleware {
 		},
 		standardHeaders: true,
 		legacyHeaders: false,
-		skip: (req: Request) => !this.isIntegrationRequest(req),
+		skip: (req: Request) => !this.isAuthorizedIntegrationRequest(req),
 	});
 
 	narrowRateLimit = async (req: Request, res: Response, next: NextFunction) =>

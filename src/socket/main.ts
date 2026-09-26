@@ -1,9 +1,16 @@
 import { Server } from 'socket.io';
+
 import UserSocketData from '@/interfaces/special/socket-data/UserSocketData.js';
 import { PairStats } from '@/interfaces/responses/orders/GetPairStatsRes.js';
+
 import chatsModel from '../models/Chats.js';
 import processController from '../controllers/process.controller.js';
-import socketMiddleware, { verifyUser } from '../middleware/socket.js';
+import socketMiddleware, {
+	socketRateLimiterMiddleware,
+	TOO_MANY_REQUESTS_ERROR_MESSAGE,
+	UNAUTHORIZED_ERROR_MESSAGE,
+	verifyUser,
+} from '../middleware/socket.js';
 import ChatSocketData from '../interfaces/special/socket-data/ChatSocketData.js';
 import SocketData from '../interfaces/special/socket-data/SocketData.js';
 import DepositSocketData from '../interfaces/special/socket-data/DepositSocketData.js';
@@ -74,8 +81,14 @@ async function runNotificationMethods(
 	}
 }
 
+const expectedErrorMessages = [TOO_MANY_REQUESTS_ERROR_MESSAGE, UNAUTHORIZED_ERROR_MESSAGE];
+
 function socketStart(io: Server) {
+	io.use((socket, next) => socketRateLimiterMiddleware(socket, next));
+
 	io.on('connection', (socket) => {
+		socket.use((_, next) => socketRateLimiterMiddleware(socket, next));
+
 		socket.use(socketMiddleware);
 		socket.use(verifyUser(['in-dex-notifications', 'out-dex-notifications', 'in-account']));
 
@@ -124,6 +137,10 @@ function socketStart(io: Server) {
 		});
 
 		socket.on('error', (err) => {
+			if (expectedErrorMessages.includes(err.message)) {
+				return;
+			}
+
 			console.log(err.message);
 		});
 
