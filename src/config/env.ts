@@ -28,6 +28,9 @@ const envSchema = z.object({
 	TRUST_PROXY_DEPTH: z.coerce.number().int().nonnegative().default(1),
 
 	INTEGRATION_KEY: z.string().min(32),
+
+	ZANO_EXPLORER_API_URL: z.url(),
+	ZANO_EXPLORER_INTEGRATION_KEY: z.string().min(1),
 });
 
 const parsed = envSchema.safeParse(process.env);

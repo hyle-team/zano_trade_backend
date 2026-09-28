@@ -1,4 +1,6 @@
 import { Op } from 'sequelize';
+
+import zanoExplorerHelper from '@/helpers/ZanoExplorer.helper.js';
 import Currency, { Asset } from '../schemes/Currency';
 import Pair from '../schemes/Pair';
 import sequelize from '../sequelize';
@@ -14,12 +16,14 @@ async function fetchWhitelisted() {
 }
 
 async function fetchAssets(from: number, to: number) {
-	return fetch(`https://explorer.zano.org/api/get_assets/${from}/${to}`)
-		.then((res) => res.json())
-		.catch((err) => {
-			console.log(err);
-			return [];
-		});
+	const result = await zanoExplorerHelper.getAssets({ from, to });
+
+	if (!result.success) {
+		console.log(result.data);
+		return [];
+	}
+
+	return result.assets;
 }
 
 class AssetsUpdateChecker {
