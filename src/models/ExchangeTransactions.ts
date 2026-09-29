@@ -4,6 +4,7 @@ import type { Transaction as SequelizeTransaction } from 'sequelize';
 
 import CancelTransactionBody from '@/interfaces/bodies/exchange-transactions/CancelTransactionBody.js';
 import sequelize from '@/sequelize.js';
+import zanoExplorerHelper from '@/helpers/ZanoExplorer.helper.js';
 import Order, { OrderStatus } from '@/schemes/Order';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import { sendDeleteOrderMessage, sendUpdatePairStatsMessage } from '../socket/main.js';
@@ -18,8 +19,6 @@ interface OrderWithTransactions extends Order {
 	buy_orders: Transaction[];
 	sell_orders: Transaction[];
 }
-
-const PRICE_BASE_URL = 'https://explorer.zano.org/api/get_historical_zano_price?timestamp=';
 
 class ExchangeModel {
 	private zano_price_data: {
@@ -40,19 +39,15 @@ class ExchangeModel {
 
 	async getZanoPriceForTimestamp(timestamp: number) {
 		try {
-			const priceData = await fetch(`${PRICE_BASE_URL}${timestamp}`).then((res) =>
-				res.json(),
-			);
+			const priceResult = await zanoExplorerHelper.getHistoricalZanoPrice({ timestamp });
 
-			const priceParsed = priceData?.data?.price;
-
-			if (!priceParsed) {
-				console.log(priceData);
+			if (!priceResult.success) {
+				console.log(priceResult.data);
 
 				throw new Error('Failed to fetch Zano price data for timestamp');
 			}
 
-			return { success: true, data: priceParsed };
+			return { success: true, data: priceResult.price };
 		} catch (error) {
 			console.log(error);
 			return { success: false, data: 'Internal error' };
@@ -61,26 +56,23 @@ class ExchangeModel {
 
 	async updateZanoPrice() {
 		try {
-			const priceDataNow = await fetch(`${PRICE_BASE_URL}${Date.now()}`).then((res) =>
-				res.json(),
-			);
+			const priceResultNow = await zanoExplorerHelper.getHistoricalZanoPrice({
+				timestamp: Date.now(),
+			});
 
-			const priceDataBack24hr = await fetch(
-				`${PRICE_BASE_URL}${Date.now() - 24 * 60 * 60 * 1000}`,
-			).then((res) => res.json());
+			const priceResultBack24hr = await zanoExplorerHelper.getHistoricalZanoPrice({
+				timestamp: Date.now() - 24 * 60 * 60 * 1000,
+			});
 
-			const priceNowParsed = priceDataNow?.data?.price;
-			const priceBack24hrParsed = priceDataBack24hr?.data?.price;
-
-			if (!priceNowParsed || !priceBack24hrParsed) {
-				console.log(priceDataNow, priceDataBack24hr);
+			if (!priceResultNow.success || !priceResultBack24hr.success) {
+				console.log(priceResultNow, priceResultBack24hr);
 
 				throw new Error('Failed to fetch Zano price data');
 			}
 
 			this.zano_price_data = {
-				now: priceNowParsed,
-				back24hr: priceBack24hrParsed,
+				now: priceResultNow.price,
+				back24hr: priceResultBack24hr.price,
 			};
 		} catch (error) {
 			console.log(error);
