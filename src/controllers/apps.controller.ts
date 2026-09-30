@@ -1,47 +1,95 @@
 import { Request, Response } from 'express';
 import CreateAppBody from '@/interfaces/bodies/apps/CreateAppBody.js';
-import CreateAppRes, { CreateAppErrorCode } from '@/interfaces/responses/apps/CreateAppRes.js';
-import { CreateAppModelErrorCode } from '@/interfaces/models/Apps/responses/CreateAppModelRes.js';
+import CreateAppRes, {
+	CreateAppErrorCode,
+	CreateAppResAppData,
+} from '@/interfaces/responses/apps/CreateAppRes.js';
+import {
+	CreateAppModelErrorCode,
+	CreateAppModelResAppData,
+} from '@/interfaces/models/Apps/responses/CreateAppModelRes.js';
 import GetAllAppsBody from '@/interfaces/bodies/apps/GetAllAppsBody.js';
-import GetAllAppsRes from '@/interfaces/responses/apps/GetAllAppsRes.js';
-import { GetAllAppsModelErrorCode } from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
+import GetAllAppsRes, { GetAllAppsResAppData } from '@/interfaces/responses/apps/GetAllAppsRes.js';
+import {
+	GetAllAppsModelErrorCode,
+	GetAllAppsModelResAppData,
+} from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
 import GetAppBody from '@/interfaces/bodies/apps/GetAppBody.js';
 import GetAppParams from '@/interfaces/params/apps/GetAppParams.js';
-import GetAppRes, { GetAppErrorCode } from '@/interfaces/responses/apps/GetAppRes.js';
-import { GetAppModelErrorCode } from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
+import GetAppRes, {
+	GetAppErrorCode,
+	GetAppResAppData,
+} from '@/interfaces/responses/apps/GetAppRes.js';
+import {
+	GetAppModelErrorCode,
+	GetAppModelResAppData,
+} from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
 import UpdateAppNameBody from '@/interfaces/bodies/apps/UpdateAppNameBody.js';
 import UpdateAppNameParams from '@/interfaces/params/apps/UpdateAppNameParams.js';
 import UpdateAppNameRes, {
 	UpdateAppNameErrorCode,
+	UpdateAppNameResAppData,
 } from '@/interfaces/responses/apps/UpdateAppNameRes.js';
-import { UpdateAppNameModelErrorCode } from '@/interfaces/models/Apps/responses/UpdateAppNameModelRes.js';
+import {
+	UpdateAppNameModelErrorCode,
+	UpdateAppNameModelResAppData,
+} from '@/interfaces/models/Apps/responses/UpdateAppNameModelRes.js';
 import DeleteAppBody from '@/interfaces/bodies/apps/DeleteAppBody.js';
 import DeleteAppParams from '@/interfaces/params/apps/DeleteAppParams.js';
-import DeleteAppRes, { DeleteAppErrorCode } from '@/interfaces/responses/apps/DeleteAppRes.js';
-import { DeleteAppModelErrorCode } from '@/interfaces/models/Apps/responses/DeleteAppModelRes.js';
+import DeleteAppRes, {
+	DeleteAppErrorCode,
+	DeleteAppResAppData,
+} from '@/interfaces/responses/apps/DeleteAppRes.js';
+import {
+	DeleteAppModelErrorCode,
+	DeleteAppModelResAppData,
+} from '@/interfaces/models/Apps/responses/DeleteAppModelRes.js';
 import CreateAppTokenBody from '@/interfaces/bodies/app-tokens/CreateAppTokenBody.js';
 import CreateAppTokenParams from '@/interfaces/params/app-tokens/CreateAppTokenParams.js';
 import CreateAppTokenRes, {
 	CreateAppTokenErrorCode,
+	CreateAppTokenResApiKeyData,
 } from '@/interfaces/responses/app-tokens/CreateAppTokenRes.js';
-import { CreateAppTokenModelErrorCode } from '@/interfaces/models/AppTokens/responses/CreateAppTokenModelRes.js';
+import {
+	CreateAppTokenModelErrorCode,
+	CreateAppTokenModelResApiKeyData,
+} from '@/interfaces/models/AppTokens/responses/CreateAppTokenModelRes.js';
 import GetAppTokenBody from '@/interfaces/bodies/app-tokens/GetAppTokenBody.js';
 import GetAppTokenParams from '@/interfaces/params/app-tokens/GetAppTokenParams.js';
 import GetAppTokenRes, {
 	GetAppTokenErrorCode,
+	GetAppTokenResApiKeyData,
 } from '@/interfaces/responses/app-tokens/GetAppTokenRes.js';
-import { GetAppTokenModelErrorCode } from '@/interfaces/models/AppTokens/responses/GetAppTokenModelRes.js';
+import {
+	GetAppTokenModelErrorCode,
+	GetAppTokenModelResApiKeyData,
+} from '@/interfaces/models/AppTokens/responses/GetAppTokenModelRes.js';
 import RegenerateAppTokenBody from '@/interfaces/bodies/app-tokens/RegenerateAppTokenBody.js';
 import RegenerateAppTokenParams from '@/interfaces/params/app-tokens/RegenerateAppTokenParams.js';
 import RegenerateAppTokenRes, {
 	RegenerateAppTokenErrorCode,
+	RegenerateAppTokenResApiKeyData,
 } from '@/interfaces/responses/app-tokens/RegenerateAppTokenRes.js';
-import { RegenerateAppTokenModelErrorCode } from '@/interfaces/models/AppTokens/responses/RegenerateAppTokenModelRes.js';
+import {
+	RegenerateAppTokenModelErrorCode,
+	RegenerateAppTokenModelResApiKeyData,
+} from '@/interfaces/models/AppTokens/responses/RegenerateAppTokenModelRes.js';
 import appTokensModel from '@/models/AppTokens.js';
 import { Decimal } from 'decimal.js';
 import appsModel from '../models/Apps.js';
 
 class AppsController {
+	private createSuccessResponseMapper = (
+		createAppModelResAppData: CreateAppModelResAppData,
+	): CreateAppResAppData => {
+		const param = createAppModelResAppData;
+
+		return {
+			id: param.id,
+			name: param.name,
+		};
+	};
+
 	create = async (req: Request, res: Response<CreateAppRes>) => {
 		const body = req.body as CreateAppBody;
 		const { name, userData } = body;
@@ -77,8 +125,20 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: result.data,
+			data: this.createSuccessResponseMapper(result.data),
 		});
+	};
+
+	private getAllSuccessResponseMapper = (
+		getAllAppsModelResAppData: GetAllAppsModelResAppData[],
+	): GetAllAppsResAppData[] => {
+		const param = getAllAppsModelResAppData;
+
+		return param.map((appData) => ({
+			id: appData.id,
+			name: appData.name,
+			apiKeyExists: appData.apiKeyExists,
+		}));
 	};
 
 	getAll = async (req: Request, res: Response<GetAllAppsRes>) => {
@@ -102,8 +162,20 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: result.data,
+			data: this.getAllSuccessResponseMapper(result.data),
 		});
+	};
+
+	private getOneSuccessResponseMapper = (
+		getAppModelResAppData: GetAppModelResAppData,
+	): GetAppResAppData => {
+		const param = getAppModelResAppData;
+
+		return {
+			id: param.id,
+			name: param.name,
+			apiKeyExists: param.apiKey !== null,
+		};
 	};
 
 	getOne = async (req: Request, res: Response<GetAppRes>) => {
@@ -142,12 +214,19 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: {
-				id: result.data.id,
-				name: result.data.name,
-				apiKeyExists: result.data.apiKey !== null,
-			},
+			data: this.getOneSuccessResponseMapper(result.data),
 		});
+	};
+
+	private updateNameSuccessResponseMapper = (
+		updateAppNameModelResAppData: UpdateAppNameModelResAppData,
+	): UpdateAppNameResAppData => {
+		const param = updateAppNameModelResAppData;
+
+		return {
+			id: param.id,
+			name: param.name,
+		};
 	};
 
 	updateName = async (req: Request, res: Response<UpdateAppNameRes>) => {
@@ -194,8 +273,18 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: result.data,
+			data: this.updateNameSuccessResponseMapper(result.data),
 		});
+	};
+
+	private deleteSuccessResponseMapper = (
+		deleteAppModelResAppData: DeleteAppModelResAppData,
+	): DeleteAppResAppData => {
+		const param = deleteAppModelResAppData;
+
+		return {
+			id: param.id,
+		};
 	};
 
 	delete = async (req: Request, res: Response<DeleteAppRes>) => {
@@ -234,8 +323,20 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: result.data,
+			data: this.deleteSuccessResponseMapper(result.data),
 		});
+	};
+
+	private createApiKeySuccessResponseMapper = (
+		createAppTokenModelResApiKeyData: CreateAppTokenModelResApiKeyData,
+	): CreateAppTokenResApiKeyData => {
+		const param = createAppTokenModelResApiKeyData;
+
+		return {
+			valueEncryptedHex: param.valueEncryptedHex,
+			issuedAtEncryptedHex: param.issuedAtEncryptedHex,
+			intermediateEncryptionPublicKeyHex: param.intermediateEncryptionPublicKeyHex,
+		};
 	};
 
 	createApiKey = async (req: Request, res: Response<CreateAppTokenRes>) => {
@@ -282,8 +383,20 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: result.data,
+			data: this.createApiKeySuccessResponseMapper(result.data),
 		});
+	};
+
+	private regenerateApiKeySuccessResponseMapper = (
+		regenerateAppTokenModelResApiKeyData: RegenerateAppTokenModelResApiKeyData,
+	): RegenerateAppTokenResApiKeyData => {
+		const param = regenerateAppTokenModelResApiKeyData;
+
+		return {
+			valueEncryptedHex: param.valueEncryptedHex,
+			issuedAtEncryptedHex: param.issuedAtEncryptedHex,
+			intermediateEncryptionPublicKeyHex: param.intermediateEncryptionPublicKeyHex,
+		};
 	};
 
 	regenerateApiKey = async (req: Request, res: Response<RegenerateAppTokenRes>) => {
@@ -330,8 +443,20 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: result.data,
+			data: this.regenerateApiKeySuccessResponseMapper(result.data),
 		});
+	};
+
+	private getApiKeySuccessResponseMapper = (
+		getAppTokenModelResApiKeyData: GetAppTokenModelResApiKeyData,
+	): GetAppTokenResApiKeyData => {
+		const param = getAppTokenModelResApiKeyData;
+
+		return {
+			valueEncryptedHex: param.valueEncryptedHex,
+			issuedAtEncryptedHex: param.issuedAtEncryptedHex,
+			intermediateEncryptionPublicKeyHex: param.intermediateEncryptionPublicKeyHex,
+		};
 	};
 
 	getApiKey = async (req: Request, res: Response<GetAppTokenRes>) => {
@@ -378,7 +503,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: result.data,
+			data: this.getApiKeySuccessResponseMapper(result.data),
 		});
 	};
 }
