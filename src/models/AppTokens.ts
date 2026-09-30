@@ -4,6 +4,7 @@ import { UniqueConstraintError } from 'sequelize';
 import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
+import { asymmetricEncryptionHelper } from '@/helpers/AsymmetricEncryption.helper.js';
 import CreateAppTokenModelParams from '@/interfaces/models/AppTokens/params/CreateAppTokenModelParams.js';
 import CreateAppTokenModelRes, {
 	CreateAppTokenModelErrorCode,
@@ -102,7 +103,11 @@ class AppTokens {
 		};
 	};
 
-	getOne = async ({ appId, address }: GetAppTokenModelParams): Promise<GetAppTokenModelRes> => {
+	getOne = async ({
+		appId,
+		address,
+		publicKeyHex,
+	}: GetAppTokenModelParams): Promise<GetAppTokenModelRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
@@ -121,11 +126,20 @@ class AppTokens {
 			return { success: false, data: GetAppTokenModelErrorCode.API_KEY_NOT_FOUND };
 		}
 
+		const {
+			cipherDataHex: [valueEncryptedHex, issuedAtEncryptedHex],
+			intermediateEncryptionPublicKeyHex,
+		} = await asymmetricEncryptionHelper.encrypt({
+			plainData: [tokenRow.value, tokenRow.issued_at.toISOString()],
+			publicKeyHex,
+		});
+
 		return {
 			success: true,
 			data: {
-				value: tokenRow.value,
-				issuedAt: tokenRow.issued_at,
+				valueEncryptedHex,
+				issuedAtEncryptedHex,
+				intermediateEncryptionPublicKeyHex,
 			},
 		};
 	};

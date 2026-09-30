@@ -5,8 +5,9 @@ export enum GetAppTokenModelErrorCode {
 }
 
 export type GetAppTokenModelResApiKeyData = {
-	value: string;
-	issuedAt: Date;
+	valueEncryptedHex: string;
+	issuedAtEncryptedHex: string;
+	intermediateEncryptionPublicKeyHex: string;
 };
 
 export type GetAppTokenModelSuccessRes = {

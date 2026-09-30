@@ -334,13 +334,14 @@ class AppsController {
 
 	getApiKey = async (req: Request, res: Response<GetAppTokenRes>) => {
 		const body = req.body as GetAppTokenBody;
-		const params = req.params as unknown as GetAppTokenParams;
+		const { appId, publicKeyHex } = req.params as unknown as GetAppTokenParams;
 
 		const { userData } = body;
 
 		const result = await appTokensModel.getOne({
-			appId: new Decimal(params.appId).toNumber(),
+			appId: new Decimal(appId).toNumber(),
 			address: userData.address,
+			publicKeyHex,
 		});
 
 		if (!result.success) {
