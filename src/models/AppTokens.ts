@@ -27,6 +27,7 @@ class AppTokens {
 	create = async ({
 		appId,
 		address,
+		publicKeyHex,
 	}: CreateAppTokenModelParams): Promise<CreateAppTokenModelRes> => {
 		const userRow = await userModel.getUserRow(address);
 
@@ -40,18 +41,30 @@ class AppTokens {
 			return { success: false, data: CreateAppTokenModelErrorCode.APP_NOT_FOUND };
 		}
 
+		const value = this.generateValue();
+		const issuedAt = new Date();
+
+		const {
+			cipherDataHex: [valueEncryptedHex, issuedAtEncryptedHex],
+			intermediateEncryptionPublicKeyHex,
+		} = await asymmetricEncryptionHelper.encrypt({
+			plainData: [value, issuedAt.toISOString()],
+			publicKeyHex,
+		});
+
 		try {
-			const tokenRow = await AppToken.create({
+			await AppToken.create({
 				app_id: appRow.id,
-				value: this.generateValue(),
-				issued_at: new Date(),
+				value,
+				issued_at: issuedAt,
 			});
 
 			return {
 				success: true,
 				data: {
-					value: tokenRow.value,
-					issuedAt: tokenRow.issued_at,
+					valueEncryptedHex,
+					issuedAtEncryptedHex,
+					intermediateEncryptionPublicKeyHex,
 				},
 			};
 		} catch (error) {

@@ -247,6 +247,7 @@ class AppsController {
 		const result = await appTokensModel.create({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
+			publicKeyHex: params.publicKeyHex,
 		});
 
 		if (!result.success) {
