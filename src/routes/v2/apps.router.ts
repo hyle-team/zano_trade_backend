@@ -48,7 +48,7 @@ appsRouter.post(
 );
 
 appsRouter.put(
-	'/:appId/api-key',
+	'/:appId/api-key/:publicKeyHex',
 	middleware.expressValidator(regenerateAppTokenParamsValidator),
 	appsController.regenerateApiKey.bind(appsController),
 );

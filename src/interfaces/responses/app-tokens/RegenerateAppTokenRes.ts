@@ -1,6 +1,7 @@
 export type RegenerateAppTokenResApiKeyData = {
-	value: string;
-	issuedAt: Date;
+	valueEncryptedHex: string;
+	issuedAtEncryptedHex: string;
+	intermediateEncryptionPublicKeyHex: string;
 };
 
 export type RegenerateAppTokenSuccessRes = {

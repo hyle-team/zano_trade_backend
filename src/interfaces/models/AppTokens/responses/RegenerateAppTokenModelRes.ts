@@ -5,8 +5,9 @@ export enum RegenerateAppTokenModelErrorCode {
 }
 
 export type RegenerateAppTokenModelResApiKeyData = {
-	value: string;
-	issuedAt: Date;
+	valueEncryptedHex: string;
+	issuedAtEncryptedHex: string;
+	intermediateEncryptionPublicKeyHex: string;
 };
 
 export type RegenerateAppTokenModelSuccessRes = {

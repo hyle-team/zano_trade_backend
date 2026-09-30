@@ -295,6 +295,7 @@ class AppsController {
 		const result = await appTokensModel.regenerate({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
+			publicKeyHex: params.publicKeyHex,
 		});
 
 		if (!result.success) {

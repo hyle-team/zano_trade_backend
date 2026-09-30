@@ -82,6 +82,7 @@ class AppTokens {
 	regenerate = async ({
 		appId,
 		address,
+		publicKeyHex,
 	}: RegenerateAppTokenModelParams): Promise<RegenerateAppTokenModelRes> => {
 		const userRow = await userModel.getUserRow(address);
 
@@ -98,6 +99,14 @@ class AppTokens {
 		const value = this.generateValue();
 		const issuedAt = new Date();
 
+		const {
+			cipherDataHex: [valueEncryptedHex, issuedAtEncryptedHex],
+			intermediateEncryptionPublicKeyHex,
+		} = await asymmetricEncryptionHelper.encrypt({
+			plainData: [value, issuedAt.toISOString()],
+			publicKeyHex,
+		});
+
 		const [affectedRowsCount] = await AppToken.update(
 			{ value, issued_at: issuedAt },
 			{ where: { app_id: appRow.id } },
@@ -110,8 +119,9 @@ class AppTokens {
 		return {
 			success: true,
 			data: {
-				value,
-				issuedAt,
+				valueEncryptedHex,
+				issuedAtEncryptedHex,
+				intermediateEncryptionPublicKeyHex,
 			},
 		};
 	};
