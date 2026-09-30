@@ -17,12 +17,57 @@ import RegenerateAppTokenModelParams from '@/interfaces/models/AppTokens/params/
 import RegenerateAppTokenModelRes, {
 	RegenerateAppTokenModelErrorCode,
 } from '@/interfaces/models/AppTokens/responses/RegenerateAppTokenModelRes.js';
+import GetDecryptedAppTokenRowByAppIdRes from '@/interfaces/models/AppTokens/responses/GetDecryptedAppTokenRowByAppIdModelRes';
+import GetDecryptedAppTokenRowByIdParams from '@/interfaces/models/AppTokens/params/GetDecryptedAppTokenRowByIdParams';
+import CreateAppTokenRowModelRes from '@/interfaces/models/AppTokens/responses/CreateAppTokenRowModelRes';
+import CreateAppTokenRowModelParams from '@/interfaces/models/AppTokens/params/CreateAppTokenRowModelParams';
 
 class AppTokens {
 	private readonly VALUE_BYTES_LENGTH = 32;
 
 	private generateValue = (): string =>
 		crypto.randomBytes(this.VALUE_BYTES_LENGTH).toString('base64url');
+
+	private getDecryptedAppTokenRowByAppId = async ({
+		appId,
+	}: GetDecryptedAppTokenRowByIdParams): Promise<GetDecryptedAppTokenRowByAppIdRes> => {
+		const appTokenRow = await AppToken.findOne({
+			where: {
+				app_id: appId,
+			},
+		});
+
+		if (!appTokenRow) {
+			return { success: true, data: null };
+		}
+
+		return {
+			success: true,
+			data: {
+				id: appTokenRow.id,
+				appId: appTokenRow.app_id,
+				value: appTokenRow.value,
+				issuedAt: appTokenRow.issued_at,
+			},
+		};
+	};
+
+	private createAppTokenRow = async ({
+		appId,
+		plainValue,
+		issuedAt,
+	}: CreateAppTokenRowModelParams): Promise<CreateAppTokenRowModelRes> => {
+		await AppToken.create({
+			app_id: appId,
+			value: plainValue,
+			issued_at: issuedAt,
+		});
+
+		return {
+			success: true,
+			data: null,
+		};
+	};
 
 	create = async ({
 		appId,
