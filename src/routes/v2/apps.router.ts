@@ -10,6 +10,9 @@ import { updateAppNameParamsValidator } from '@/interfaces/params/apps/UpdateApp
 import { createAppTokenParamsValidator } from '@/interfaces/params/app-tokens/CreateAppTokenParams';
 import { regenerateAppTokenParamsValidator } from '@/interfaces/params/app-tokens/RegenerateAppTokenParams';
 import { getAppTokenParamsValidator } from '@/interfaces/params/app-tokens/GetAppTokenParams';
+import { createAppTokenValidator } from '@/interfaces/bodies/app-tokens/CreateAppTokenBody';
+import { regenerateAppTokenValidator } from '@/interfaces/bodies/app-tokens/RegenerateAppTokenBody';
+import { getAppTokenValidator } from '@/interfaces/bodies/app-tokens/GetAppTokenBody';
 
 const appsRouter = express.Router();
 
@@ -42,20 +45,23 @@ appsRouter.delete(
 );
 
 appsRouter.post(
-	'/:appId/api-key/:publicKeyHex',
-	middleware.expressValidator(createAppTokenParamsValidator),
+	'/:appId/api-key',
+	middleware.expressValidator([...createAppTokenParamsValidator, ...createAppTokenValidator]),
 	appsController.createApiKey.bind(appsController),
 );
 
 appsRouter.put(
-	'/:appId/api-key/:publicKeyHex',
-	middleware.expressValidator(regenerateAppTokenParamsValidator),
+	'/:appId/api-key',
+	middleware.expressValidator([
+		...regenerateAppTokenParamsValidator,
+		...regenerateAppTokenValidator,
+	]),
 	appsController.regenerateApiKey.bind(appsController),
 );
 
 appsRouter.patch(
-	'/:appId/api-key/get/:publicKeyHex',
-	middleware.expressValidator(getAppTokenParamsValidator),
+	'/:appId/api-key/get',
+	middleware.expressValidator([...getAppTokenParamsValidator, ...getAppTokenValidator]),
 	appsController.getApiKey.bind(appsController),
 );
 

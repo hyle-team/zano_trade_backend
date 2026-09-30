@@ -242,12 +242,12 @@ class AppsController {
 		const body = req.body as CreateAppTokenBody;
 		const params = req.params as unknown as CreateAppTokenParams;
 
-		const { userData } = body;
+		const { userData, publicKeyHex } = body;
 
 		const result = await appTokensModel.create({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
-			publicKeyHex: params.publicKeyHex,
+			publicKeyHex,
 		});
 
 		if (!result.success) {
@@ -290,12 +290,12 @@ class AppsController {
 		const body = req.body as RegenerateAppTokenBody;
 		const params = req.params as unknown as RegenerateAppTokenParams;
 
-		const { userData } = body;
+		const { userData, publicKeyHex } = body;
 
 		const result = await appTokensModel.regenerate({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
-			publicKeyHex: params.publicKeyHex,
+			publicKeyHex,
 		});
 
 		if (!result.success) {
@@ -336,9 +336,9 @@ class AppsController {
 
 	getApiKey = async (req: Request, res: Response<GetAppTokenRes>) => {
 		const body = req.body as GetAppTokenBody;
-		const { appId, publicKeyHex } = req.params as unknown as GetAppTokenParams;
+		const { appId } = req.params as unknown as GetAppTokenParams;
 
-		const { userData } = body;
+		const { userData, publicKeyHex } = body;
 
 		const result = await appTokensModel.getOne({
 			appId: new Decimal(appId).toNumber(),
