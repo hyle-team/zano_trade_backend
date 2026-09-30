@@ -6,6 +6,7 @@ import { Server } from 'socket.io';
 import helmet from 'helmet';
 import { env } from '@/config/env.js';
 import authMessagesCleanService from '@/workers/authMessagesCleanService';
+import settingsModel from './models/Settings';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
 import userRouter from './routes/user.router';
@@ -59,6 +60,8 @@ apiV2Router.use('/apps', appsRouter);
 	await sequelize.authenticate();
 	await sequelize.sync();
 	await setupAssociations();
+
+	await settingsModel.initAndCheckSettings();
 
 	const zanoRow = await Currency.findOne({ where: { asset_id: ZANO_ASSET_ID } });
 

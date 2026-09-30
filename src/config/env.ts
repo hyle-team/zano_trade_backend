@@ -28,6 +28,8 @@ const envSchema = z.object({
 	TRUST_PROXY_DEPTH: z.coerce.number().int().nonnegative().default(1),
 
 	INTEGRATION_KEY: z.string().min(32),
+
+	ACCESS_PASSWORD: z.string().min(32),
 });
 
 const parsed = envSchema.safeParse(process.env);
