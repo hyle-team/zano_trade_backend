@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import crypto from 'node:crypto';
 
 export function validateTokensInput(input: string | number, decimal_point = 12) {
 	let inputVal = input;
@@ -97,3 +98,6 @@ export function validateTokensInput(input: string | number, decimal_point = 12) 
 		valid: true,
 	};
 }
+
+export const sha256 = (value: string): Buffer =>
+	crypto.createHash('sha256').update(value, 'utf8').digest();

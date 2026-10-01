@@ -88,6 +88,7 @@ process.on('unhandledRejection', (reason, promise) => {
 	app.set('trust proxy', env.TRUST_PROXY_DEPTH);
 	app.use(middleware.bffTrustedProxyIpSignatureCheckMiddleware);
 	app.use(middleware.defaultRateLimit);
+	app.use(middleware.integrationRateLimit);
 
 	socketStart(io);
 
@@ -107,6 +108,8 @@ process.on('unhandledRejection', (reason, promise) => {
 
 	app.use(express.json());
 	app.use(express.urlencoded({ extended: true }));
+
+	app.use(middleware.optionalIntegrationKeyAuthGuard);
 
 	app.use('/api', [
 		authRouter,
