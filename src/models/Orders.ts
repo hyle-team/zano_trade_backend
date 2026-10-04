@@ -786,7 +786,13 @@ class OrdersModel {
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
-			const orderRow = await Order.findByPk(orderData.connected_order_id);
+			const orderRow = await Order.findOne({
+				where: {
+					id: orderData.connected_order_id,
+					status: 'active',
+					user_id: userRow.id,
+				},
+			});
 
 			const applyingOrderRow = await Order.findOne({
 				where: {
