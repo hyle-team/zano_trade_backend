@@ -8,7 +8,6 @@ import zanoExplorerHelper from '@/helpers/ZanoExplorer.helper.js';
 import Order, { OrderStatus } from '@/schemes/Order';
 import TransactionWithOrders from '@/interfaces/common/Transaction.js';
 import { sendDeleteOrderMessage, sendUpdatePairStatsMessage } from '../socket/main.js';
-import ordersModel from './Orders.js';
 import userModel from './User.js';
 import io from '../server.js';
 import ConfirmTransactionBody from '../interfaces/bodies/exchange-transactions/ConfirmTransactionBody.js';
@@ -366,73 +365,121 @@ class ExchangeModel {
 				throw new Error('User not found.');
 			}
 
-			const transaction = await Transaction.findByPk(transactionId);
+			const result = await sequelize.transaction(async (transaction) => {
+				const unlockedTransactionRow = await Transaction.findByPk(transactionId, {
+					transaction,
+				});
 
-			if (!transaction) {
-				return { success: false, data: "Transaction doesn't exist." };
-			}
+				if (!unlockedTransactionRow) {
+					return { success: false as const, data: "Transaction doesn't exist." };
+				}
 
-			if (transaction.status !== 'pending') {
-				return { success: false, data: 'Transaction is not pending' };
-			}
+				const orderRows = await Order.findAll({
+					where: {
+						id: [
+							unlockedTransactionRow.buy_order_id,
+							unlockedTransactionRow.sell_order_id,
+						],
+					},
+					order: [['id', 'ASC']],
+					transaction,
+					lock: transaction.LOCK.UPDATE,
+				});
 
-			const buyOrder = await ordersModel.getOrderRow(transaction.buy_order_id);
-			const sellOrder = await ordersModel.getOrderRow(transaction.sell_order_id);
+				const buyOrder = orderRows.find(
+					(e) => e.id === unlockedTransactionRow.buy_order_id,
+				);
+				const sellOrder = orderRows.find(
+					(e) => e.id === unlockedTransactionRow.sell_order_id,
+				);
 
-			if (!(buyOrder && sellOrder)) {
-				throw new Error('Buy or sell order not found.');
-			}
+				if (!(buyOrder && sellOrder)) {
+					throw new Error('Buy or sell order not found.');
+				}
 
-			if (
-				!(transaction.creator === 'sell'
-					? buyOrder.user_id === userRow.id
-					: sellOrder.user_id === userRow.id)
-			) {
-				return { success: false, data: 'You are not a participant of this transaction' };
-			}
+				const transactionRow = await Transaction.findByPk(transactionId, {
+					transaction,
+					lock: transaction.LOCK.UPDATE,
+				});
 
-			const transactionAmount = new Decimal(transaction.amount);
+				if (!transactionRow) {
+					return { success: false as const, data: "Transaction doesn't exist." };
+				}
 
-			const buyOrderLeft = new Decimal(buyOrder.left);
-			const sellOrderLeft = new Decimal(sellOrder.left);
+				if (transactionRow.status !== 'pending') {
+					return { success: false as const, data: 'Transaction is not pending' };
+				}
 
-			const newBuyOrderLeft = buyOrderLeft.minus(transactionAmount);
-			const newSellOrderLeft = sellOrderLeft.minus(transactionAmount);
+				if (
+					!(transactionRow.creator === 'sell'
+						? buyOrder.user_id === userRow.id
+						: sellOrder.user_id === userRow.id)
+				) {
+					return {
+						success: false as const,
+						data: 'You are not a participant of this transaction',
+					};
+				}
 
-			if (newBuyOrderLeft.isNegative() || newSellOrderLeft.isNegative()) {
+				const transactionAmount = new Decimal(transactionRow.amount);
+
+				const buyOrderLeft = new Decimal(buyOrder.left);
+				const sellOrderLeft = new Decimal(sellOrder.left);
+
+				const newBuyOrderLeft = buyOrderLeft.minus(transactionAmount);
+				const newSellOrderLeft = sellOrderLeft.minus(transactionAmount);
+
+				if (newBuyOrderLeft.isNegative() || newSellOrderLeft.isNegative()) {
+					return {
+						success: false as const,
+						data: ExchangeModel.CONFIRM_TRANSACTION_ORDERS_LEFT_ALREADY_EXCEEDED,
+					};
+				}
+
+				const isBuyOrderFinished = newBuyOrderLeft.equals('0');
+				const isSellOrderFinished = newSellOrderLeft.equals('0');
+
+				await Transaction.update(
+					{ status: 'confirmed', finalize_timestamp: Date.now() },
+					{ where: { id: transactionId }, transaction },
+				);
+
+				await Order.update(
+					{
+						...(isBuyOrderFinished ? { status: OrderStatus.FINISHED } : {}),
+						left: newBuyOrderLeft.toFixed(),
+					},
+					{
+						where: { id: buyOrder.id },
+						transaction,
+					},
+				);
+
+				await Order.update(
+					{
+						...(isSellOrderFinished ? { status: OrderStatus.FINISHED } : {}),
+						left: newSellOrderLeft.toFixed(),
+					},
+					{
+						where: { id: sellOrder.id },
+						transaction,
+					},
+				);
+
 				return {
-					success: false,
-					data: ExchangeModel.CONFIRM_TRANSACTION_ORDERS_LEFT_ALREADY_EXCEEDED,
+					success: true as const,
+					buyOrder,
+					sellOrder,
+					isBuyOrderFinished,
+					isSellOrderFinished,
 				};
+			});
+
+			if (!result.success) {
+				return { success: false, data: result.data };
 			}
 
-			const isBuyOrderFinished = newBuyOrderLeft.equals('0');
-			const isSellOrderFinished = newSellOrderLeft.equals('0');
-
-			await Transaction.update(
-				{ status: 'confirmed', finalize_timestamp: Date.now() },
-				{ where: { id: transactionId } },
-			);
-
-			await Order.update(
-				{
-					...(isBuyOrderFinished ? { status: OrderStatus.FINISHED } : {}),
-					left: newBuyOrderLeft.toFixed(),
-				},
-				{
-					where: { id: buyOrder.id },
-				},
-			);
-
-			await Order.update(
-				{
-					...(isSellOrderFinished ? { status: OrderStatus.FINISHED } : {}),
-					left: newSellOrderLeft.toFixed(),
-				},
-				{
-					where: { id: sellOrder.id },
-				},
-			);
+			const { buyOrder, sellOrder, isBuyOrderFinished, isSellOrderFinished } = result;
 
 			if (isBuyOrderFinished) {
 				sendDeleteOrderMessage(io, buyOrder.pair_id.toString(), buyOrder.id.toString());
