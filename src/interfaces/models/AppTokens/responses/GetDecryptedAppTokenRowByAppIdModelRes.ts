@@ -1,5 +1,3 @@
-export enum GetDecryptedAppTokenRowByAppIdModelErrorCode {}
-
 export type GetDecryptedAppTokenRowByAppIdResApiKeyData = {
 	id: number;
 	appId: number;
@@ -7,18 +5,6 @@ export type GetDecryptedAppTokenRowByAppIdResApiKeyData = {
 	issuedAt: Date;
 };
 
-export type GetDecryptedAppTokenRowByAppIdModelSuccessRes = {
-	success: true;
-	data: GetDecryptedAppTokenRowByAppIdResApiKeyData | null;
-};
-
-export type GetDecryptedAppTokenRowByAppIdModelErrorRes = {
-	success: false;
-	data: GetDecryptedAppTokenRowByAppIdModelErrorCode;
-};
-
-type GetDecryptedAppTokenRowByAppIdRes =
-	| GetDecryptedAppTokenRowByAppIdModelSuccessRes
-	| GetDecryptedAppTokenRowByAppIdModelErrorRes;
+type GetDecryptedAppTokenRowByAppIdRes = GetDecryptedAppTokenRowByAppIdResApiKeyData | null;
 
 export default GetDecryptedAppTokenRowByAppIdRes;
