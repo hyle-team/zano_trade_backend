@@ -27,7 +27,7 @@ import DeleteAppModelRes, {
 } from '@/interfaces/models/Apps/responses/DeleteAppModelRes.js';
 import { Decimal } from 'decimal.js';
 
-class Apps {
+class AppsService {
 	private readonly APPS_PER_USER_LIMIT = 1;
 
 	create = async ({ name, address }: CreateAppModelParams): Promise<CreateAppModelRes> => {
@@ -173,6 +173,6 @@ class Apps {
 	};
 }
 
-const appsModel = new Apps();
+const appsService = new AppsService();
 
-export default appsModel;
+export default appsService;

@@ -1,7 +1,7 @@
 import express from 'express';
 
 import { createAppValidator } from '@/interfaces/bodies/apps/CreateAppBody.js';
-import appsController from '@/controllers/apps.controller.js';
+import appsController from '@/v2/controllers/apps.controller.js';
 import middleware from '@/middleware/middleware';
 import { deleteAppParamsValidator } from '@/interfaces/params/apps/DeleteAppParams';
 import { getAppParamsValidator } from '@/interfaces/params/apps/GetAppParams';

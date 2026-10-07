@@ -23,7 +23,7 @@ import GetDecryptedAppTokenRowByAppIdRes from '@/interfaces/models/AppTokens/res
 import CreateAppTokenRowModelRes from '@/interfaces/models/AppTokens/responses/CreateAppTokenRowModelRes';
 import CreateAppTokenRowModelParams from '@/interfaces/models/AppTokens/params/CreateAppTokenRowModelParams';
 
-class AppTokens {
+class AppTokensService {
 	private readonly VALUE_BYTES_LENGTH = 32;
 
 	private generateValue = (): string =>
@@ -258,6 +258,6 @@ class AppTokens {
 	};
 }
 
-const appTokensModel = new AppTokens();
+const appTokensService = new AppTokensService();
 
-export default appTokensModel;
+export default appTokensService;

@@ -10,7 +10,7 @@ import settingsModel from './models/Settings';
 import authRouter from './routes/auth.router';
 import offersRouter from './routes/offers.router';
 import userRouter from './routes/user.router';
-import appsRouter from './routes/v2/apps.router';
+import appsRouter from './v2/routes/apps.router';
 import middleware from './middleware/middleware';
 import configRouter from './routes/config.router';
 import chatsRouter from './routes/chats.router';

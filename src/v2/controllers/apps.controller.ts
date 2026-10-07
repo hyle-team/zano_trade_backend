@@ -74,9 +74,9 @@ import {
 	RegenerateAppTokenModelErrorCode,
 	RegenerateAppTokenModelResApiKeyData,
 } from '@/interfaces/models/AppTokens/responses/RegenerateAppTokenModelRes.js';
-import appTokensModel from '@/models/AppTokens.js';
+import appTokensService from '@/v2/services/app-tokens.service.js';
 import { Decimal } from 'decimal.js';
-import appsModel from '../models/Apps.js';
+import appsService from '../services/apps.service.js';
 
 class AppsController {
 	private createSuccessResponseMapper = (
@@ -94,7 +94,7 @@ class AppsController {
 		const body = req.body as CreateAppBody;
 		const { name, userData } = body;
 
-		const result = await appsModel.create({ name, address: userData.address });
+		const result = await appsService.create({ name, address: userData.address });
 
 		if (!result.success) {
 			const errorCode = result.data;
@@ -145,7 +145,7 @@ class AppsController {
 		const body = req.body as GetAllAppsBody;
 		const { userData } = body;
 
-		const result = await appsModel.getAll({ address: userData.address });
+		const result = await appsService.getAll({ address: userData.address });
 
 		if (!result.success) {
 			const errorCode = result.data;
@@ -184,7 +184,7 @@ class AppsController {
 
 		const { userData } = body;
 
-		const result = await appsModel.getOne({
+		const result = await appsService.getOne({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
 		});
@@ -235,7 +235,7 @@ class AppsController {
 
 		const { name, userData } = body;
 
-		const result = await appsModel.updateName({
+		const result = await appsService.updateName({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
 			name,
@@ -293,7 +293,7 @@ class AppsController {
 
 		const { userData } = body;
 
-		const result = await appsModel.delete({
+		const result = await appsService.delete({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
 		});
@@ -345,7 +345,7 @@ class AppsController {
 
 		const { userData, publicKeyHex } = body;
 
-		const result = await appTokensModel.create({
+		const result = await appTokensService.create({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
 			publicKeyHex,
@@ -405,7 +405,7 @@ class AppsController {
 
 		const { userData, publicKeyHex } = body;
 
-		const result = await appTokensModel.regenerate({
+		const result = await appTokensService.regenerate({
 			appId: new Decimal(params.appId).toNumber(),
 			address: userData.address,
 			publicKeyHex,
@@ -465,7 +465,7 @@ class AppsController {
 
 		const { userData, publicKeyHex } = body;
 
-		const result = await appTokensModel.getOne({
+		const result = await appTokensService.getOne({
 			appId: new Decimal(appId).toNumber(),
 			address: userData.address,
 			publicKeyHex,
