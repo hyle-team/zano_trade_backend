@@ -5,15 +5,15 @@ import CreateAppRes, {
 	CreateAppResAppData,
 } from '@/interfaces/responses/apps/CreateAppRes.js';
 import {
-	CreateAppModelErrorCode,
-	CreateAppModelResAppData,
-} from '@/interfaces/models/Apps/responses/CreateAppModelRes.js';
+	CreateAppServiceErrorCode,
+	CreateAppServiceResAppData,
+} from '@/v2/interfaces/services/Apps/responses/CreateAppServiceRes.js';
 import GetAllAppsBody from '@/interfaces/bodies/apps/GetAllAppsBody.js';
 import GetAllAppsRes, { GetAllAppsResAppData } from '@/interfaces/responses/apps/GetAllAppsRes.js';
 import {
-	GetAllAppsModelErrorCode,
-	GetAllAppsModelResAppData,
-} from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
+	GetAllAppsServiceErrorCode,
+	GetAllAppsServiceResAppData,
+} from '@/v2/interfaces/services/Apps/responses/GetAllAppsServiceRes.js';
 import GetAppBody from '@/interfaces/bodies/apps/GetAppBody.js';
 import GetAppParams from '@/interfaces/params/apps/GetAppParams.js';
 import GetAppRes, {
@@ -21,9 +21,9 @@ import GetAppRes, {
 	GetAppResAppData,
 } from '@/interfaces/responses/apps/GetAppRes.js';
 import {
-	GetAppModelErrorCode,
-	GetAppModelResAppData,
-} from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
+	GetAppServiceErrorCode,
+	GetAppServiceResAppData,
+} from '@/v2/interfaces/services/Apps/responses/GetAppServiceRes.js';
 import UpdateAppNameBody from '@/interfaces/bodies/apps/UpdateAppNameBody.js';
 import UpdateAppNameParams from '@/interfaces/params/apps/UpdateAppNameParams.js';
 import UpdateAppNameRes, {
@@ -31,9 +31,9 @@ import UpdateAppNameRes, {
 	UpdateAppNameResAppData,
 } from '@/interfaces/responses/apps/UpdateAppNameRes.js';
 import {
-	UpdateAppNameModelErrorCode,
-	UpdateAppNameModelResAppData,
-} from '@/interfaces/models/Apps/responses/UpdateAppNameModelRes.js';
+	UpdateAppNameServiceErrorCode,
+	UpdateAppNameServiceResAppData,
+} from '@/v2/interfaces/services/Apps/responses/UpdateAppNameServiceRes.js';
 import DeleteAppBody from '@/interfaces/bodies/apps/DeleteAppBody.js';
 import DeleteAppParams from '@/interfaces/params/apps/DeleteAppParams.js';
 import DeleteAppRes, {
@@ -41,9 +41,9 @@ import DeleteAppRes, {
 	DeleteAppResAppData,
 } from '@/interfaces/responses/apps/DeleteAppRes.js';
 import {
-	DeleteAppModelErrorCode,
-	DeleteAppModelResAppData,
-} from '@/interfaces/models/Apps/responses/DeleteAppModelRes.js';
+	DeleteAppServiceErrorCode,
+	DeleteAppServiceResAppData,
+} from '@/v2/interfaces/services/Apps/responses/DeleteAppServiceRes.js';
 import CreateAppTokenBody from '@/interfaces/bodies/app-tokens/CreateAppTokenBody.js';
 import CreateAppTokenParams from '@/interfaces/params/app-tokens/CreateAppTokenParams.js';
 import CreateAppTokenRes, {
@@ -51,9 +51,9 @@ import CreateAppTokenRes, {
 	CreateAppTokenResApiKeyData,
 } from '@/interfaces/responses/app-tokens/CreateAppTokenRes.js';
 import {
-	CreateAppTokenModelErrorCode,
-	CreateAppTokenModelResApiKeyData,
-} from '@/interfaces/models/AppTokens/responses/CreateAppTokenModelRes.js';
+	CreateAppTokenServiceErrorCode,
+	CreateAppTokenServiceResApiKeyData,
+} from '@/v2/interfaces/services/AppTokens/responses/CreateAppTokenServiceRes.js';
 import GetAppTokenBody from '@/interfaces/bodies/app-tokens/GetAppTokenBody.js';
 import GetAppTokenParams from '@/interfaces/params/app-tokens/GetAppTokenParams.js';
 import GetAppTokenRes, {
@@ -61,9 +61,9 @@ import GetAppTokenRes, {
 	GetAppTokenResApiKeyData,
 } from '@/interfaces/responses/app-tokens/GetAppTokenRes.js';
 import {
-	GetAppTokenModelErrorCode,
-	GetAppTokenModelResApiKeyData,
-} from '@/interfaces/models/AppTokens/responses/GetAppTokenModelRes.js';
+	GetAppTokenServiceErrorCode,
+	GetAppTokenServiceResApiKeyData,
+} from '@/v2/interfaces/services/AppTokens/responses/GetAppTokenServiceRes.js';
 import RegenerateAppTokenBody from '@/interfaces/bodies/app-tokens/RegenerateAppTokenBody.js';
 import RegenerateAppTokenParams from '@/interfaces/params/app-tokens/RegenerateAppTokenParams.js';
 import RegenerateAppTokenRes, {
@@ -71,18 +71,18 @@ import RegenerateAppTokenRes, {
 	RegenerateAppTokenResApiKeyData,
 } from '@/interfaces/responses/app-tokens/RegenerateAppTokenRes.js';
 import {
-	RegenerateAppTokenModelErrorCode,
-	RegenerateAppTokenModelResApiKeyData,
-} from '@/interfaces/models/AppTokens/responses/RegenerateAppTokenModelRes.js';
+	RegenerateAppTokenServiceErrorCode,
+	RegenerateAppTokenServiceResApiKeyData,
+} from '@/v2/interfaces/services/AppTokens/responses/RegenerateAppTokenServiceRes.js';
 import appTokensService from '@/v2/services/app-tokens.service.js';
 import { Decimal } from 'decimal.js';
 import appsService from '../services/apps.service.js';
 
 class AppsController {
 	private createSuccessResponseMapper = (
-		createAppModelResAppData: CreateAppModelResAppData,
+		createAppServiceResAppData: CreateAppServiceResAppData,
 	): CreateAppResAppData => {
-		const param = createAppModelResAppData;
+		const param = createAppServiceResAppData;
 
 		return {
 			id: param.id,
@@ -100,24 +100,24 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case CreateAppModelErrorCode.NAME_TAKEN:
+				case CreateAppServiceErrorCode.NAME_TAKEN:
 					res.status(400).send({ success: false, data: CreateAppErrorCode.NAME_TAKEN });
 					return;
 
-				case CreateAppModelErrorCode.APP_LIMIT_REACHED:
+				case CreateAppServiceErrorCode.APP_LIMIT_REACHED:
 					res.status(400).send({
 						success: false,
 						data: CreateAppErrorCode.APP_LIMIT_REACHED,
 					});
 					return;
 
-				case CreateAppModelErrorCode.USER_NOT_FOUND:
+				case CreateAppServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
 					const unhandledErrorCode: never = errorCode;
 					throw new Error(
-						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
 					);
 				}
 			}
@@ -130,9 +130,9 @@ class AppsController {
 	};
 
 	private getAllSuccessResponseMapper = (
-		getAllAppsModelResAppData: GetAllAppsModelResAppData[],
+		getAllAppsServiceResAppData: GetAllAppsServiceResAppData[],
 	): GetAllAppsResAppData[] => {
-		const param = getAllAppsModelResAppData;
+		const param = getAllAppsServiceResAppData;
 
 		return param.map((appData) => ({
 			id: appData.id,
@@ -150,12 +150,12 @@ class AppsController {
 		if (!result.success) {
 			const errorCode = result.data;
 
-			if (errorCode === GetAllAppsModelErrorCode.USER_NOT_FOUND) {
+			if (errorCode === GetAllAppsServiceErrorCode.USER_NOT_FOUND) {
 				throw new Error('JWT token of non-existent user');
 			} else {
 				const unhandledErrorCode: never = errorCode;
 				throw new Error(
-					`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+					`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
 				);
 			}
 		}
@@ -167,9 +167,9 @@ class AppsController {
 	};
 
 	private getOneSuccessResponseMapper = (
-		getAppModelResAppData: GetAppModelResAppData,
+		getAppServiceResAppData: GetAppServiceResAppData,
 	): GetAppResAppData => {
-		const param = getAppModelResAppData;
+		const param = getAppServiceResAppData;
 
 		return {
 			id: param.id,
@@ -193,20 +193,20 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case GetAppModelErrorCode.APP_NOT_FOUND:
+				case GetAppServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: GetAppErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case GetAppModelErrorCode.USER_NOT_FOUND:
+				case GetAppServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
 					const unhandledErrorCode: never = errorCode;
 					throw new Error(
-						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
 					);
 				}
 			}
@@ -219,9 +219,9 @@ class AppsController {
 	};
 
 	private updateNameSuccessResponseMapper = (
-		updateAppNameModelResAppData: UpdateAppNameModelResAppData,
+		updateAppNameServiceResAppData: UpdateAppNameServiceResAppData,
 	): UpdateAppNameResAppData => {
-		const param = updateAppNameModelResAppData;
+		const param = updateAppNameServiceResAppData;
 
 		return {
 			id: param.id,
@@ -245,27 +245,27 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case UpdateAppNameModelErrorCode.APP_NOT_FOUND:
+				case UpdateAppNameServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: UpdateAppNameErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case UpdateAppNameModelErrorCode.NAME_TAKEN:
+				case UpdateAppNameServiceErrorCode.NAME_TAKEN:
 					res.status(400).send({
 						success: false,
 						data: UpdateAppNameErrorCode.NAME_TAKEN,
 					});
 					return;
 
-				case UpdateAppNameModelErrorCode.USER_NOT_FOUND:
+				case UpdateAppNameServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
 					const unhandledErrorCode: never = errorCode;
 					throw new Error(
-						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
 					);
 				}
 			}
@@ -278,9 +278,9 @@ class AppsController {
 	};
 
 	private deleteSuccessResponseMapper = (
-		deleteAppModelResAppData: DeleteAppModelResAppData,
+		deleteAppServiceResAppData: DeleteAppServiceResAppData,
 	): DeleteAppResAppData => {
-		const param = deleteAppModelResAppData;
+		const param = deleteAppServiceResAppData;
 
 		return {
 			id: param.id,
@@ -302,20 +302,20 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case DeleteAppModelErrorCode.APP_NOT_FOUND:
+				case DeleteAppServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: DeleteAppErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case DeleteAppModelErrorCode.USER_NOT_FOUND:
+				case DeleteAppServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
 					const unhandledErrorCode: never = errorCode;
 					throw new Error(
-						`Unhandled apps model error: ${JSON.stringify(unhandledErrorCode)}`,
+						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
 					);
 				}
 			}
@@ -328,9 +328,9 @@ class AppsController {
 	};
 
 	private createApiKeySuccessResponseMapper = (
-		createAppTokenModelResApiKeyData: CreateAppTokenModelResApiKeyData,
+		createAppTokenServiceResApiKeyData: CreateAppTokenServiceResApiKeyData,
 	): CreateAppTokenResApiKeyData => {
-		const param = createAppTokenModelResApiKeyData;
+		const param = createAppTokenServiceResApiKeyData;
 
 		return {
 			valueEncryptedHex: param.valueEncryptedHex,
@@ -355,27 +355,27 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case CreateAppTokenModelErrorCode.APP_NOT_FOUND:
+				case CreateAppTokenServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: CreateAppTokenErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case CreateAppTokenModelErrorCode.API_KEY_ALREADY_EXISTS:
+				case CreateAppTokenServiceErrorCode.API_KEY_ALREADY_EXISTS:
 					res.status(400).send({
 						success: false,
 						data: CreateAppTokenErrorCode.API_KEY_ALREADY_EXISTS,
 					});
 					return;
 
-				case CreateAppTokenModelErrorCode.USER_NOT_FOUND:
+				case CreateAppTokenServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
 					const unhandledErrorCode: never = errorCode;
 					throw new Error(
-						`Unhandled app tokens model error: ${JSON.stringify(unhandledErrorCode)}`,
+						`Unhandled app tokens service error: ${JSON.stringify(unhandledErrorCode)}`,
 					);
 				}
 			}
@@ -388,9 +388,9 @@ class AppsController {
 	};
 
 	private regenerateApiKeySuccessResponseMapper = (
-		regenerateAppTokenModelResApiKeyData: RegenerateAppTokenModelResApiKeyData,
+		regenerateAppTokenServiceResApiKeyData: RegenerateAppTokenServiceResApiKeyData,
 	): RegenerateAppTokenResApiKeyData => {
-		const param = regenerateAppTokenModelResApiKeyData;
+		const param = regenerateAppTokenServiceResApiKeyData;
 
 		return {
 			valueEncryptedHex: param.valueEncryptedHex,
@@ -415,27 +415,27 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case RegenerateAppTokenModelErrorCode.APP_NOT_FOUND:
+				case RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: RegenerateAppTokenErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case RegenerateAppTokenModelErrorCode.API_KEY_NOT_FOUND:
+				case RegenerateAppTokenServiceErrorCode.API_KEY_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: RegenerateAppTokenErrorCode.API_KEY_NOT_FOUND,
 					});
 					return;
 
-				case RegenerateAppTokenModelErrorCode.USER_NOT_FOUND:
+				case RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
 					const unhandledErrorCode: never = errorCode;
 					throw new Error(
-						`Unhandled app tokens model error: ${JSON.stringify(unhandledErrorCode)}`,
+						`Unhandled app tokens service error: ${JSON.stringify(unhandledErrorCode)}`,
 					);
 				}
 			}
@@ -448,9 +448,9 @@ class AppsController {
 	};
 
 	private getApiKeySuccessResponseMapper = (
-		getAppTokenModelResApiKeyData: GetAppTokenModelResApiKeyData,
+		getAppTokenServiceResApiKeyData: GetAppTokenServiceResApiKeyData,
 	): GetAppTokenResApiKeyData => {
-		const param = getAppTokenModelResApiKeyData;
+		const param = getAppTokenServiceResApiKeyData;
 
 		return {
 			valueEncryptedHex: param.valueEncryptedHex,
@@ -475,27 +475,27 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case GetAppTokenModelErrorCode.APP_NOT_FOUND:
+				case GetAppTokenServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: GetAppTokenErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case GetAppTokenModelErrorCode.API_KEY_NOT_FOUND:
+				case GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: GetAppTokenErrorCode.API_KEY_NOT_FOUND,
 					});
 					return;
 
-				case GetAppTokenModelErrorCode.USER_NOT_FOUND:
+				case GetAppTokenServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
 					const unhandledErrorCode: never = errorCode;
 					throw new Error(
-						`Unhandled app tokens model error: ${JSON.stringify(unhandledErrorCode)}`,
+						`Unhandled app tokens service error: ${JSON.stringify(unhandledErrorCode)}`,
 					);
 				}
 			}

@@ -7,21 +7,21 @@ import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
 import { asymmetricEncryptionHelper } from '@/helpers/AsymmetricEncryption.helper.js';
-import CreateAppTokenModelParams from '@/interfaces/models/AppTokens/params/CreateAppTokenModelParams.js';
-import CreateAppTokenModelRes, {
-	CreateAppTokenModelErrorCode,
-} from '@/interfaces/models/AppTokens/responses/CreateAppTokenModelRes.js';
-import GetAppTokenModelParams from '@/interfaces/models/AppTokens/params/GetAppTokenModelParams.js';
-import GetAppTokenModelRes, {
-	GetAppTokenModelErrorCode,
-} from '@/interfaces/models/AppTokens/responses/GetAppTokenModelRes.js';
-import RegenerateAppTokenModelParams from '@/interfaces/models/AppTokens/params/RegenerateAppTokenModelParams.js';
-import RegenerateAppTokenModelRes, {
-	RegenerateAppTokenModelErrorCode,
-} from '@/interfaces/models/AppTokens/responses/RegenerateAppTokenModelRes.js';
-import GetDecryptedAppTokenRowByAppIdRes from '@/interfaces/models/AppTokens/responses/GetDecryptedAppTokenRowByAppIdModelRes';
-import CreateAppTokenRowModelRes from '@/interfaces/models/AppTokens/responses/CreateAppTokenRowModelRes';
-import CreateAppTokenRowModelParams from '@/interfaces/models/AppTokens/params/CreateAppTokenRowModelParams';
+import CreateAppTokenServiceParams from '@/v2/interfaces/services/AppTokens/params/CreateAppTokenServiceParams.js';
+import CreateAppTokenServiceRes, {
+	CreateAppTokenServiceErrorCode,
+} from '@/v2/interfaces/services/AppTokens/responses/CreateAppTokenServiceRes.js';
+import GetAppTokenServiceParams from '@/v2/interfaces/services/AppTokens/params/GetAppTokenServiceParams.js';
+import GetAppTokenServiceRes, {
+	GetAppTokenServiceErrorCode,
+} from '@/v2/interfaces/services/AppTokens/responses/GetAppTokenServiceRes.js';
+import RegenerateAppTokenServiceParams from '@/v2/interfaces/services/AppTokens/params/RegenerateAppTokenServiceParams.js';
+import RegenerateAppTokenServiceRes, {
+	RegenerateAppTokenServiceErrorCode,
+} from '@/v2/interfaces/services/AppTokens/responses/RegenerateAppTokenServiceRes.js';
+import GetDecryptedAppTokenRowByAppIdServiceRes from '@/v2/interfaces/services/AppTokens/responses/GetDecryptedAppTokenRowByAppIdServiceRes';
+import CreateAppTokenRowServiceRes from '@/v2/interfaces/services/AppTokens/responses/CreateAppTokenRowServiceRes';
+import CreateAppTokenRowServiceParams from '@/v2/interfaces/services/AppTokens/params/CreateAppTokenRowServiceParams';
 
 class AppTokensService {
 	private readonly VALUE_BYTES_LENGTH = 32;
@@ -68,7 +68,7 @@ class AppTokensService {
 		appId,
 	}: {
 		appId: number;
-	}): Promise<GetDecryptedAppTokenRowByAppIdRes> => {
+	}): Promise<GetDecryptedAppTokenRowByAppIdServiceRes> => {
 		const appTokenRow = await AppToken.findOne({
 			where: {
 				app_id: appId,
@@ -97,7 +97,7 @@ class AppTokensService {
 		appId,
 		plainValue,
 		issuedAt,
-	}: CreateAppTokenRowModelParams): Promise<CreateAppTokenRowModelRes> => {
+	}: CreateAppTokenRowServiceParams): Promise<CreateAppTokenRowServiceRes> => {
 		const valueEncrypted = this.encryptAppTokenForStorage({
 			plainValue,
 		});
@@ -118,17 +118,17 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: CreateAppTokenModelParams): Promise<CreateAppTokenModelRes> => {
+	}: CreateAppTokenServiceParams): Promise<CreateAppTokenServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: CreateAppTokenModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: CreateAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
 
 		if (!appRow) {
-			return { success: false, data: CreateAppTokenModelErrorCode.APP_NOT_FOUND };
+			return { success: false, data: CreateAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
 		const value = this.generateValue();
@@ -161,7 +161,7 @@ class AppTokensService {
 			if (error instanceof UniqueConstraintError) {
 				return {
 					success: false,
-					data: CreateAppTokenModelErrorCode.API_KEY_ALREADY_EXISTS,
+					data: CreateAppTokenServiceErrorCode.API_KEY_ALREADY_EXISTS,
 				};
 			}
 
@@ -173,17 +173,17 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: RegenerateAppTokenModelParams): Promise<RegenerateAppTokenModelRes> => {
+	}: RegenerateAppTokenServiceParams): Promise<RegenerateAppTokenServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: RegenerateAppTokenModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
 
 		if (!appRow) {
-			return { success: false, data: RegenerateAppTokenModelErrorCode.APP_NOT_FOUND };
+			return { success: false, data: RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
 		const value = this.generateValue();
@@ -203,7 +203,7 @@ class AppTokensService {
 		);
 
 		if (affectedRowsCount === 0) {
-			return { success: false, data: RegenerateAppTokenModelErrorCode.API_KEY_NOT_FOUND };
+			return { success: false, data: RegenerateAppTokenServiceErrorCode.API_KEY_NOT_FOUND };
 		}
 
 		return {
@@ -220,23 +220,23 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: GetAppTokenModelParams): Promise<GetAppTokenModelRes> => {
+	}: GetAppTokenServiceParams): Promise<GetAppTokenServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: GetAppTokenModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: GetAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
 
 		if (!appRow) {
-			return { success: false, data: GetAppTokenModelErrorCode.APP_NOT_FOUND };
+			return { success: false, data: GetAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
 		const tokenRow = await this.getDecryptedAppTokenRowByAppId({ appId: appRow.id });
 
 		if (!tokenRow) {
-			return { success: false, data: GetAppTokenModelErrorCode.API_KEY_NOT_FOUND };
+			return { success: false, data: GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND };
 		}
 
 		const {

@@ -5,42 +5,42 @@ import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
 import { AppWithApiKeyCount } from '@/interfaces/database/modifiedRequests.js';
-import CreateAppModelParams from '@/interfaces/models/Apps/params/CreateAppModelParams.js';
-import CreateAppModelRes, {
-	CreateAppModelErrorCode,
-} from '@/interfaces/models/Apps/responses/CreateAppModelRes.js';
-import GetAllAppsModelParams from '@/interfaces/models/Apps/params/GetAllAppsModelParams.js';
-import GetAllAppsModelRes, {
-	GetAllAppsModelErrorCode,
-} from '@/interfaces/models/Apps/responses/GetAllAppsModelRes.js';
-import GetAppModelParams from '@/interfaces/models/Apps/params/GetAppModelParams.js';
-import GetAppModelRes, {
-	GetAppModelErrorCode,
-} from '@/interfaces/models/Apps/responses/GetAppModelRes.js';
-import UpdateAppNameModelParams from '@/interfaces/models/Apps/params/UpdateAppNameModelParams.js';
-import UpdateAppNameModelRes, {
-	UpdateAppNameModelErrorCode,
-} from '@/interfaces/models/Apps/responses/UpdateAppNameModelRes.js';
-import DeleteAppModelParams from '@/interfaces/models/Apps/params/DeleteAppModelParams.js';
-import DeleteAppModelRes, {
-	DeleteAppModelErrorCode,
-} from '@/interfaces/models/Apps/responses/DeleteAppModelRes.js';
+import CreateAppServiceParams from '@/v2/interfaces/services/Apps/params/CreateAppServiceParams.js';
+import CreateAppServiceRes, {
+	CreateAppServiceErrorCode,
+} from '@/v2/interfaces/services/Apps/responses/CreateAppServiceRes.js';
+import GetAllAppsServiceParams from '@/v2/interfaces/services/Apps/params/GetAllAppsServiceParams.js';
+import GetAllAppsServiceRes, {
+	GetAllAppsServiceErrorCode,
+} from '@/v2/interfaces/services/Apps/responses/GetAllAppsServiceRes.js';
+import GetAppServiceParams from '@/v2/interfaces/services/Apps/params/GetAppServiceParams.js';
+import GetAppServiceRes, {
+	GetAppServiceErrorCode,
+} from '@/v2/interfaces/services/Apps/responses/GetAppServiceRes.js';
+import UpdateAppNameServiceParams from '@/v2/interfaces/services/Apps/params/UpdateAppNameServiceParams.js';
+import UpdateAppNameServiceRes, {
+	UpdateAppNameServiceErrorCode,
+} from '@/v2/interfaces/services/Apps/responses/UpdateAppNameServiceRes.js';
+import DeleteAppServiceParams from '@/v2/interfaces/services/Apps/params/DeleteAppServiceParams.js';
+import DeleteAppServiceRes, {
+	DeleteAppServiceErrorCode,
+} from '@/v2/interfaces/services/Apps/responses/DeleteAppServiceRes.js';
 import { Decimal } from 'decimal.js';
 
 class AppsService {
 	private readonly APPS_PER_USER_LIMIT = 1;
 
-	create = async ({ name, address }: CreateAppModelParams): Promise<CreateAppModelRes> => {
+	create = async ({ name, address }: CreateAppServiceParams): Promise<CreateAppServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: CreateAppModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: CreateAppServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		const appsCount = await App.count({ where: { user_id: userRow.id } });
 
 		if (appsCount >= this.APPS_PER_USER_LIMIT) {
-			return { success: false, data: CreateAppModelErrorCode.APP_LIMIT_REACHED };
+			return { success: false, data: CreateAppServiceErrorCode.APP_LIMIT_REACHED };
 		}
 
 		try {
@@ -55,18 +55,18 @@ class AppsService {
 			};
 		} catch (error) {
 			if (error instanceof UniqueConstraintError) {
-				return { success: false, data: CreateAppModelErrorCode.NAME_TAKEN };
+				return { success: false, data: CreateAppServiceErrorCode.NAME_TAKEN };
 			}
 
 			throw error;
 		}
 	};
 
-	getAll = async ({ address }: GetAllAppsModelParams): Promise<GetAllAppsModelRes> => {
+	getAll = async ({ address }: GetAllAppsServiceParams): Promise<GetAllAppsServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: GetAllAppsModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: GetAllAppsServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		const appRows = (await App.findAll({
@@ -92,17 +92,17 @@ class AppsService {
 		};
 	};
 
-	getOne = async ({ appId, address }: GetAppModelParams): Promise<GetAppModelRes> => {
+	getOne = async ({ appId, address }: GetAppServiceParams): Promise<GetAppServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: GetAppModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: GetAppServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
 
 		if (!appRow) {
-			return { success: false, data: GetAppModelErrorCode.APP_NOT_FOUND };
+			return { success: false, data: GetAppServiceErrorCode.APP_NOT_FOUND };
 		}
 
 		const tokenRow = await AppToken.findOne({ where: { app_id: appRow.id } });
@@ -121,11 +121,11 @@ class AppsService {
 		appId,
 		address,
 		name,
-	}: UpdateAppNameModelParams): Promise<UpdateAppNameModelRes> => {
+	}: UpdateAppNameServiceParams): Promise<UpdateAppNameServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: UpdateAppNameModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: UpdateAppNameServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		try {
@@ -135,24 +135,24 @@ class AppsService {
 			);
 
 			if (affectedRowsCount === 0) {
-				return { success: false, data: UpdateAppNameModelErrorCode.APP_NOT_FOUND };
+				return { success: false, data: UpdateAppNameServiceErrorCode.APP_NOT_FOUND };
 			}
 
 			return { success: true, data: { id: appId, name } };
 		} catch (error) {
 			if (error instanceof UniqueConstraintError) {
-				return { success: false, data: UpdateAppNameModelErrorCode.NAME_TAKEN };
+				return { success: false, data: UpdateAppNameServiceErrorCode.NAME_TAKEN };
 			}
 
 			throw error;
 		}
 	};
 
-	delete = async ({ appId, address }: DeleteAppModelParams): Promise<DeleteAppModelRes> => {
+	delete = async ({ appId, address }: DeleteAppServiceParams): Promise<DeleteAppServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: DeleteAppModelErrorCode.USER_NOT_FOUND };
+			return { success: false, data: DeleteAppServiceErrorCode.USER_NOT_FOUND };
 		}
 
 		return sequelize.transaction(async (transaction) => {
@@ -162,7 +162,7 @@ class AppsService {
 			});
 
 			if (!appRow) {
-				return { success: false, data: DeleteAppModelErrorCode.APP_NOT_FOUND };
+				return { success: false, data: DeleteAppServiceErrorCode.APP_NOT_FOUND };
 			}
 
 			await AppToken.destroy({ where: { app_id: appRow.id }, transaction });
