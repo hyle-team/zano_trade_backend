@@ -7,6 +7,7 @@ import {
 	PairWithCurrencies,
 	PairWithIdAndCurrencies,
 } from '@/interfaces/database/modifiedRequests.js';
+import { isValidHexValue } from '@/methods/isValidHexValue.js';
 import dexModel from './Dex.js';
 import userModel from './User.js';
 import exchangeModel from './ExchangeTransactions.js';
@@ -768,6 +769,26 @@ class OrdersModel {
 		}
 	}
 
+	private validateApplyOrderParams = (
+		body: ApplyOrderBody,
+	): 'INVALID_HEX_RAW_PROPOSAL' | null => {
+		if (typeof body?.orderData?.hex_raw_proposal !== 'string') {
+			return 'INVALID_HEX_RAW_PROPOSAL';
+		}
+
+		const hexRawProposal = body.orderData.hex_raw_proposal;
+
+		if (hexRawProposal.length === 0) {
+			return 'INVALID_HEX_RAW_PROPOSAL';
+		}
+
+		if (!isValidHexValue(hexRawProposal)) {
+			return 'INVALID_HEX_RAW_PROPOSAL';
+		}
+
+		return null;
+	};
+
 	APPLY_ORDER_INVALID_ORDER_DATA_MSG = 'Invalid order data';
 	APPLY_ORDER_ALREADY_APPLIED_MSG = 'This orders pair already has a pending apply';
 	async applyOrder(
@@ -779,6 +800,11 @@ class OrdersModel {
 		},
 	) {
 		try {
+			const validationResult = this.validateApplyOrderParams(body);
+			if (validationResult !== null) {
+				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
+			}
+
 			const { userData } = body;
 			const { orderData } = body;
 
@@ -786,7 +812,13 @@ class OrdersModel {
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
-			const orderRow = await Order.findByPk(orderData.connected_order_id);
+			const orderRow = await Order.findOne({
+				where: {
+					id: orderData.connected_order_id,
+					status: 'active',
+					user_id: userRow.id,
+				},
+			});
 
 			const applyingOrderRow = await Order.findOne({
 				where: {
