@@ -541,22 +541,24 @@ class ExchangeModel {
 					return { success: false, data: "Transaction doesn't exist." };
 				}
 
-				const transactionOwnerOrder =
-					transaction.creator === 'buy'
-						? transaction.buy_order_id
-						: transaction.sell_order_id;
-
-				const ownerOrder = await Order.findByPk(transactionOwnerOrder, {
+				const buyOrder = await Order.findByPk(transaction.buy_order_id, {
+					transaction: t,
+					lock: t.LOCK.UPDATE,
+				});
+				const sellOrder = await Order.findByPk(transaction.sell_order_id, {
 					transaction: t,
 					lock: t.LOCK.UPDATE,
 				});
 
-				if (!ownerOrder) {
-					throw new Error('Owner order not found.');
+				if (!buyOrder || !sellOrder) {
+					throw new Error('Buy or sell orders not found.');
 				}
 
-				if (ownerOrder.user_id !== userRow.id) {
-					return { success: false, data: 'You are not the creator of this transaction' };
+				if (buyOrder.user_id !== userRow.id && sellOrder.user_id !== userRow.id) {
+					return {
+						success: false,
+						data: 'You are not the participant of this transaction',
+					};
 				}
 
 				if (transaction.status !== 'pending') {
