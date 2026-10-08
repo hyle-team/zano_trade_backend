@@ -1,5 +1,7 @@
 import { UniqueConstraintError } from 'sequelize';
 
+import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
+import { appRepository } from '@/v2/database/repositories/app.repository';
 import sequelize from '@/sequelize.js';
 import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
@@ -33,6 +35,8 @@ import {
 import { Decimal } from 'decimal.js';
 
 class AppsService {
+	private readonly appRepository: IAppRepository = appRepository;
+
 	private readonly APPS_PER_USER_LIMIT = 1;
 
 	create = async ({ name, address }: CreateAppServiceParams): Promise<CreateAppServiceRes> => {
@@ -104,19 +108,21 @@ class AppsService {
 			return { success: false, data: GetAppServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
+		const app = await this.appRepository.findOneById({
+			where: { id: appId, user_id: userRow.id },
+		});
 
-		if (!appRow) {
+		if (!app) {
 			return { success: false, data: GetAppServiceErrorCode.APP_NOT_FOUND };
 		}
 
-		const tokenRow = await AppToken.findOne({ where: { app_id: appRow.id } });
+		const tokenRow = await AppToken.findOne({ where: { app_id: app.id } });
 
 		return {
 			success: true,
 			data: {
-				id: appRow.id,
-				name: appRow.name,
+				id: app.id,
+				name: app.name,
 				apiKey: tokenRow ? { issuedAt: tokenRow.issued_at } : null,
 			},
 		};

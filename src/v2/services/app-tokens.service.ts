@@ -3,7 +3,6 @@ import { UniqueConstraintError } from 'sequelize';
 import CryptoJS from 'crypto-js';
 
 import settingsModel from '@/models/Settings.js';
-import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
 import { asymmetricEncryptionHelper } from '@/helpers/AsymmetricEncryption.helper.js';
@@ -25,9 +24,13 @@ import {
 import { GetDecryptedAppTokenRowByAppIdServiceRes } from '@/v2/services/types/responses/app-tokens/get-decrypted-app-token-row-by-app-id.response';
 import { CreateAppTokenRowServiceRes } from '@/v2/services/types/responses/app-tokens/create-app-token-row.response';
 import { CreateAppTokenRowServiceParams } from '@/v2/services/types/params/app-tokens/create-app-token-row.params';
+import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
+import { appRepository } from '@/v2/database/repositories/app.repository';
 
 class AppTokensService {
 	private readonly VALUE_BYTES_LENGTH = 32;
+
+	private readonly appRepository: IAppRepository = appRepository;
 
 	private generateValue = (): string =>
 		crypto.randomBytes(this.VALUE_BYTES_LENGTH).toString('base64');
@@ -128,9 +131,11 @@ class AppTokensService {
 			return { success: false, data: CreateAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
+		const app = await this.appRepository.findOneById({
+			where: { id: appId, user_id: userRow.id },
+		});
 
-		if (!appRow) {
+		if (!app) {
 			return { success: false, data: CreateAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
@@ -147,7 +152,7 @@ class AppTokensService {
 
 		try {
 			await this.createAppTokenRow({
-				appId: appRow.id,
+				appId: app.id,
 				plainValue: value,
 				issuedAt,
 			});
@@ -183,9 +188,11 @@ class AppTokensService {
 			return { success: false, data: RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
+		const app = await this.appRepository.findOneById({
+			where: { id: appId, user_id: userRow.id },
+		});
 
-		if (!appRow) {
+		if (!app) {
 			return { success: false, data: RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
@@ -202,7 +209,7 @@ class AppTokensService {
 
 		const [affectedRowsCount] = await AppToken.update(
 			{ value, issued_at: issuedAt },
-			{ where: { app_id: appRow.id } },
+			{ where: { app_id: app.id } },
 		);
 
 		if (affectedRowsCount === 0) {
@@ -230,13 +237,15 @@ class AppTokensService {
 			return { success: false, data: GetAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const appRow = await App.findOne({ where: { id: appId, user_id: userRow.id } });
+		const app = await this.appRepository.findOneById({
+			where: { id: appId, user_id: userRow.id },
+		});
 
-		if (!appRow) {
+		if (!app) {
 			return { success: false, data: GetAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
-		const tokenRow = await this.getDecryptedAppTokenRowByAppId({ appId: appRow.id });
+		const tokenRow = await this.getDecryptedAppTokenRowByAppId({ appId: app.id });
 
 		if (!tokenRow) {
 			return { success: false, data: GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND };

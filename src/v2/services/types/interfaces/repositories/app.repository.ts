@@ -1,11 +1,6 @@
 import { App } from '@/v2/entities/app.entity';
-import { RepositoryMethodOptions } from './shared/types';
+import { RepositoryFindMethodOptions } from './shared/types';
 
 export interface IAppRepository {
-	findOneById(
-		params: {
-			id: number;
-		},
-		options: RepositoryMethodOptions,
-	): Promise<App>;
+	findOneById(params: RepositoryFindMethodOptions): Promise<App | null>;
 }
