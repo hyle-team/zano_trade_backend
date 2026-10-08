@@ -19,6 +19,4 @@ export type UpdateAppNameServiceErrorRes = {
 	data: UpdateAppNameServiceErrorCode;
 };
 
-type UpdateAppNameServiceRes = UpdateAppNameServiceSuccessRes | UpdateAppNameServiceErrorRes;
-
-export default UpdateAppNameServiceRes;
+export type UpdateAppNameServiceRes = UpdateAppNameServiceSuccessRes | UpdateAppNameServiceErrorRes;

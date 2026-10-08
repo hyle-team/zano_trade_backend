@@ -18,6 +18,4 @@ export type GetAppErrorRes = {
 	data: GetAppErrorCode;
 };
 
-type GetAppRes = GetAppSuccessRes | GetAppErrorRes;
-
-export default GetAppRes;
+export type GetAppRes = GetAppSuccessRes | GetAppErrorRes;

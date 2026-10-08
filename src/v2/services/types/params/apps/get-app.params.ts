@@ -1,6 +1,4 @@
-interface GetAppServiceParams {
+export type GetAppServiceParams = {
 	appId: number;
 	address: string;
-}
-
-export default GetAppServiceParams;
+};

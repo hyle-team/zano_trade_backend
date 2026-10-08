@@ -19,6 +19,4 @@ export type RegenerateAppTokenErrorRes = {
 	data: RegenerateAppTokenErrorCode;
 };
 
-type RegenerateAppTokenRes = RegenerateAppTokenSuccessRes | RegenerateAppTokenErrorRes;
-
-export default RegenerateAppTokenRes;
+export type RegenerateAppTokenRes = RegenerateAppTokenSuccessRes | RegenerateAppTokenErrorRes;

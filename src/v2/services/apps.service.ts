@@ -5,24 +5,29 @@ import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
 import { AppWithApiKeyCount } from '@/interfaces/database/modifiedRequests.js';
-import CreateAppServiceParams from '@/v2/services/types/params/apps/create-app.params.js';
-import CreateAppServiceRes, {
+import { CreateAppServiceParams } from '@/v2/services/types/params/apps/create-app.params.js';
+import {
+	CreateAppServiceRes,
 	CreateAppServiceErrorCode,
 } from '@/v2/services/types/responses/apps/create-app.response.js';
-import GetAllAppsServiceParams from '@/v2/services/types/params/apps/get-all-apps.params.js';
-import GetAllAppsServiceRes, {
+import { GetAllAppsServiceParams } from '@/v2/services/types/params/apps/get-all-apps.params.js';
+import {
+	GetAllAppsServiceRes,
 	GetAllAppsServiceErrorCode,
 } from '@/v2/services/types/responses/apps/get-all-apps.response.js';
-import GetAppServiceParams from '@/v2/services/types/params/apps/get-app.params.js';
-import GetAppServiceRes, {
+import { GetAppServiceParams } from '@/v2/services/types/params/apps/get-app.params.js';
+import {
+	GetAppServiceRes,
 	GetAppServiceErrorCode,
 } from '@/v2/services/types/responses/apps/get-app.response.js';
-import UpdateAppNameServiceParams from '@/v2/services/types/params/apps/update-app-name.params.js';
-import UpdateAppNameServiceRes, {
+import { UpdateAppNameServiceParams } from '@/v2/services/types/params/apps/update-app-name.params.js';
+import {
+	UpdateAppNameServiceRes,
 	UpdateAppNameServiceErrorCode,
 } from '@/v2/services/types/responses/apps/update-app-name.response.js';
-import DeleteAppServiceParams from '@/v2/services/types/params/apps/delete-app.params.js';
-import DeleteAppServiceRes, {
+import { DeleteAppServiceParams } from '@/v2/services/types/params/apps/delete-app.params.js';
+import {
+	DeleteAppServiceRes,
 	DeleteAppServiceErrorCode,
 } from '@/v2/services/types/responses/apps/delete-app.response.js';
 import { Decimal } from 'decimal.js';
@@ -173,6 +178,4 @@ class AppsService {
 	};
 }
 
-const appsService = new AppsService();
-
-export default appsService;
+export const appsService = new AppsService();

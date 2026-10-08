@@ -1,6 +1,4 @@
-interface CreateAppServiceParams {
+export type CreateAppServiceParams = {
 	name: string;
 	address: string;
-}
-
-export default CreateAppServiceParams;
+};

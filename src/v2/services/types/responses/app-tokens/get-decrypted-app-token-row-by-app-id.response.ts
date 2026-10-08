@@ -5,7 +5,5 @@ export type GetDecryptedAppTokenRowByAppIdServiceResApiKeyData = {
 	issuedAt: Date;
 };
 
-type GetDecryptedAppTokenRowByAppIdServiceRes =
+export type GetDecryptedAppTokenRowByAppIdServiceRes =
 	GetDecryptedAppTokenRowByAppIdServiceResApiKeyData | null;
-
-export default GetDecryptedAppTokenRowByAppIdServiceRes;

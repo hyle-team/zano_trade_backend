@@ -1,6 +1,4 @@
-interface DeleteAppServiceParams {
+export type DeleteAppServiceParams = {
 	appId: number;
 	address: string;
-}
-
-export default DeleteAppServiceParams;
+};

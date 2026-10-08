@@ -1,7 +1,5 @@
-interface CreateAppTokenRowServiceParams {
+export type CreateAppTokenRowServiceParams = {
 	appId: number;
 	plainValue: string;
 	issuedAt: Date;
-}
-
-export default CreateAppTokenRowServiceParams;
+};

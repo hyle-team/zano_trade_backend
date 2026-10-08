@@ -1,7 +1,5 @@
-interface RegenerateAppTokenServiceParams {
+export type RegenerateAppTokenServiceParams = {
 	appId: number;
 	address: string;
 	publicKeyHex: string;
-}
-
-export default RegenerateAppTokenServiceParams;
+};

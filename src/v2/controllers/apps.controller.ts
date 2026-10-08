@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CreateAppRequestBody } from '@/v2/controllers/types/params/apps/create-app.params.js';
-import CreateAppRes, {
+import {
+	CreateAppRes,
 	CreateAppErrorCode,
 	CreateAppResAppData,
 } from '@/v2/controllers/types/responses/apps/create-app.response.js';
@@ -9,7 +10,8 @@ import {
 	CreateAppServiceResAppData,
 } from '@/v2/services/types/responses/apps/create-app.response.js';
 import { GetAllAppsRequestBody } from '@/v2/controllers/types/params/apps/get-all-apps.params.js';
-import GetAllAppsRes, {
+import {
+	GetAllAppsRes,
 	GetAllAppsResAppData,
 } from '@/v2/controllers/types/responses/apps/get-all-apps.response.js';
 import {
@@ -20,7 +22,8 @@ import {
 	GetAppRequestBody,
 	GetAppRequestQueryParams,
 } from '@/v2/controllers/types/params/apps/get-app.params.js';
-import GetAppRes, {
+import {
+	GetAppRes,
 	GetAppErrorCode,
 	GetAppResAppData,
 } from '@/v2/controllers/types/responses/apps/get-app.response.js';
@@ -28,7 +31,8 @@ import {
 	GetAppServiceErrorCode,
 	GetAppServiceResAppData,
 } from '@/v2/services/types/responses/apps/get-app.response.js';
-import UpdateAppNameRes, {
+import {
+	UpdateAppNameRes,
 	UpdateAppNameErrorCode,
 	UpdateAppNameResAppData,
 } from '@/v2/controllers/types/responses/apps/update-app-name.response.js';
@@ -40,7 +44,8 @@ import {
 	DeleteAppRequestBody,
 	DeleteAppRequestQueryParams,
 } from '@/v2/controllers/types/params/apps/delete-app.params.js';
-import DeleteAppRes, {
+import {
+	DeleteAppRes,
 	DeleteAppErrorCode,
 	DeleteAppResAppData,
 } from '@/v2/controllers/types/responses/apps/delete-app.response.js';
@@ -52,7 +57,8 @@ import {
 	CreateAppTokenRequestBody,
 	CreateAppTokenRequestQueryParams,
 } from '@/v2/controllers/types/params/app-tokens/create-app-token.params.js';
-import CreateAppTokenRes, {
+import {
+	CreateAppTokenRes,
 	CreateAppTokenErrorCode,
 	CreateAppTokenResApiKeyData,
 } from '@/v2/controllers/types/responses/app-tokens/create-app-token.response.js';
@@ -64,7 +70,8 @@ import {
 	GetAppTokenRequestBody,
 	GetAppTokenRequestQueryParams,
 } from '@/v2/controllers/types/params/app-tokens/get-app-token.params.js';
-import GetAppTokenRes, {
+import {
+	GetAppTokenRes,
 	GetAppTokenErrorCode,
 	GetAppTokenResApiKeyData,
 } from '@/v2/controllers/types/responses/app-tokens/get-app-token.response.js';
@@ -76,7 +83,8 @@ import {
 	RegenerateAppTokenRequestBody,
 	RegenerateAppTokenRequestQueryParams,
 } from '@/v2/controllers/types/params/app-tokens/regenerate-app-token.params.js';
-import RegenerateAppTokenRes, {
+import {
+	RegenerateAppTokenRes,
 	RegenerateAppTokenErrorCode,
 	RegenerateAppTokenResApiKeyData,
 } from '@/v2/controllers/types/responses/app-tokens/regenerate-app-token.response.js';
@@ -84,13 +92,13 @@ import {
 	RegenerateAppTokenServiceErrorCode,
 	RegenerateAppTokenServiceResApiKeyData,
 } from '@/v2/services/types/responses/app-tokens/regenerate-app-token.response.js';
-import appTokensService from '@/v2/services/app-tokens.service.js';
+import { appTokensService } from '@/v2/services/app-tokens.service.js';
 import { Decimal } from 'decimal.js';
 import {
 	UpdateAppNameRequestBody,
 	UpdateAppNameRequestQueryParams,
 } from '@/v2/controllers/types/params/apps/update-app-name.params.js';
-import appsService from '@/v2/services/apps.service.js';
+import { appsService } from '@/v2/services/apps.service.js';
 
 class AppsController {
 	private createSuccessResponseMapper = (
@@ -522,6 +530,4 @@ class AppsController {
 	};
 }
 
-const appsController = new AppsController();
-
-export default appsController;
+export const appsController = new AppsController();

@@ -23,6 +23,4 @@ export type GetAppServiceErrorRes = {
 	data: GetAppServiceErrorCode;
 };
 
-type GetAppServiceRes = GetAppServiceSuccessRes | GetAppServiceErrorRes;
-
-export default GetAppServiceRes;
+export type GetAppServiceRes = GetAppServiceSuccessRes | GetAppServiceErrorRes;

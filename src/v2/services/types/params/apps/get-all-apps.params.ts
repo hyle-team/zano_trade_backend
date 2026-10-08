@@ -1,5 +1,3 @@
-interface GetAllAppsServiceParams {
+export type GetAllAppsServiceParams = {
 	address: string;
-}
-
-export default GetAllAppsServiceParams;
+};

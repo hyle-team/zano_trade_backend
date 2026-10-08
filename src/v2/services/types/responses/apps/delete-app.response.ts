@@ -17,6 +17,4 @@ export type DeleteAppServiceErrorRes = {
 	data: DeleteAppServiceErrorCode;
 };
 
-type DeleteAppServiceRes = DeleteAppServiceSuccessRes | DeleteAppServiceErrorRes;
-
-export default DeleteAppServiceRes;
+export type DeleteAppServiceRes = DeleteAppServiceSuccessRes | DeleteAppServiceErrorRes;

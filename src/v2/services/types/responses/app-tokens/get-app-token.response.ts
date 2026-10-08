@@ -20,6 +20,4 @@ export type GetAppTokenServiceErrorRes = {
 	data: GetAppTokenServiceErrorCode;
 };
 
-type GetAppTokenServiceRes = GetAppTokenServiceSuccessRes | GetAppTokenServiceErrorRes;
-
-export default GetAppTokenServiceRes;
+export type GetAppTokenServiceRes = GetAppTokenServiceSuccessRes | GetAppTokenServiceErrorRes;

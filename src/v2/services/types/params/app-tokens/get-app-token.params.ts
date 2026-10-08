@@ -1,7 +1,5 @@
-interface GetAppTokenServiceParams {
+export type GetAppTokenServiceParams = {
 	appId: number;
 	address: string;
 	publicKeyHex: string;
-}
-
-export default GetAppTokenServiceParams;
+};

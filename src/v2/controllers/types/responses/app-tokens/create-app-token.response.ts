@@ -19,6 +19,4 @@ export type CreateAppTokenErrorRes = {
 	data: CreateAppTokenErrorCode;
 };
 
-type CreateAppTokenRes = CreateAppTokenSuccessRes | CreateAppTokenErrorRes;
-
-export default CreateAppTokenRes;
+export type CreateAppTokenRes = CreateAppTokenSuccessRes | CreateAppTokenErrorRes;

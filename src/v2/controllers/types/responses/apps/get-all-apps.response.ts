@@ -16,6 +16,4 @@ export type GetAllAppsErrorRes = {
 	data: GetAllAppsErrorCode;
 };
 
-type GetAllAppsRes = GetAllAppsSuccessRes | GetAllAppsErrorRes;
-
-export default GetAllAppsRes;
+export type GetAllAppsRes = GetAllAppsSuccessRes | GetAllAppsErrorRes;

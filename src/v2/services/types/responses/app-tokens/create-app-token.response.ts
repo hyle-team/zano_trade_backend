@@ -20,6 +20,6 @@ export type CreateAppTokenServiceErrorRes = {
 	data: CreateAppTokenServiceErrorCode;
 };
 
-type CreateAppTokenServiceRes = CreateAppTokenServiceSuccessRes | CreateAppTokenServiceErrorRes;
-
-export default CreateAppTokenServiceRes;
+export type CreateAppTokenServiceRes =
+	| CreateAppTokenServiceSuccessRes
+	| CreateAppTokenServiceErrorRes;

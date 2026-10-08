@@ -1,7 +1,7 @@
 import express from 'express';
 
 import { createAppRequestBodyValidator } from '@/v2/controllers/types/params/apps/create-app.params.js';
-import appsController from '@/v2/controllers/apps.controller.js';
+import { appsController } from '@/v2/controllers/apps.controller.js';
 import middleware from '@/middleware/middleware';
 import { deleteAppRequestQueryParamsValidator } from '@/v2/controllers/types/params/apps/delete-app.params.js';
 import { getAppRequestQueryParamsValidator } from '@/v2/controllers/types/params/apps/get-app.params.js';
@@ -22,7 +22,7 @@ import {
 	getAppTokenRequestQueryParamsValidator,
 } from '@/v2/controllers/types/params/app-tokens/get-app-token.params.js';
 
-const appsRouter = express.Router();
+export const appsRouter = express.Router();
 
 appsRouter.use('/', middleware.authGuard);
 
@@ -81,5 +81,3 @@ appsRouter.patch(
 	]),
 	appsController.getApiKey.bind(appsController),
 );
-
-export default appsRouter;

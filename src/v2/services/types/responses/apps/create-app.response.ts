@@ -19,6 +19,4 @@ export type CreateAppServiceErrorRes = {
 	data: CreateAppServiceErrorCode;
 };
 
-type CreateAppServiceRes = CreateAppServiceSuccessRes | CreateAppServiceErrorRes;
-
-export default CreateAppServiceRes;
+export type CreateAppServiceRes = CreateAppServiceSuccessRes | CreateAppServiceErrorRes;
