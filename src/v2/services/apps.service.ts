@@ -5,26 +5,26 @@ import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
 import { AppWithApiKeyCount } from '@/interfaces/database/modifiedRequests.js';
-import CreateAppServiceParams from '@/v2/interfaces/services/Apps/params/CreateAppServiceParams.js';
+import CreateAppServiceParams from '@/v2/services/types/params/apps/CreateAppServiceParams.js';
 import CreateAppServiceRes, {
 	CreateAppServiceErrorCode,
-} from '@/v2/interfaces/services/Apps/responses/CreateAppServiceRes.js';
-import GetAllAppsServiceParams from '@/v2/interfaces/services/Apps/params/GetAllAppsServiceParams.js';
+} from '@/v2/services/types/responses/apps/CreateAppServiceRes.js';
+import GetAllAppsServiceParams from '@/v2/services/types/params/apps/GetAllAppsServiceParams.js';
 import GetAllAppsServiceRes, {
 	GetAllAppsServiceErrorCode,
-} from '@/v2/interfaces/services/Apps/responses/GetAllAppsServiceRes.js';
-import GetAppServiceParams from '@/v2/interfaces/services/Apps/params/GetAppServiceParams.js';
+} from '@/v2/services/types/responses/apps/GetAllAppsServiceRes.js';
+import GetAppServiceParams from '@/v2/services/types/params/apps/GetAppServiceParams.js';
 import GetAppServiceRes, {
 	GetAppServiceErrorCode,
-} from '@/v2/interfaces/services/Apps/responses/GetAppServiceRes.js';
-import UpdateAppNameServiceParams from '@/v2/interfaces/services/Apps/params/UpdateAppNameServiceParams.js';
+} from '@/v2/services/types/responses/apps/GetAppServiceRes.js';
+import UpdateAppNameServiceParams from '@/v2/services/types/params/apps/UpdateAppNameServiceParams.js';
 import UpdateAppNameServiceRes, {
 	UpdateAppNameServiceErrorCode,
-} from '@/v2/interfaces/services/Apps/responses/UpdateAppNameServiceRes.js';
-import DeleteAppServiceParams from '@/v2/interfaces/services/Apps/params/DeleteAppServiceParams.js';
+} from '@/v2/services/types/responses/apps/UpdateAppNameServiceRes.js';
+import DeleteAppServiceParams from '@/v2/services/types/params/apps/DeleteAppServiceParams.js';
 import DeleteAppServiceRes, {
 	DeleteAppServiceErrorCode,
-} from '@/v2/interfaces/services/Apps/responses/DeleteAppServiceRes.js';
+} from '@/v2/services/types/responses/apps/DeleteAppServiceRes.js';
 import { Decimal } from 'decimal.js';
 
 class AppsService {

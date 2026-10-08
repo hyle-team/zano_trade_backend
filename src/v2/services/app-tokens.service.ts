@@ -7,21 +7,21 @@ import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
 import { asymmetricEncryptionHelper } from '@/helpers/AsymmetricEncryption.helper.js';
-import CreateAppTokenServiceParams from '@/v2/interfaces/services/AppTokens/params/CreateAppTokenServiceParams.js';
+import CreateAppTokenServiceParams from '@/v2/services/types/params/app-tokens/CreateAppTokenServiceParams.js';
 import CreateAppTokenServiceRes, {
 	CreateAppTokenServiceErrorCode,
-} from '@/v2/interfaces/services/AppTokens/responses/CreateAppTokenServiceRes.js';
-import GetAppTokenServiceParams from '@/v2/interfaces/services/AppTokens/params/GetAppTokenServiceParams.js';
+} from '@/v2/services/types/responses/app-tokens/CreateAppTokenServiceRes.js';
+import GetAppTokenServiceParams from '@/v2/services/types/params/app-tokens/GetAppTokenServiceParams.js';
 import GetAppTokenServiceRes, {
 	GetAppTokenServiceErrorCode,
-} from '@/v2/interfaces/services/AppTokens/responses/GetAppTokenServiceRes.js';
-import RegenerateAppTokenServiceParams from '@/v2/interfaces/services/AppTokens/params/RegenerateAppTokenServiceParams.js';
+} from '@/v2/services/types/responses/app-tokens/GetAppTokenServiceRes.js';
+import RegenerateAppTokenServiceParams from '@/v2/services/types/params/app-tokens/RegenerateAppTokenServiceParams.js';
 import RegenerateAppTokenServiceRes, {
 	RegenerateAppTokenServiceErrorCode,
-} from '@/v2/interfaces/services/AppTokens/responses/RegenerateAppTokenServiceRes.js';
-import GetDecryptedAppTokenRowByAppIdServiceRes from '@/v2/interfaces/services/AppTokens/responses/GetDecryptedAppTokenRowByAppIdServiceRes';
-import CreateAppTokenRowServiceRes from '@/v2/interfaces/services/AppTokens/responses/CreateAppTokenRowServiceRes';
-import CreateAppTokenRowServiceParams from '@/v2/interfaces/services/AppTokens/params/CreateAppTokenRowServiceParams';
+} from '@/v2/services/types/responses/app-tokens/RegenerateAppTokenServiceRes.js';
+import GetDecryptedAppTokenRowByAppIdServiceRes from '@/v2/services/types/responses/app-tokens/GetDecryptedAppTokenRowByAppIdServiceRes';
+import CreateAppTokenRowServiceRes from '@/v2/services/types/responses/app-tokens/CreateAppTokenRowServiceRes';
+import CreateAppTokenRowServiceParams from '@/v2/services/types/params/app-tokens/CreateAppTokenRowServiceParams';
 
 class AppTokensService {
 	private readonly VALUE_BYTES_LENGTH = 32;
