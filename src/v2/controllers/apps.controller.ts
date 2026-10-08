@@ -7,13 +7,13 @@ import CreateAppRes, {
 import {
 	CreateAppServiceErrorCode,
 	CreateAppServiceResAppData,
-} from '@/v2/services/types/responses/apps/CreateAppServiceRes.js';
+} from '@/v2/services/types/responses/apps/create-app.response.js';
 import GetAllAppsBody from '@/interfaces/bodies/apps/GetAllAppsBody.js';
 import GetAllAppsRes, { GetAllAppsResAppData } from '@/interfaces/responses/apps/GetAllAppsRes.js';
 import {
 	GetAllAppsServiceErrorCode,
 	GetAllAppsServiceResAppData,
-} from '@/v2/services/types/responses/apps/GetAllAppsServiceRes.js';
+} from '@/v2/services/types/responses/apps/get-all-apps.response.js';
 import GetAppBody from '@/interfaces/bodies/apps/GetAppBody.js';
 import GetAppParams from '@/interfaces/params/apps/GetAppParams.js';
 import GetAppRes, {
@@ -23,7 +23,7 @@ import GetAppRes, {
 import {
 	GetAppServiceErrorCode,
 	GetAppServiceResAppData,
-} from '@/v2/services/types/responses/apps/GetAppServiceRes.js';
+} from '@/v2/services/types/responses/apps/get-app.response.js';
 import UpdateAppNameBody from '@/interfaces/bodies/apps/UpdateAppNameBody.js';
 import UpdateAppNameParams from '@/interfaces/params/apps/UpdateAppNameParams.js';
 import UpdateAppNameRes, {
@@ -33,7 +33,7 @@ import UpdateAppNameRes, {
 import {
 	UpdateAppNameServiceErrorCode,
 	UpdateAppNameServiceResAppData,
-} from '@/v2/services/types/responses/apps/UpdateAppNameServiceRes.js';
+} from '@/v2/services/types/responses/apps/update-app-name.response.js';
 import DeleteAppBody from '@/interfaces/bodies/apps/DeleteAppBody.js';
 import DeleteAppParams from '@/interfaces/params/apps/DeleteAppParams.js';
 import DeleteAppRes, {
@@ -43,7 +43,7 @@ import DeleteAppRes, {
 import {
 	DeleteAppServiceErrorCode,
 	DeleteAppServiceResAppData,
-} from '@/v2/services/types/responses/apps/DeleteAppServiceRes.js';
+} from '@/v2/services/types/responses/apps/delete-app.response.js';
 import CreateAppTokenBody from '@/interfaces/bodies/app-tokens/CreateAppTokenBody.js';
 import CreateAppTokenParams from '@/interfaces/params/app-tokens/CreateAppTokenParams.js';
 import CreateAppTokenRes, {
@@ -53,7 +53,7 @@ import CreateAppTokenRes, {
 import {
 	CreateAppTokenServiceErrorCode,
 	CreateAppTokenServiceResApiKeyData,
-} from '@/v2/services/types/responses/app-tokens/CreateAppTokenServiceRes.js';
+} from '@/v2/services/types/responses/app-tokens/create-app-token.response.js';
 import GetAppTokenBody from '@/interfaces/bodies/app-tokens/GetAppTokenBody.js';
 import GetAppTokenParams from '@/interfaces/params/app-tokens/GetAppTokenParams.js';
 import GetAppTokenRes, {
@@ -63,7 +63,7 @@ import GetAppTokenRes, {
 import {
 	GetAppTokenServiceErrorCode,
 	GetAppTokenServiceResApiKeyData,
-} from '@/v2/services/types/responses/app-tokens/GetAppTokenServiceRes.js';
+} from '@/v2/services/types/responses/app-tokens/get-app-token.response.js';
 import RegenerateAppTokenBody from '@/interfaces/bodies/app-tokens/RegenerateAppTokenBody.js';
 import RegenerateAppTokenParams from '@/interfaces/params/app-tokens/RegenerateAppTokenParams.js';
 import RegenerateAppTokenRes, {
@@ -73,7 +73,7 @@ import RegenerateAppTokenRes, {
 import {
 	RegenerateAppTokenServiceErrorCode,
 	RegenerateAppTokenServiceResApiKeyData,
-} from '@/v2/services/types/responses/app-tokens/RegenerateAppTokenServiceRes.js';
+} from '@/v2/services/types/responses/app-tokens/regenerate-app-token.response.js';
 import appTokensService from '@/v2/services/app-tokens.service.js';
 import { Decimal } from 'decimal.js';
 import appsService from '../services/apps.service.js';
