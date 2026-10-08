@@ -1,82 +1,96 @@
 import { Request, Response } from 'express';
-import CreateAppBody from '@/interfaces/bodies/apps/CreateAppBody.js';
+import { CreateAppRequestBody } from '@/v2/controllers/types/params/apps/create-app.params.js';
 import CreateAppRes, {
 	CreateAppErrorCode,
 	CreateAppResAppData,
-} from '@/interfaces/responses/apps/CreateAppRes.js';
+} from '@/v2/controllers/types/responses/apps/create-app.response.js';
 import {
 	CreateAppServiceErrorCode,
 	CreateAppServiceResAppData,
 } from '@/v2/services/types/responses/apps/create-app.response.js';
-import GetAllAppsBody from '@/interfaces/bodies/apps/GetAllAppsBody.js';
-import GetAllAppsRes, { GetAllAppsResAppData } from '@/interfaces/responses/apps/GetAllAppsRes.js';
+import { GetAllAppsRequestBody } from '@/v2/controllers/types/params/apps/get-all-apps.params.js';
+import GetAllAppsRes, {
+	GetAllAppsResAppData,
+} from '@/v2/controllers/types/responses/apps/get-all-apps.response.js';
 import {
 	GetAllAppsServiceErrorCode,
 	GetAllAppsServiceResAppData,
 } from '@/v2/services/types/responses/apps/get-all-apps.response.js';
-import GetAppBody from '@/interfaces/bodies/apps/GetAppBody.js';
-import GetAppParams from '@/interfaces/params/apps/GetAppParams.js';
+import {
+	GetAppRequestBody,
+	GetAppRequestQueryParams,
+} from '@/v2/controllers/types/params/apps/get-app.params.js';
 import GetAppRes, {
 	GetAppErrorCode,
 	GetAppResAppData,
-} from '@/interfaces/responses/apps/GetAppRes.js';
+} from '@/v2/controllers/types/responses/apps/get-app.response.js';
 import {
 	GetAppServiceErrorCode,
 	GetAppServiceResAppData,
 } from '@/v2/services/types/responses/apps/get-app.response.js';
-import UpdateAppNameBody from '@/interfaces/bodies/apps/UpdateAppNameBody.js';
-import UpdateAppNameParams from '@/interfaces/params/apps/UpdateAppNameParams.js';
 import UpdateAppNameRes, {
 	UpdateAppNameErrorCode,
 	UpdateAppNameResAppData,
-} from '@/interfaces/responses/apps/UpdateAppNameRes.js';
+} from '@/v2/controllers/types/responses/apps/update-app-name.response.js';
 import {
 	UpdateAppNameServiceErrorCode,
 	UpdateAppNameServiceResAppData,
 } from '@/v2/services/types/responses/apps/update-app-name.response.js';
-import DeleteAppBody from '@/interfaces/bodies/apps/DeleteAppBody.js';
-import DeleteAppParams from '@/interfaces/params/apps/DeleteAppParams.js';
+import {
+	DeleteAppRequestBody,
+	DeleteAppRequestQueryParams,
+} from '@/v2/controllers/types/params/apps/delete-app.params.js';
 import DeleteAppRes, {
 	DeleteAppErrorCode,
 	DeleteAppResAppData,
-} from '@/interfaces/responses/apps/DeleteAppRes.js';
+} from '@/v2/controllers/types/responses/apps/delete-app.response.js';
 import {
 	DeleteAppServiceErrorCode,
 	DeleteAppServiceResAppData,
 } from '@/v2/services/types/responses/apps/delete-app.response.js';
-import CreateAppTokenBody from '@/interfaces/bodies/app-tokens/CreateAppTokenBody.js';
-import CreateAppTokenParams from '@/interfaces/params/app-tokens/CreateAppTokenParams.js';
+import {
+	CreateAppTokenRequestBody,
+	CreateAppTokenRequestQueryParams,
+} from '@/v2/controllers/types/params/app-tokens/create-app-token.params.js';
 import CreateAppTokenRes, {
 	CreateAppTokenErrorCode,
 	CreateAppTokenResApiKeyData,
-} from '@/interfaces/responses/app-tokens/CreateAppTokenRes.js';
+} from '@/v2/controllers/types/responses/app-tokens/create-app-token.response.js';
 import {
 	CreateAppTokenServiceErrorCode,
 	CreateAppTokenServiceResApiKeyData,
 } from '@/v2/services/types/responses/app-tokens/create-app-token.response.js';
-import GetAppTokenBody from '@/interfaces/bodies/app-tokens/GetAppTokenBody.js';
-import GetAppTokenParams from '@/interfaces/params/app-tokens/GetAppTokenParams.js';
+import {
+	GetAppTokenRequestBody,
+	GetAppTokenRequestQueryParams,
+} from '@/v2/controllers/types/params/app-tokens/get-app-token.params.js';
 import GetAppTokenRes, {
 	GetAppTokenErrorCode,
 	GetAppTokenResApiKeyData,
-} from '@/interfaces/responses/app-tokens/GetAppTokenRes.js';
+} from '@/v2/controllers/types/responses/app-tokens/get-app-token.response.js';
 import {
 	GetAppTokenServiceErrorCode,
 	GetAppTokenServiceResApiKeyData,
 } from '@/v2/services/types/responses/app-tokens/get-app-token.response.js';
-import RegenerateAppTokenBody from '@/interfaces/bodies/app-tokens/RegenerateAppTokenBody.js';
-import RegenerateAppTokenParams from '@/interfaces/params/app-tokens/RegenerateAppTokenParams.js';
+import {
+	RegenerateAppTokenRequestBody,
+	RegenerateAppTokenRequestQueryParams,
+} from '@/v2/controllers/types/params/app-tokens/regenerate-app-token.params.js';
 import RegenerateAppTokenRes, {
 	RegenerateAppTokenErrorCode,
 	RegenerateAppTokenResApiKeyData,
-} from '@/interfaces/responses/app-tokens/RegenerateAppTokenRes.js';
+} from '@/v2/controllers/types/responses/app-tokens/regenerate-app-token.response.js';
 import {
 	RegenerateAppTokenServiceErrorCode,
 	RegenerateAppTokenServiceResApiKeyData,
 } from '@/v2/services/types/responses/app-tokens/regenerate-app-token.response.js';
 import appTokensService from '@/v2/services/app-tokens.service.js';
 import { Decimal } from 'decimal.js';
-import appsService from '../services/apps.service.js';
+import {
+	UpdateAppNameRequestBody,
+	UpdateAppNameRequestQueryParams,
+} from '@/v2/controllers/types/params/apps/update-app-name.params.js';
+import appsService from '@/v2/services/apps.service.js';
 
 class AppsController {
 	private createSuccessResponseMapper = (
@@ -91,7 +105,7 @@ class AppsController {
 	};
 
 	create = async (req: Request, res: Response<CreateAppRes>) => {
-		const body = req.body as CreateAppBody;
+		const body = req.body as CreateAppRequestBody;
 		const { name, userData } = body;
 
 		const result = await appsService.create({ name, address: userData.address });
@@ -142,7 +156,7 @@ class AppsController {
 	};
 
 	getAll = async (req: Request, res: Response<GetAllAppsRes>) => {
-		const body = req.body as GetAllAppsBody;
+		const body = req.body as GetAllAppsRequestBody;
 		const { userData } = body;
 
 		const result = await appsService.getAll({ address: userData.address });
@@ -179,8 +193,8 @@ class AppsController {
 	};
 
 	getOne = async (req: Request, res: Response<GetAppRes>) => {
-		const body = req.body as GetAppBody;
-		const params = req.params as unknown as GetAppParams;
+		const body = req.body as GetAppRequestBody;
+		const params = req.params as unknown as GetAppRequestQueryParams;
 
 		const { userData } = body;
 
@@ -230,8 +244,8 @@ class AppsController {
 	};
 
 	updateName = async (req: Request, res: Response<UpdateAppNameRes>) => {
-		const body = req.body as UpdateAppNameBody;
-		const params = req.params as unknown as UpdateAppNameParams;
+		const body = req.body as UpdateAppNameRequestBody;
+		const params = req.params as unknown as UpdateAppNameRequestQueryParams;
 
 		const { name, userData } = body;
 
@@ -288,8 +302,8 @@ class AppsController {
 	};
 
 	delete = async (req: Request, res: Response<DeleteAppRes>) => {
-		const body = req.body as DeleteAppBody;
-		const params = req.params as unknown as DeleteAppParams;
+		const body = req.body as DeleteAppRequestBody;
+		const params = req.params as unknown as DeleteAppRequestQueryParams;
 
 		const { userData } = body;
 
@@ -340,8 +354,8 @@ class AppsController {
 	};
 
 	createApiKey = async (req: Request, res: Response<CreateAppTokenRes>) => {
-		const body = req.body as CreateAppTokenBody;
-		const params = req.params as unknown as CreateAppTokenParams;
+		const body = req.body as CreateAppTokenRequestBody;
+		const params = req.params as unknown as CreateAppTokenRequestQueryParams;
 
 		const { userData, publicKeyHex } = body;
 
@@ -400,8 +414,8 @@ class AppsController {
 	};
 
 	regenerateApiKey = async (req: Request, res: Response<RegenerateAppTokenRes>) => {
-		const body = req.body as RegenerateAppTokenBody;
-		const params = req.params as unknown as RegenerateAppTokenParams;
+		const body = req.body as RegenerateAppTokenRequestBody;
+		const params = req.params as unknown as RegenerateAppTokenRequestQueryParams;
 
 		const { userData, publicKeyHex } = body;
 
@@ -460,8 +474,8 @@ class AppsController {
 	};
 
 	getApiKey = async (req: Request, res: Response<GetAppTokenRes>) => {
-		const body = req.body as GetAppTokenBody;
-		const { appId } = req.params as unknown as GetAppTokenParams;
+		const body = req.body as GetAppTokenRequestBody;
+		const { appId } = req.params as unknown as GetAppTokenRequestQueryParams;
 
 		const { userData, publicKeyHex } = body;
 

@@ -1,13 +1,13 @@
 import { body } from 'express-validator';
 
-import UserData from '../../common/UserData';
+import UserData from '@/interfaces/common/UserData';
 
-interface CreateAppBody {
+export type CreateAppRequestBody = {
 	userData: UserData;
 	name: string;
-}
+};
 
-export const createAppValidator = [
+export const createAppRequestBodyValidator = [
 	body('name')
 		.isString()
 		.withMessage('name must be a string')
@@ -18,5 +18,3 @@ export const createAppValidator = [
 		.isLength({ max: 256 })
 		.withMessage('name must not be longer than 256 characters'),
 ];
-
-export default CreateAppBody;

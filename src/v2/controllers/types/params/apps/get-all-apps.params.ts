@@ -1,7 +1,5 @@
 import UserData from '@/interfaces/common/UserData';
 
-interface GetAppBody {
+export type GetAllAppsRequestBody = {
 	userData: UserData;
-}
-
-export default GetAppBody;
+};

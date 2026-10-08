@@ -1,18 +1,26 @@
 import express from 'express';
 
-import { createAppValidator } from '@/interfaces/bodies/apps/CreateAppBody.js';
+import { createAppRequestBodyValidator } from '@/v2/controllers/types/params/apps/create-app.params.js';
 import appsController from '@/v2/controllers/apps.controller.js';
 import middleware from '@/middleware/middleware';
-import { deleteAppParamsValidator } from '@/interfaces/params/apps/DeleteAppParams';
-import { getAppParamsValidator } from '@/interfaces/params/apps/GetAppParams';
-import { updateAppNameValidator } from '@/interfaces/bodies/apps/UpdateAppNameBody';
-import { updateAppNameParamsValidator } from '@/interfaces/params/apps/UpdateAppNameParams';
-import { createAppTokenParamsValidator } from '@/interfaces/params/app-tokens/CreateAppTokenParams';
-import { regenerateAppTokenParamsValidator } from '@/interfaces/params/app-tokens/RegenerateAppTokenParams';
-import { getAppTokenParamsValidator } from '@/interfaces/params/app-tokens/GetAppTokenParams';
-import { createAppTokenValidator } from '@/interfaces/bodies/app-tokens/CreateAppTokenBody';
-import { regenerateAppTokenValidator } from '@/interfaces/bodies/app-tokens/RegenerateAppTokenBody';
-import { getAppTokenValidator } from '@/interfaces/bodies/app-tokens/GetAppTokenBody';
+import { deleteAppRequestQueryParamsValidator } from '@/v2/controllers/types/params/apps/delete-app.params.js';
+import { getAppRequestQueryParamsValidator } from '@/v2/controllers/types/params/apps/get-app.params.js';
+import {
+	updateAppNameRequestBodyValidator,
+	updateAppNameRequestQueryParamsValidator,
+} from '@/v2/controllers/types/params/apps/update-app-name.params.js';
+import {
+	createAppTokenRequestBodyValidator,
+	createAppTokenRequestQueryParamsValidator,
+} from '@/v2/controllers/types/params/app-tokens/create-app-token.params.js';
+import {
+	regenerateAppTokenRequestBodyValidator,
+	regenerateAppTokenRequestQueryParamsValidator,
+} from '@/v2/controllers/types/params/app-tokens/regenerate-app-token.params.js';
+import {
+	getAppTokenRequestBodyValidator,
+	getAppTokenRequestQueryParamsValidator,
+} from '@/v2/controllers/types/params/app-tokens/get-app-token.params.js';
 
 const appsRouter = express.Router();
 
@@ -20,7 +28,7 @@ appsRouter.use('/', middleware.authGuard);
 
 appsRouter.post(
 	'/',
-	middleware.expressValidator(createAppValidator),
+	middleware.expressValidator(createAppRequestBodyValidator),
 	appsController.create.bind(appsController),
 );
 
@@ -28,40 +36,49 @@ appsRouter.patch('/', appsController.getAll.bind(appsController));
 
 appsRouter.patch(
 	'/get/:appId',
-	middleware.expressValidator(getAppParamsValidator),
+	middleware.expressValidator(getAppRequestQueryParamsValidator),
 	appsController.getOne.bind(appsController),
 );
 
 appsRouter.put(
 	'/:appId',
-	middleware.expressValidator([...updateAppNameParamsValidator, ...updateAppNameValidator]),
+	middleware.expressValidator([
+		...updateAppNameRequestQueryParamsValidator,
+		...updateAppNameRequestBodyValidator,
+	]),
 	appsController.updateName.bind(appsController),
 );
 
 appsRouter.delete(
 	'/:appId',
-	middleware.expressValidator(deleteAppParamsValidator),
+	middleware.expressValidator(deleteAppRequestQueryParamsValidator),
 	appsController.delete.bind(appsController),
 );
 
 appsRouter.post(
 	'/:appId/api-key',
-	middleware.expressValidator([...createAppTokenParamsValidator, ...createAppTokenValidator]),
+	middleware.expressValidator([
+		...createAppTokenRequestQueryParamsValidator,
+		...createAppTokenRequestBodyValidator,
+	]),
 	appsController.createApiKey.bind(appsController),
 );
 
 appsRouter.put(
 	'/:appId/api-key',
 	middleware.expressValidator([
-		...regenerateAppTokenParamsValidator,
-		...regenerateAppTokenValidator,
+		...regenerateAppTokenRequestQueryParamsValidator,
+		...regenerateAppTokenRequestBodyValidator,
 	]),
 	appsController.regenerateApiKey.bind(appsController),
 );
 
 appsRouter.patch(
 	'/:appId/api-key/get',
-	middleware.expressValidator([...getAppTokenParamsValidator, ...getAppTokenValidator]),
+	middleware.expressValidator([
+		...getAppTokenRequestQueryParamsValidator,
+		...getAppTokenRequestBodyValidator,
+	]),
 	appsController.getApiKey.bind(appsController),
 );
 
