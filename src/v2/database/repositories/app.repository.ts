@@ -1,6 +1,9 @@
 import { App } from '@/v2/entities/app.entity';
 import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
-import { RepositoryFindMethodOptions } from '@/v2/services/types/interfaces/repositories/shared/types';
+import {
+	RepositoryCountMethodOptions,
+	RepositoryFindMethodOptions,
+} from '@/v2/services/types/interfaces/repositories/shared/types';
 import AppSequelize from '@/schemes/App';
 
 export class AppRepository implements IAppRepository {
@@ -20,6 +23,11 @@ export class AppRepository implements IAppRepository {
 
 		const app = this.mapRowToEntity(appRow);
 		return app;
+	};
+
+	count = async (params: RepositoryCountMethodOptions): Promise<number> => {
+		const appsCount = await AppSequelize.count(params);
+		return appsCount;
 	};
 }
 

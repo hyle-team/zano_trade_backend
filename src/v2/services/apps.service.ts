@@ -46,7 +46,7 @@ class AppsService {
 			return { success: false, data: CreateAppServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const appsCount = await App.count({ where: { user_id: userRow.id } });
+		const appsCount = await this.appRepository.count({ where: { user_id: userRow.id } });
 
 		if (appsCount >= this.APPS_PER_USER_LIMIT) {
 			return { success: false, data: CreateAppServiceErrorCode.APP_LIMIT_REACHED };
