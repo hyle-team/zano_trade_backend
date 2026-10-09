@@ -36,11 +36,11 @@ export type InternalErrorResponse = ServerResponse<never, InternalErrorType>;
 
 // Add new shared error types below as new global error types are required
 export type SharedErrorType = ValidateErrorSubType<
-| InternalErrorType
-| ValidationErrorType
-| UnauthorizedErrorType
-| InvalidBodyJsonErrorType
-| TooManyRequestsErrorType
+	| InternalErrorType
+	| ValidationErrorType
+	| UnauthorizedErrorType
+	| InvalidBodyJsonErrorType
+	| TooManyRequestsErrorType
 >;
 
 export type SharedErrorResponse = ServerResponse<never, SharedErrorType>;

@@ -30,14 +30,14 @@ class AppsController {
 				case Services.Responses.CreateAppErrorCode.NAME_TAKEN:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.CreateAppErrorCode.NAME_TAKEN,
+						error: { code: Controllers.Responses.CreateAppErrorCode.NAME_TAKEN },
 					});
 					return;
 
 				case Services.Responses.CreateAppErrorCode.APP_LIMIT_REACHED:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.CreateAppErrorCode.APP_LIMIT_REACHED,
+						error: { code: Controllers.Responses.CreateAppErrorCode.APP_LIMIT_REACHED },
 					});
 					return;
 
@@ -55,7 +55,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.createSuccessResponseMapper(result.data),
+			result: this.createSuccessResponseMapper(result.data),
 		});
 	};
 
@@ -92,7 +92,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.getAllSuccessResponseMapper(result.data),
+			result: this.getAllSuccessResponseMapper(result.data),
 		});
 	};
 
@@ -126,7 +126,7 @@ class AppsController {
 				case Services.Responses.GetAppErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.GetAppErrorCode.APP_NOT_FOUND,
+						error: { code: Controllers.Responses.GetAppErrorCode.APP_NOT_FOUND },
 					});
 					return;
 
@@ -144,7 +144,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.getOneSuccessResponseMapper(result.data),
+			result: this.getOneSuccessResponseMapper(result.data),
 		});
 	};
 
@@ -178,14 +178,14 @@ class AppsController {
 				case Services.Responses.UpdateAppNameErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.UpdateAppNameErrorCode.APP_NOT_FOUND,
+						error: { code: Controllers.Responses.UpdateAppNameErrorCode.APP_NOT_FOUND },
 					});
 					return;
 
 				case Services.Responses.UpdateAppNameErrorCode.NAME_TAKEN:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.UpdateAppNameErrorCode.NAME_TAKEN,
+						error: { code: Controllers.Responses.UpdateAppNameErrorCode.NAME_TAKEN },
 					});
 					return;
 
@@ -203,7 +203,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.updateNameSuccessResponseMapper(result.data),
+			result: this.updateNameSuccessResponseMapper(result.data),
 		});
 	};
 
@@ -235,7 +235,7 @@ class AppsController {
 				case Services.Responses.DeleteAppErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.DeleteAppErrorCode.APP_NOT_FOUND,
+						error: { code: Controllers.Responses.DeleteAppErrorCode.APP_NOT_FOUND },
 					});
 					return;
 
@@ -253,7 +253,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.deleteSuccessResponseMapper(result.data),
+			result: this.deleteSuccessResponseMapper(result.data),
 		});
 	};
 
@@ -288,14 +288,19 @@ class AppsController {
 				case Services.Responses.CreateAppTokenErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.CreateAppTokenErrorCode.APP_NOT_FOUND,
+						error: {
+							code: Controllers.Responses.CreateAppTokenErrorCode.APP_NOT_FOUND,
+						},
 					});
 					return;
 
 				case Services.Responses.CreateAppTokenErrorCode.API_KEY_ALREADY_EXISTS:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.CreateAppTokenErrorCode.API_KEY_ALREADY_EXISTS,
+						error: {
+							code: Controllers.Responses.CreateAppTokenErrorCode
+								.API_KEY_ALREADY_EXISTS,
+						},
 					});
 					return;
 
@@ -313,7 +318,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.createApiKeySuccessResponseMapper(result.data),
+			result: this.createApiKeySuccessResponseMapper(result.data),
 		});
 	};
 
@@ -351,14 +356,19 @@ class AppsController {
 				case Services.Responses.RegenerateAppTokenErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.RegenerateAppTokenErrorCode.APP_NOT_FOUND,
+						error: {
+							code: Controllers.Responses.RegenerateAppTokenErrorCode.APP_NOT_FOUND,
+						},
 					});
 					return;
 
 				case Services.Responses.RegenerateAppTokenErrorCode.API_KEY_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.RegenerateAppTokenErrorCode.API_KEY_NOT_FOUND,
+						error: {
+							code: Controllers.Responses.RegenerateAppTokenErrorCode
+								.API_KEY_NOT_FOUND,
+						},
 					});
 					return;
 
@@ -376,7 +386,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.regenerateApiKeySuccessResponseMapper(result.data),
+			result: this.regenerateApiKeySuccessResponseMapper(result.data),
 		});
 	};
 
@@ -411,14 +421,16 @@ class AppsController {
 				case Services.Responses.GetAppTokenErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.GetAppTokenErrorCode.APP_NOT_FOUND,
+						error: { code: Controllers.Responses.GetAppTokenErrorCode.APP_NOT_FOUND },
 					});
 					return;
 
 				case Services.Responses.GetAppTokenErrorCode.API_KEY_NOT_FOUND:
 					res.status(400).send({
 						success: false,
-						data: Controllers.Responses.GetAppTokenErrorCode.API_KEY_NOT_FOUND,
+						error: {
+							code: Controllers.Responses.GetAppTokenErrorCode.API_KEY_NOT_FOUND,
+						},
 					});
 					return;
 
@@ -436,7 +448,7 @@ class AppsController {
 
 		res.status(200).send({
 			success: true,
-			data: this.getApiKeySuccessResponseMapper(result.data),
+			result: this.getApiKeySuccessResponseMapper(result.data),
 		});
 	};
 }

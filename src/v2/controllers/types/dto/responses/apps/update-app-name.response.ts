@@ -1,11 +1,10 @@
+import { ServerResponse } from '@/v2/controllers/types/dto/responses/shared/responses-typing/response';
+import { GetServerError } from '@/v2/controllers/types/dto/responses/shared/shared.response';
+import { ValidateErrorSubType } from '@/v2/controllers/types/dto/responses/shared/responses-typing/error-response';
+
 export type UpdateAppNameDTOAppData = {
 	id: number;
 	name: string;
-};
-
-export type UpdateAppNameSuccessDTO = {
-	success: true;
-	data: UpdateAppNameDTOAppData;
 };
 
 export enum UpdateAppNameErrorCode {
@@ -13,9 +12,11 @@ export enum UpdateAppNameErrorCode {
 	NAME_TAKEN = 'Name taken',
 }
 
-export type UpdateAppNameErrorDTO = {
-	success: false;
-	data: UpdateAppNameErrorCode;
-};
+export type UpdateAppNameErrorType = ValidateErrorSubType<{
+	code: UpdateAppNameErrorCode;
+}>;
 
-export type UpdateAppNameDTO = UpdateAppNameSuccessDTO | UpdateAppNameErrorDTO;
+export type UpdateAppNameDTO = ServerResponse<
+	UpdateAppNameDTOAppData,
+	GetServerError<UpdateAppNameErrorType>
+>;

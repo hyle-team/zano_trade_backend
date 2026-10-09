@@ -1,12 +1,11 @@
+import { ServerResponse } from '@/v2/controllers/types/dto/responses/shared/responses-typing/response';
+import { GetServerError } from '@/v2/controllers/types/dto/responses/shared/shared.response';
+import { ValidateErrorSubType } from '@/v2/controllers/types/dto/responses/shared/responses-typing/error-response';
+
 export type GetAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
-};
-
-export type GetAppTokenSuccessDTO = {
-	success: true;
-	data: GetAppTokenDTOApiKeyData;
 };
 
 export enum GetAppTokenErrorCode {
@@ -14,9 +13,11 @@ export enum GetAppTokenErrorCode {
 	API_KEY_NOT_FOUND = 'Api key not found',
 }
 
-export type GetAppTokenErrorDTO = {
-	success: false;
-	data: GetAppTokenErrorCode;
-};
+export type GetAppTokenErrorType = ValidateErrorSubType<{
+	code: GetAppTokenErrorCode;
+}>;
 
-export type GetAppTokenDTO = GetAppTokenSuccessDTO | GetAppTokenErrorDTO;
+export type GetAppTokenDTO = ServerResponse<
+	GetAppTokenDTOApiKeyData,
+	GetServerError<GetAppTokenErrorType>
+>;

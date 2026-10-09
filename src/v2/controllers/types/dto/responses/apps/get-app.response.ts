@@ -1,21 +1,19 @@
+import { ServerResponse } from '@/v2/controllers/types/dto/responses/shared/responses-typing/response';
+import { GetServerError } from '@/v2/controllers/types/dto/responses/shared/shared.response';
+import { ValidateErrorSubType } from '@/v2/controllers/types/dto/responses/shared/responses-typing/error-response';
+
 export type GetAppDTOAppData = {
 	id: number;
 	name: string;
 	apiKeyExists: boolean;
 };
 
-export type GetAppSuccessDTO = {
-	success: true;
-	data: GetAppDTOAppData;
-};
-
 export enum GetAppErrorCode {
 	APP_NOT_FOUND = 'App not found',
 }
 
-export type GetAppErrorDTO = {
-	success: false;
-	data: GetAppErrorCode;
-};
+export type GetAppErrorType = ValidateErrorSubType<{
+	code: GetAppErrorCode;
+}>;
 
-export type GetAppDTO = GetAppSuccessDTO | GetAppErrorDTO;
+export type GetAppDTO = ServerResponse<GetAppDTOAppData, GetServerError<GetAppErrorType>>;

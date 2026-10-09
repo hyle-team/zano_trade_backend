@@ -1,19 +1,17 @@
+import { ServerResponse } from '@/v2/controllers/types/dto/responses/shared/responses-typing/response';
+import { GetServerError } from '@/v2/controllers/types/dto/responses/shared/shared.response';
+import { ValidateErrorSubType } from '@/v2/controllers/types/dto/responses/shared/responses-typing/error-response';
+
 export type DeleteAppDTOAppData = {
 	id: number;
-};
-
-export type DeleteAppSuccessDTO = {
-	success: true;
-	data: DeleteAppDTOAppData;
 };
 
 export enum DeleteAppErrorCode {
 	APP_NOT_FOUND = 'App not found',
 }
 
-export type DeleteAppErrorDTO = {
-	success: false;
-	data: DeleteAppErrorCode;
-};
+export type DeleteAppErrorType = ValidateErrorSubType<{
+	code: DeleteAppErrorCode;
+}>;
 
-export type DeleteAppDTO = DeleteAppSuccessDTO | DeleteAppErrorDTO;
+export type DeleteAppDTO = ServerResponse<DeleteAppDTOAppData, GetServerError<DeleteAppErrorType>>;

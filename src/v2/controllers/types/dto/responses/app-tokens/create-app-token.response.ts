@@ -1,12 +1,11 @@
+import { ServerResponse } from '@/v2/controllers/types/dto/responses/shared/responses-typing/response';
+import { GetServerError } from '@/v2/controllers/types/dto/responses/shared/shared.response';
+import { ValidateErrorSubType } from '@/v2/controllers/types/dto/responses/shared/responses-typing/error-response';
+
 export type CreateAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
-};
-
-export type CreateAppTokenSuccessDTO = {
-	success: true;
-	data: CreateAppTokenDTOApiKeyData;
 };
 
 export enum CreateAppTokenErrorCode {
@@ -14,9 +13,11 @@ export enum CreateAppTokenErrorCode {
 	API_KEY_ALREADY_EXISTS = 'Api key already exists',
 }
 
-export type CreateAppTokenErrorDTO = {
-	success: false;
-	data: CreateAppTokenErrorCode;
-};
+export type CreateAppTokenErrorType = ValidateErrorSubType<{
+	code: CreateAppTokenErrorCode;
+}>;
 
-export type CreateAppTokenDTO = CreateAppTokenSuccessDTO | CreateAppTokenErrorDTO;
+export type CreateAppTokenDTO = ServerResponse<
+	CreateAppTokenDTOApiKeyData,
+	GetServerError<CreateAppTokenErrorType>
+>;

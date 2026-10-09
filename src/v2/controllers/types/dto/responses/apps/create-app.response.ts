@@ -1,11 +1,10 @@
+import { ServerResponse } from '@/v2/controllers/types/dto/responses/shared/responses-typing/response';
+import { GetServerError } from '@/v2/controllers/types/dto/responses/shared/shared.response';
+import { ValidateErrorSubType } from '@/v2/controllers/types/dto/responses/shared/responses-typing/error-response';
+
 export type CreateAppDTOAppData = {
 	id: number;
 	name: string;
-};
-
-export type CreateAppSuccessDTO = {
-	success: true;
-	data: CreateAppDTOAppData;
 };
 
 export enum CreateAppErrorCode {
@@ -13,9 +12,8 @@ export enum CreateAppErrorCode {
 	APP_LIMIT_REACHED = 'App limit reached',
 }
 
-export type CreateAppErrorDTO = {
-	success: false;
-	data: CreateAppErrorCode;
-};
+export type CreateAppErrorType = ValidateErrorSubType<{
+	code: CreateAppErrorCode;
+}>;
 
-export type CreateAppDTO = CreateAppSuccessDTO | CreateAppErrorDTO;
+export type CreateAppDTO = ServerResponse<CreateAppDTOAppData, GetServerError<CreateAppErrorType>>;
