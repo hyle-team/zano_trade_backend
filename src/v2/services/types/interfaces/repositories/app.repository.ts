@@ -1,7 +1,12 @@
 import { App } from '@/v2/entities/app.entity';
-import { RepositoryCountMethodOptions, RepositoryFindMethodOptions } from './shared/types';
+import {
+	RepositoryCountMethodOptions,
+	RepositoryCreateMethodOptions,
+	RepositoryFindMethodOptions,
+} from './shared/types';
 
 export interface IAppRepository {
 	findOneById(params: RepositoryFindMethodOptions): Promise<App | null>;
 	count(params: RepositoryCountMethodOptions): Promise<number>;
+	create(values: Record<string, unknown>, params?: RepositoryCreateMethodOptions): Promise<App>;
 }

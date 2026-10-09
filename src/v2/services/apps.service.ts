@@ -53,13 +53,13 @@ class AppsService {
 		}
 
 		try {
-			const appRow = await App.create({ name, user_id: userRow.id });
+			const app = await this.appRepository.create({ name, user_id: userRow.id });
 
 			return {
 				success: true,
 				data: {
-					id: appRow.id,
-					name: appRow.name,
+					id: app.id,
+					name: app.name,
 				},
 			};
 		} catch (error) {
