@@ -5,7 +5,6 @@ import { appRepository } from '@/v2/database/repositories/app.repository';
 import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories/app-token.repository';
 import { appTokenRepository } from '@/v2/database/repositories/app-token.repository';
 import sequelize from '@/sequelize.js';
-import { AppTokenSequelize } from '@/v2/database/schemes/app-token.scheme';
 import userModel from '@/models/User.js';
 import { CreateAppServiceParams } from '@/v2/services/types/params/apps/create-app.params.js';
 import {
@@ -166,7 +165,7 @@ class AppsService {
 				return { success: false, data: DeleteAppServiceErrorCode.APP_NOT_FOUND };
 			}
 
-			await AppTokenSequelize.destroy({ where: { app_id: app.id }, transaction });
+			await this.appTokenRepository.delete({ where: { app_id: app.id }, transaction });
 			await this.appRepository.delete({ where: { id: app.id }, transaction });
 
 			return { success: true, data: { id: appId } };

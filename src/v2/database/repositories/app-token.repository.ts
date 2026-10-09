@@ -2,6 +2,7 @@ import { AppToken } from '@/v2/entities/app-token.entity';
 import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories/app-token.repository';
 import {
 	RepositoryCreateMethodOptions,
+	RepositoryDeleteMethodOptions,
 	RepositoryFindMethodOptions,
 	RepositoryUpdateMethodOptions,
 } from '@/v2/services/types/interfaces/repositories/shared/types';
@@ -43,6 +44,11 @@ export class AppTokenRepository implements IAppTokenRepository {
 	): Promise<number> => {
 		const [affectedRowsCount] = await AppTokenSequelize.update(values, params);
 		return affectedRowsCount;
+	};
+
+	delete = async (params: RepositoryDeleteMethodOptions): Promise<number> => {
+		const deletedRowsCount = await AppTokenSequelize.destroy(params);
+		return deletedRowsCount;
 	};
 }
 
