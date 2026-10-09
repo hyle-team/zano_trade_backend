@@ -2,9 +2,9 @@ import crypto from 'node:crypto';
 import { UniqueConstraintError } from 'sequelize';
 import CryptoJS from 'crypto-js';
 
-import settingsModel from '@/models/Settings.js';
+import { settingsHelper } from '@/v2/helpers/settings.helper';
 import userModel from '@/models/User.js';
-import { asymmetricEncryptionHelper } from '@/helpers/AsymmetricEncryption.helper.js';
+import { asymmetricEncryptionHelper } from '@/v2/helpers/asymmetric-encryption.helper.js';
 import { CreateAppTokenServiceParams } from '@/v2/services/types/params/app-tokens/create-app-token.params.js';
 import {
 	CreateAppTokenServiceRes,
@@ -40,7 +40,7 @@ class AppTokensService {
 
 	private encryptAppTokenForStorage = ({ plainValue }: { plainValue: string }): string => {
 		const keyWords = CryptoJS.enc.Hex.parse(
-			settingsModel.globalValues.sensitiveDataEncryptionKey,
+			settingsHelper.globalValues.sensitiveDataEncryptionKey,
 		).words.slice(0, 8);
 		const key = CryptoJS.lib.WordArray.create(keyWords);
 
@@ -62,7 +62,7 @@ class AppTokensService {
 		const salt = CryptoJS.enc.Base64.parse(headers.replace('env_v1__', ''));
 
 		const keyWords = CryptoJS.enc.Hex.parse(
-			settingsModel.globalValues.sensitiveDataEncryptionKey,
+			settingsHelper.globalValues.sensitiveDataEncryptionKey,
 		).words.slice(0, 8);
 		const key = CryptoJS.lib.WordArray.create(keyWords);
 

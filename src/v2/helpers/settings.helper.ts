@@ -7,7 +7,7 @@ import { Settings as SettingsScheme } from '@/schemes/Settings';
 import { AppSettings, appSettingsSchema } from '@/interfaces/common/Settings';
 import { env } from '@/config/env';
 
-class Settings {
+class SettingsHelper {
 	globalValues: { sensitiveDataEncryptionKey: string } = {
 		sensitiveDataEncryptionKey: '',
 	};
@@ -84,6 +84,4 @@ class Settings {
 	};
 }
 
-const settingsModel = new Settings();
-
-export default settingsModel;
+export const settingsHelper = new SettingsHelper();
