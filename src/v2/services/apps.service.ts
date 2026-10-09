@@ -127,7 +127,7 @@ class AppsService {
 		}
 
 		try {
-			const [affectedRowsCount] = await App.update(
+			const affectedRowsCount = await this.appRepository.update(
 				{ name },
 				{ where: { id: appId, user_id: userRow.id } },
 			);

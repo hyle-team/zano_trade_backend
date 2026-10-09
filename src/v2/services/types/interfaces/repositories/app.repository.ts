@@ -3,6 +3,7 @@ import {
 	RepositoryCountMethodOptions,
 	RepositoryCreateMethodOptions,
 	RepositoryFindMethodOptions,
+	RepositoryUpdateMethodOptions,
 } from './shared/types';
 
 export type AppWithApiKeyCountEntry = {
@@ -15,4 +16,5 @@ export interface IAppRepository {
 	count(params: RepositoryCountMethodOptions): Promise<number>;
 	create(values: Record<string, unknown>, params?: RepositoryCreateMethodOptions): Promise<App>;
 	findAllWithApiKeyCount(params: { userId: number }): Promise<AppWithApiKeyCountEntry[]>;
+	update(values: Record<string, unknown>, params: RepositoryUpdateMethodOptions): Promise<number>;
 }

@@ -7,6 +7,7 @@ import {
 	RepositoryCountMethodOptions,
 	RepositoryCreateMethodOptions,
 	RepositoryFindMethodOptions,
+	RepositoryUpdateMethodOptions,
 } from '@/v2/services/types/interfaces/repositories/shared/types';
 import AppSequelize from '@/schemes/App';
 import AppToken from '@/schemes/AppToken.js';
@@ -74,6 +75,14 @@ export class AppRepository implements IAppRepository {
 			app: new App({ id: appRow.id, name: appRow.name, userId }),
 			apiKeyCount: Number(appRow.api_key_count),
 		}));
+	};
+
+	update = async (
+		values: Record<string, unknown>,
+		params: RepositoryUpdateMethodOptions,
+	): Promise<number> => {
+		const [affectedRowsCount] = await AppSequelize.update(values, params);
+		return affectedRowsCount;
 	};
 }
 
