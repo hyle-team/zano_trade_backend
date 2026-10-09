@@ -1,8 +1,5 @@
-import crypto from 'node:crypto';
 import { UniqueConstraintError } from 'sequelize';
-import CryptoJS from 'crypto-js';
 
-import { settingsHelper } from '@/v2/helpers/settings.helper';
 import userModel from '@/models/User.js';
 import { asymmetricEncryptionHelper } from '@/v2/helpers/asymmetric-encryption.helper.js';
 import { CreateAppTokenServiceParams } from '@/v2/services/types/params/app-tokens/create-app-token.params.js';
@@ -20,108 +17,16 @@ import {
 	RegenerateAppTokenServiceRes,
 	RegenerateAppTokenServiceErrorCode,
 } from '@/v2/services/types/responses/app-tokens/regenerate-app-token.response.js';
-import { GetDecryptedAppTokenRowByAppIdServiceRes } from '@/v2/services/types/responses/app-tokens/get-decrypted-app-token-row-by-app-id.response';
-import { CreateAppTokenRowServiceRes } from '@/v2/services/types/responses/app-tokens/create-app-token-row.response';
-import { CreateAppTokenRowServiceParams } from '@/v2/services/types/params/app-tokens/create-app-token-row.params';
 import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
 import { appRepository } from '@/v2/database/repositories/app.repository';
 import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories/app-token.repository';
 import { appTokenRepository } from '@/v2/database/repositories/app-token.repository';
+import { AppToken } from '@/v2/entities/app-token.entity';
 
 class AppTokensService {
-	private readonly VALUE_BYTES_LENGTH = 32;
-
 	private readonly appRepository: IAppRepository = appRepository;
 
 	private readonly appTokenRepository: IAppTokenRepository = appTokenRepository;
-
-	private generateValue = (): string =>
-		crypto.randomBytes(this.VALUE_BYTES_LENGTH).toString('base64');
-
-	private encryptAppTokenForStorage = ({ plainValue }: { plainValue: string }): string => {
-		const keyWords = CryptoJS.enc.Hex.parse(
-			settingsHelper.globalValues.sensitiveDataEncryptionKey,
-		).words.slice(0, 8);
-		const key = CryptoJS.lib.WordArray.create(keyWords);
-
-		const salt = CryptoJS.lib.WordArray.random(16);
-
-		const valueEncryptedBody = CryptoJS.AES.encrypt(plainValue, key, { iv: salt }).toString();
-
-		const valueEncrypted = `env_v1__${salt.toString(CryptoJS.enc.Base64)}:${valueEncryptedBody}`;
-
-		return valueEncrypted;
-	};
-
-	private decryptAppTokenFromStorage = ({
-		valueEncrypted,
-	}: {
-		valueEncrypted: string;
-	}): string => {
-		const [headers, valueEncryptedBody] = valueEncrypted.split(':');
-		const salt = CryptoJS.enc.Base64.parse(headers.replace('env_v1__', ''));
-
-		const keyWords = CryptoJS.enc.Hex.parse(
-			settingsHelper.globalValues.sensitiveDataEncryptionKey,
-		).words.slice(0, 8);
-		const key = CryptoJS.lib.WordArray.create(keyWords);
-
-		const valueDecrypted = CryptoJS.AES.decrypt(valueEncryptedBody, key, { iv: salt }).toString(
-			CryptoJS.enc.Utf8,
-		);
-
-		return valueDecrypted;
-	};
-
-	private getDecryptedAppTokenRowByAppId = async ({
-		appId,
-	}: {
-		appId: number;
-	}): Promise<GetDecryptedAppTokenRowByAppIdServiceRes> => {
-		const appToken = await this.appTokenRepository.findOne({
-			where: {
-				app_id: appId,
-			},
-		});
-
-		if (!appToken) {
-			return null;
-		}
-
-		const valueEncrypted = appToken.value;
-
-		const valueDecrypted = this.decryptAppTokenFromStorage({
-			valueEncrypted,
-		});
-
-		return {
-			id: appToken.id,
-			appId: appToken.appId,
-			value: valueDecrypted,
-			issuedAt: appToken.issuedAt,
-		};
-	};
-
-	private createAppTokenRow = async ({
-		appId,
-		plainValue,
-		issuedAt,
-	}: CreateAppTokenRowServiceParams): Promise<CreateAppTokenRowServiceRes> => {
-		const valueEncrypted = this.encryptAppTokenForStorage({
-			plainValue,
-		});
-
-		await this.appTokenRepository.create({
-			app_id: appId,
-			value: valueEncrypted,
-			issued_at: issuedAt,
-		});
-
-		return {
-			success: true,
-			data: null,
-		};
-	};
 
 	create = async ({
 		appId,
@@ -142,11 +47,13 @@ class AppTokensService {
 			return { success: false, data: CreateAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
-		const value = this.generateValue();
+		const value = AppToken.generateValue();
+		const valueEncryptedForStorage = AppToken.encryptValueForStorage({ valueDecrypted: value });
+
 		const issuedAt = new Date();
 
 		const {
-			cipherDataHex: [valueEncryptedHex, issuedAtEncryptedHex],
+			cipherDataHex: [valueEncryptedForTransmitHex, issuedAtEncryptedForTransmitHex],
 			intermediateEncryptionPublicKeyHex,
 		} = await asymmetricEncryptionHelper.encrypt({
 			plainData: [value, issuedAt.toISOString()],
@@ -154,17 +61,17 @@ class AppTokensService {
 		});
 
 		try {
-			await this.createAppTokenRow({
-				appId: app.id,
-				plainValue: value,
-				issuedAt,
+			await this.appTokenRepository.create({
+				app_id: app.id,
+				value: valueEncryptedForStorage,
+				issued_at: issuedAt,
 			});
 
 			return {
 				success: true,
 				data: {
-					valueEncryptedHex,
-					issuedAtEncryptedHex,
+					valueEncryptedHex: valueEncryptedForTransmitHex,
+					issuedAtEncryptedHex: issuedAtEncryptedForTransmitHex,
 					intermediateEncryptionPublicKeyHex,
 				},
 			};
@@ -199,23 +106,21 @@ class AppTokensService {
 			return { success: false, data: RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
-		const value = this.generateValue();
+		const value = AppToken.generateValue();
+		const valueEncryptedForStorage = AppToken.encryptValueForStorage({ valueDecrypted: value });
+
 		const issuedAt = new Date();
 
 		const {
-			cipherDataHex: [valueEncryptedHex, issuedAtEncryptedHex],
+			cipherDataHex: [valueEncryptedForTransmitHex, issuedAtEncryptedForTransmitHex],
 			intermediateEncryptionPublicKeyHex,
 		} = await asymmetricEncryptionHelper.encrypt({
 			plainData: [value, issuedAt.toISOString()],
 			publicKeyHex,
 		});
 
-		const valueEncrypted = this.encryptAppTokenForStorage({
-			plainValue: value,
-		});
-
 		const affectedRowsCount = await this.appTokenRepository.update(
-			{ value: valueEncrypted, issued_at: issuedAt },
+			{ value: valueEncryptedForStorage, issued_at: issuedAt },
 			{ where: { app_id: app.id } },
 		);
 
@@ -226,8 +131,8 @@ class AppTokensService {
 		return {
 			success: true,
 			data: {
-				valueEncryptedHex,
-				issuedAtEncryptedHex,
+				valueEncryptedHex: valueEncryptedForTransmitHex,
+				issuedAtEncryptedHex: issuedAtEncryptedForTransmitHex,
 				intermediateEncryptionPublicKeyHex,
 			},
 		};
@@ -252,25 +157,25 @@ class AppTokensService {
 			return { success: false, data: GetAppTokenServiceErrorCode.APP_NOT_FOUND };
 		}
 
-		const tokenRow = await this.getDecryptedAppTokenRowByAppId({ appId: app.id });
+		const appToken = await this.appTokenRepository.findOne({ where: { app_id: app.id } });
 
-		if (!tokenRow) {
+		if (!appToken) {
 			return { success: false, data: GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND };
 		}
 
 		const {
-			cipherDataHex: [valueEncryptedHex, issuedAtEncryptedHex],
+			cipherDataHex: [valueEncryptedForTransmitHex, issuedAtEncryptedForTransmitHex],
 			intermediateEncryptionPublicKeyHex,
 		} = await asymmetricEncryptionHelper.encrypt({
-			plainData: [tokenRow.value, tokenRow.issuedAt.toISOString()],
+			plainData: [appToken.getValueDecrypted(), appToken.issuedAt.toISOString()],
 			publicKeyHex,
 		});
 
 		return {
 			success: true,
 			data: {
-				valueEncryptedHex,
-				issuedAtEncryptedHex,
+				valueEncryptedHex: valueEncryptedForTransmitHex,
+				issuedAtEncryptedHex: issuedAtEncryptedForTransmitHex,
 				intermediateEncryptionPublicKeyHex,
 			},
 		};

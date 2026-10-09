@@ -13,7 +13,7 @@ export class AppTokenRepository implements IAppTokenRepository {
 		new AppToken({
 			id: appTokenRow.id,
 			appId: appTokenRow.app_id,
-			value: appTokenRow.value,
+			valueEncryptedForStorage: appTokenRow.value,
 			issuedAt: appTokenRow.issued_at,
 		});
 
