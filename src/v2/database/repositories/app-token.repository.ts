@@ -3,6 +3,7 @@ import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories
 import {
 	RepositoryCreateMethodOptions,
 	RepositoryFindMethodOptions,
+	RepositoryUpdateMethodOptions,
 } from '@/v2/services/types/interfaces/repositories/shared/types';
 import { AppTokenSequelize } from '@/v2/database/schemes/app-token.scheme';
 
@@ -34,6 +35,14 @@ export class AppTokenRepository implements IAppTokenRepository {
 
 		const appToken = this.mapRowToEntity(appTokenRow);
 		return appToken;
+	};
+
+	update = async (
+		values: Record<string, unknown>,
+		params: RepositoryUpdateMethodOptions,
+	): Promise<number> => {
+		const [affectedRowsCount] = await AppTokenSequelize.update(values, params);
+		return affectedRowsCount;
 	};
 }
 
