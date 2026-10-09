@@ -7,9 +7,9 @@ import { Services } from '@/v2/services/types';
 
 class AppsController {
 	private createSuccessResponseMapper = (
-		createAppServiceResAppData: Services.Responses.CreateAppDTOAppData,
+		createAppDTOAppData: Services.Responses.CreateAppDTOAppData,
 	): Controllers.Responses.CreateAppDTOAppData => {
-		const param = createAppServiceResAppData;
+		const param = createAppDTOAppData;
 
 		return {
 			id: param.id,
@@ -60,9 +60,9 @@ class AppsController {
 	};
 
 	private getAllSuccessResponseMapper = (
-		getAllAppsServiceResAppData: Services.Responses.GetAllAppsDTOAppData[],
+		getAllAppsDTOAppData: Services.Responses.GetAllAppsDTOAppData[],
 	): Controllers.Responses.GetAllAppsDTOAppData[] => {
-		const param = getAllAppsServiceResAppData;
+		const param = getAllAppsDTOAppData;
 
 		return param.map((appData) => ({
 			id: appData.id,
@@ -97,9 +97,9 @@ class AppsController {
 	};
 
 	private getOneSuccessResponseMapper = (
-		getAppServiceResAppData: Services.Responses.GetAppDTOAppData,
+		getAppDTOAppData: Services.Responses.GetAppDTOAppData,
 	): Controllers.Responses.GetAppDTOAppData => {
-		const param = getAppServiceResAppData;
+		const param = getAppDTOAppData;
 
 		return {
 			id: param.id,
@@ -149,9 +149,9 @@ class AppsController {
 	};
 
 	private updateNameSuccessResponseMapper = (
-		updateAppNameServiceResAppData: Services.Responses.UpdateAppNameDTOAppData,
+		updateAppNameDTOAppData: Services.Responses.UpdateAppNameDTOAppData,
 	): Controllers.Responses.UpdateAppNameDTOAppData => {
-		const param = updateAppNameServiceResAppData;
+		const param = updateAppNameDTOAppData;
 
 		return {
 			id: param.id,
@@ -208,9 +208,9 @@ class AppsController {
 	};
 
 	private deleteSuccessResponseMapper = (
-		deleteAppServiceResAppData: Services.Responses.DeleteAppDTOAppData,
+		deleteAppDTOAppData: Services.Responses.DeleteAppDTOAppData,
 	): Controllers.Responses.DeleteAppDTOAppData => {
-		const param = deleteAppServiceResAppData;
+		const param = deleteAppDTOAppData;
 
 		return {
 			id: param.id,
@@ -258,9 +258,9 @@ class AppsController {
 	};
 
 	private createApiKeySuccessResponseMapper = (
-		createAppTokenServiceResApiKeyData: Services.Responses.CreateAppTokenDTOApiKeyData,
+		createAppTokenDTOApiKeyData: Services.Responses.CreateAppTokenDTOApiKeyData,
 	): Controllers.Responses.CreateAppTokenDTOApiKeyData => {
-		const param = createAppTokenServiceResApiKeyData;
+		const param = createAppTokenDTOApiKeyData;
 
 		return {
 			valueEncryptedHex: param.valueEncryptedHex,
@@ -323,9 +323,9 @@ class AppsController {
 	};
 
 	private regenerateApiKeySuccessResponseMapper = (
-		regenerateAppTokenServiceResApiKeyData: Services.Responses.RegenerateAppTokenDTOApiKeyData,
+		regenerateAppTokenDTOApiKeyData: Services.Responses.RegenerateAppTokenDTOApiKeyData,
 	): Controllers.Responses.RegenerateAppTokenDTOApiKeyData => {
-		const param = regenerateAppTokenServiceResApiKeyData;
+		const param = regenerateAppTokenDTOApiKeyData;
 
 		return {
 			valueEncryptedHex: param.valueEncryptedHex,
@@ -391,9 +391,9 @@ class AppsController {
 	};
 
 	private getApiKeySuccessResponseMapper = (
-		getAppTokenServiceResApiKeyData: Services.Responses.GetAppTokenDTOApiKeyData,
+		getAppTokenDTOApiKeyData: Services.Responses.GetAppTokenDTOApiKeyData,
 	): Controllers.Responses.GetAppTokenDTOApiKeyData => {
-		const param = getAppTokenServiceResApiKeyData;
+		const param = getAppTokenDTOApiKeyData;
 
 		return {
 			valueEncryptedHex: param.valueEncryptedHex,
