@@ -1,19 +1,19 @@
 import { Request, Response } from 'express';
-import { CreateAppRequestBody } from '@/v2/controllers/types/params/apps/create-app.params.js';
+import { CreateAppRequestBody } from '@/v2/controllers/types/dto/params/apps/create-app.params.js';
 import {
 	CreateAppRes,
 	CreateAppErrorCode,
 	CreateAppResAppData,
-} from '@/v2/controllers/types/responses/apps/create-app.response.js';
+} from '@/v2/controllers/types/dto/responses/apps/create-app.response.js';
 import {
 	CreateAppServiceErrorCode,
 	CreateAppServiceResAppData,
 } from '@/v2/services/types/responses/apps/create-app.response.js';
-import { GetAllAppsRequestBody } from '@/v2/controllers/types/params/apps/get-all-apps.params.js';
+import { GetAllAppsRequestBody } from '@/v2/controllers/types/dto/params/apps/get-all-apps.params.js';
 import {
 	GetAllAppsRes,
 	GetAllAppsResAppData,
-} from '@/v2/controllers/types/responses/apps/get-all-apps.response.js';
+} from '@/v2/controllers/types/dto/responses/apps/get-all-apps.response.js';
 import {
 	GetAllAppsServiceErrorCode,
 	GetAllAppsServiceResAppData,
@@ -21,12 +21,12 @@ import {
 import {
 	GetAppRequestBody,
 	GetAppRequestQueryParams,
-} from '@/v2/controllers/types/params/apps/get-app.params.js';
+} from '@/v2/controllers/types/dto/params/apps/get-app.params.js';
 import {
 	GetAppRes,
 	GetAppErrorCode,
 	GetAppResAppData,
-} from '@/v2/controllers/types/responses/apps/get-app.response.js';
+} from '@/v2/controllers/types/dto/responses/apps/get-app.response.js';
 import {
 	GetAppServiceErrorCode,
 	GetAppServiceResAppData,
@@ -35,7 +35,7 @@ import {
 	UpdateAppNameRes,
 	UpdateAppNameErrorCode,
 	UpdateAppNameResAppData,
-} from '@/v2/controllers/types/responses/apps/update-app-name.response.js';
+} from '@/v2/controllers/types/dto/responses/apps/update-app-name.response.js';
 import {
 	UpdateAppNameServiceErrorCode,
 	UpdateAppNameServiceResAppData,
@@ -43,12 +43,12 @@ import {
 import {
 	DeleteAppRequestBody,
 	DeleteAppRequestQueryParams,
-} from '@/v2/controllers/types/params/apps/delete-app.params.js';
+} from '@/v2/controllers/types/dto/params/apps/delete-app.params.js';
 import {
 	DeleteAppRes,
 	DeleteAppErrorCode,
 	DeleteAppResAppData,
-} from '@/v2/controllers/types/responses/apps/delete-app.response.js';
+} from '@/v2/controllers/types/dto/responses/apps/delete-app.response.js';
 import {
 	DeleteAppServiceErrorCode,
 	DeleteAppServiceResAppData,
@@ -56,12 +56,12 @@ import {
 import {
 	CreateAppTokenRequestBody,
 	CreateAppTokenRequestQueryParams,
-} from '@/v2/controllers/types/params/app-tokens/create-app-token.params.js';
+} from '@/v2/controllers/types/dto/params/app-tokens/create-app-token.params.js';
 import {
 	CreateAppTokenRes,
 	CreateAppTokenErrorCode,
 	CreateAppTokenResApiKeyData,
-} from '@/v2/controllers/types/responses/app-tokens/create-app-token.response.js';
+} from '@/v2/controllers/types/dto/responses/app-tokens/create-app-token.response.js';
 import {
 	CreateAppTokenServiceErrorCode,
 	CreateAppTokenServiceResApiKeyData,
@@ -69,12 +69,12 @@ import {
 import {
 	GetAppTokenRequestBody,
 	GetAppTokenRequestQueryParams,
-} from '@/v2/controllers/types/params/app-tokens/get-app-token.params.js';
+} from '@/v2/controllers/types/dto/params/app-tokens/get-app-token.params.js';
 import {
 	GetAppTokenRes,
 	GetAppTokenErrorCode,
 	GetAppTokenResApiKeyData,
-} from '@/v2/controllers/types/responses/app-tokens/get-app-token.response.js';
+} from '@/v2/controllers/types/dto/responses/app-tokens/get-app-token.response.js';
 import {
 	GetAppTokenServiceErrorCode,
 	GetAppTokenServiceResApiKeyData,
@@ -82,12 +82,12 @@ import {
 import {
 	RegenerateAppTokenRequestBody,
 	RegenerateAppTokenRequestQueryParams,
-} from '@/v2/controllers/types/params/app-tokens/regenerate-app-token.params.js';
+} from '@/v2/controllers/types/dto/params/app-tokens/regenerate-app-token.params.js';
 import {
 	RegenerateAppTokenRes,
 	RegenerateAppTokenErrorCode,
 	RegenerateAppTokenResApiKeyData,
-} from '@/v2/controllers/types/responses/app-tokens/regenerate-app-token.response.js';
+} from '@/v2/controllers/types/dto/responses/app-tokens/regenerate-app-token.response.js';
 import {
 	RegenerateAppTokenServiceErrorCode,
 	RegenerateAppTokenServiceResApiKeyData,
@@ -97,7 +97,7 @@ import { Decimal } from 'decimal.js';
 import {
 	UpdateAppNameRequestBody,
 	UpdateAppNameRequestQueryParams,
-} from '@/v2/controllers/types/params/apps/update-app-name.params.js';
+} from '@/v2/controllers/types/dto/params/apps/update-app-name.params.js';
 import { appsService } from '@/v2/services/apps.service.js';
 
 class AppsController {

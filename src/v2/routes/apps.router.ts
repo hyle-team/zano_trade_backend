@@ -1,26 +1,26 @@
 import express from 'express';
 
-import { createAppRequestBodyValidator } from '@/v2/controllers/types/params/apps/create-app.params.js';
+import { createAppRequestBodyValidator } from '@/v2/controllers/types/dto/params/apps/create-app.params.js';
 import { appsController } from '@/v2/controllers/apps.controller.js';
 import middleware from '@/middleware/middleware';
-import { deleteAppRequestQueryParamsValidator } from '@/v2/controllers/types/params/apps/delete-app.params.js';
-import { getAppRequestQueryParamsValidator } from '@/v2/controllers/types/params/apps/get-app.params.js';
+import { deleteAppRequestQueryParamsValidator } from '@/v2/controllers/types/dto/params/apps/delete-app.params.js';
+import { getAppRequestQueryParamsValidator } from '@/v2/controllers/types/dto/params/apps/get-app.params.js';
 import {
 	updateAppNameRequestBodyValidator,
 	updateAppNameRequestQueryParamsValidator,
-} from '@/v2/controllers/types/params/apps/update-app-name.params.js';
+} from '@/v2/controllers/types/dto/params/apps/update-app-name.params.js';
 import {
 	createAppTokenRequestBodyValidator,
 	createAppTokenRequestQueryParamsValidator,
-} from '@/v2/controllers/types/params/app-tokens/create-app-token.params.js';
+} from '@/v2/controllers/types/dto/params/app-tokens/create-app-token.params.js';
 import {
 	regenerateAppTokenRequestBodyValidator,
 	regenerateAppTokenRequestQueryParamsValidator,
-} from '@/v2/controllers/types/params/app-tokens/regenerate-app-token.params.js';
+} from '@/v2/controllers/types/dto/params/app-tokens/regenerate-app-token.params.js';
 import {
 	getAppTokenRequestBodyValidator,
 	getAppTokenRequestQueryParamsValidator,
-} from '@/v2/controllers/types/params/app-tokens/get-app-token.params.js';
+} from '@/v2/controllers/types/dto/params/app-tokens/get-app-token.params.js';
 
 export const appsRouter = express.Router();
 
