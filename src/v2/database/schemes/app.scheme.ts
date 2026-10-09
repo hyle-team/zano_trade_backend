@@ -5,7 +5,7 @@ import User from '@/schemes/User';
 
 export const APPS_USER_ID_NAME_UNIQUE_CONSTRAINT = 'apps_user_id_name_unique';
 
-class AppSequelize extends Model {
+export class AppSequelize extends Model {
 	declare readonly id: number;
 
 	declare name: string;
@@ -45,5 +45,3 @@ AppSequelize.belongsTo(User, {
 User.hasMany(AppSequelize, {
 	foreignKey: 'user_id',
 });
-
-export default AppSequelize;
