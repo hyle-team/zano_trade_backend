@@ -1,6 +1,9 @@
 import { AppToken } from '@/v2/entities/app-token.entity';
 import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories/app-token.repository';
-import { RepositoryFindMethodOptions } from '@/v2/services/types/interfaces/repositories/shared/types';
+import {
+	RepositoryCreateMethodOptions,
+	RepositoryFindMethodOptions,
+} from '@/v2/services/types/interfaces/repositories/shared/types';
 import { AppTokenSequelize } from '@/v2/database/schemes/app-token.scheme';
 
 export class AppTokenRepository implements IAppTokenRepository {
@@ -18,6 +21,16 @@ export class AppTokenRepository implements IAppTokenRepository {
 		if (appTokenRow === null) {
 			return null;
 		}
+
+		const appToken = this.mapRowToEntity(appTokenRow);
+		return appToken;
+	};
+
+	create = async (
+		values: Record<string, unknown>,
+		params?: RepositoryCreateMethodOptions,
+	): Promise<AppToken> => {
+		const appTokenRow = await AppTokenSequelize.create(values, params);
 
 		const appToken = this.mapRowToEntity(appTokenRow);
 		return appToken;

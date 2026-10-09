@@ -112,7 +112,7 @@ class AppTokensService {
 			plainValue,
 		});
 
-		await AppTokenSequelize.create({
+		await this.appTokenRepository.create({
 			app_id: appId,
 			value: valueEncrypted,
 			issued_at: issuedAt,
