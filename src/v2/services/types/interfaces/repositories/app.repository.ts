@@ -6,7 +6,7 @@ import {
 } from './shared/types';
 
 export interface IAppRepository {
-	findOneById(params: RepositoryFindMethodOptions): Promise<App | null>;
+	findOne(params: RepositoryFindMethodOptions): Promise<App | null>;
 	count(params: RepositoryCountMethodOptions): Promise<number>;
 	create(values: Record<string, unknown>, params?: RepositoryCreateMethodOptions): Promise<App>;
 }

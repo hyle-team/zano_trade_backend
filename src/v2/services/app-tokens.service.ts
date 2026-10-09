@@ -131,7 +131,7 @@ class AppTokensService {
 			return { success: false, data: CreateAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const app = await this.appRepository.findOneById({
+		const app = await this.appRepository.findOne({
 			where: { id: appId, user_id: userRow.id },
 		});
 
@@ -188,7 +188,7 @@ class AppTokensService {
 			return { success: false, data: RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const app = await this.appRepository.findOneById({
+		const app = await this.appRepository.findOne({
 			where: { id: appId, user_id: userRow.id },
 		});
 
@@ -237,7 +237,7 @@ class AppTokensService {
 			return { success: false, data: GetAppTokenServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const app = await this.appRepository.findOneById({
+		const app = await this.appRepository.findOne({
 			where: { id: appId, user_id: userRow.id },
 		});
 

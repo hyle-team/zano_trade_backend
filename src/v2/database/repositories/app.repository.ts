@@ -15,7 +15,7 @@ export class AppRepository implements IAppRepository {
 			userId: appRow.user_id,
 		});
 
-	findOneById = async (params: RepositoryFindMethodOptions): Promise<App | null> => {
+	findOne = async (params: RepositoryFindMethodOptions): Promise<App | null> => {
 		const appRow = await AppSequelize.findOne(params);
 
 		if (appRow === null) {

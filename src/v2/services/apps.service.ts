@@ -108,7 +108,7 @@ class AppsService {
 			return { success: false, data: GetAppServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const app = await this.appRepository.findOneById({
+		const app = await this.appRepository.findOne({
 			where: { id: appId, user_id: userRow.id },
 		});
 
