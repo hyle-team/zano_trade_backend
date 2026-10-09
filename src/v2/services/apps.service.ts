@@ -2,6 +2,8 @@ import { UniqueConstraintError } from 'sequelize';
 
 import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
 import { appRepository } from '@/v2/database/repositories/app.repository';
+import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories/app-token.repository';
+import { appTokenRepository } from '@/v2/database/repositories/app-token.repository';
 import sequelize from '@/sequelize.js';
 import { AppTokenSequelize } from '@/v2/database/schemes/app-token.scheme';
 import userModel from '@/models/User.js';
@@ -33,6 +35,8 @@ import {
 
 class AppsService {
 	private readonly appRepository: IAppRepository = appRepository;
+
+	private readonly appTokenRepository: IAppTokenRepository = appTokenRepository;
 
 	private readonly APPS_PER_USER_LIMIT = 1;
 
@@ -102,14 +106,14 @@ class AppsService {
 			return { success: false, data: GetAppServiceErrorCode.APP_NOT_FOUND };
 		}
 
-		const tokenRow = await AppTokenSequelize.findOne({ where: { app_id: app.id } });
+		const appToken = await this.appTokenRepository.findOne({ where: { app_id: app.id } });
 
 		return {
 			success: true,
 			data: {
 				id: app.id,
 				name: app.name,
-				apiKey: tokenRow ? { issuedAt: tokenRow.issued_at } : null,
+				apiKey: appToken ? { issuedAt: appToken.issuedAt } : null,
 			},
 		};
 	};

@@ -26,11 +26,15 @@ import { CreateAppTokenRowServiceRes } from '@/v2/services/types/responses/app-t
 import { CreateAppTokenRowServiceParams } from '@/v2/services/types/params/app-tokens/create-app-token-row.params';
 import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
 import { appRepository } from '@/v2/database/repositories/app.repository';
+import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories/app-token.repository';
+import { appTokenRepository } from '@/v2/database/repositories/app-token.repository';
 
 class AppTokensService {
 	private readonly VALUE_BYTES_LENGTH = 32;
 
 	private readonly appRepository: IAppRepository = appRepository;
+
+	private readonly appTokenRepository: IAppTokenRepository = appTokenRepository;
 
 	private generateValue = (): string =>
 		crypto.randomBytes(this.VALUE_BYTES_LENGTH).toString('base64');
@@ -75,27 +79,27 @@ class AppTokensService {
 	}: {
 		appId: number;
 	}): Promise<GetDecryptedAppTokenRowByAppIdServiceRes> => {
-		const appTokenRow = await AppTokenSequelize.findOne({
+		const appToken = await this.appTokenRepository.findOne({
 			where: {
 				app_id: appId,
 			},
 		});
 
-		if (!appTokenRow) {
+		if (!appToken) {
 			return null;
 		}
 
-		const valueEncrypted = appTokenRow.value;
+		const valueEncrypted = appToken.value;
 
 		const valueDecrypted = this.decryptAppTokenFromStorage({
 			valueEncrypted,
 		});
 
 		return {
-			id: appTokenRow.id,
-			appId: appTokenRow.app_id,
+			id: appToken.id,
+			appId: appToken.appId,
 			value: valueDecrypted,
-			issuedAt: appTokenRow.issued_at,
+			issuedAt: appToken.issuedAt,
 		};
 	};
 
