@@ -11,7 +11,7 @@ import {
 	RepositoryUpdateMethodOptions,
 } from '@/v2/services/types/interfaces/repositories/shared/types';
 import { AppSequelize } from '@/v2/database/schemes/app.scheme';
-import AppToken from '@/schemes/AppToken.js';
+import { AppTokenSequelize } from '@/v2/database/schemes/app-token.scheme';
 import sequelize from '@/sequelize.js';
 
 export interface AppWithApiKeyCount {
@@ -66,7 +66,7 @@ export class AppRepository implements IAppRepository {
 				'name',
 				[sequelize.fn('COUNT', sequelize.col('AppToken.id')), 'api_key_count'],
 			],
-			include: [{ model: AppToken, attributes: [] }],
+			include: [{ model: AppTokenSequelize, attributes: [] }],
 			group: ['App.id'],
 			order: [['id', 'ASC']],
 			raw: true,

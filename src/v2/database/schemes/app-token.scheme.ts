@@ -1,9 +1,9 @@
 import { Model, DataTypes } from 'sequelize';
 
 import sequelize from '@/sequelize';
-import AppSequelize from '@/v2/database/schemes/app.scheme';
+import { AppSequelize } from '@/v2/database/schemes/app.scheme';
 
-class AppToken extends Model {
+export class AppTokenSequelize extends Model {
 	declare readonly id: number;
 
 	declare app_id: number;
@@ -13,7 +13,7 @@ class AppToken extends Model {
 	declare issued_at: Date;
 }
 
-AppToken.init(
+AppTokenSequelize.init(
 	{
 		id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 		app_id: {
@@ -38,12 +38,10 @@ AppToken.init(
 	},
 );
 
-AppToken.belongsTo(AppSequelize, {
+AppTokenSequelize.belongsTo(AppSequelize, {
 	foreignKey: 'app_id',
 });
 
-AppSequelize.hasOne(AppToken, {
+AppSequelize.hasOne(AppTokenSequelize, {
 	foreignKey: 'app_id',
 });
-
-export default AppToken;

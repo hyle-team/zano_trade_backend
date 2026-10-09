@@ -3,7 +3,7 @@ import { UniqueConstraintError } from 'sequelize';
 import CryptoJS from 'crypto-js';
 
 import settingsModel from '@/models/Settings.js';
-import AppToken from '@/schemes/AppToken.js';
+import { AppTokenSequelize } from '@/v2/database/schemes/app-token.scheme';
 import userModel from '@/models/User.js';
 import { asymmetricEncryptionHelper } from '@/helpers/AsymmetricEncryption.helper.js';
 import { CreateAppTokenServiceParams } from '@/v2/services/types/params/app-tokens/create-app-token.params.js';
@@ -75,7 +75,7 @@ class AppTokensService {
 	}: {
 		appId: number;
 	}): Promise<GetDecryptedAppTokenRowByAppIdServiceRes> => {
-		const appTokenRow = await AppToken.findOne({
+		const appTokenRow = await AppTokenSequelize.findOne({
 			where: {
 				app_id: appId,
 			},
@@ -108,7 +108,7 @@ class AppTokensService {
 			plainValue,
 		});
 
-		await AppToken.create({
+		await AppTokenSequelize.create({
 			app_id: appId,
 			value: valueEncrypted,
 			issued_at: issuedAt,
@@ -207,7 +207,7 @@ class AppTokensService {
 			publicKeyHex,
 		});
 
-		const [affectedRowsCount] = await AppToken.update(
+		const [affectedRowsCount] = await AppTokenSequelize.update(
 			{ value, issued_at: issuedAt },
 			{ where: { app_id: app.id } },
 		);
