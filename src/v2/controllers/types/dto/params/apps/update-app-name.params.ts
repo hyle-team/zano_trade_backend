@@ -3,20 +3,20 @@ import { body } from 'express-validator';
 
 import UserData from '@/interfaces/common/UserData';
 
-export type UpdateAppNameRequestQueryParams = {
+export type UpdateAppNameQueryParamsDTO = {
 	appId: string;
 };
 
-export const updateAppNameRequestQueryParamsValidator = [
+export const updateAppNameQueryParamsDTOValidator = [
 	param('appId').isInt({ min: 1 }).withMessage('appId must be a positive integer'),
 ];
 
-export type UpdateAppNameRequestBody = {
+export type UpdateAppNameBodyDTO = {
 	userData: UserData;
 	name: string;
 };
 
-export const updateAppNameRequestBodyValidator = [
+export const updateAppNameBodyDTOValidator = [
 	body('name')
 		.isString()
 		.withMessage('name must be a string')

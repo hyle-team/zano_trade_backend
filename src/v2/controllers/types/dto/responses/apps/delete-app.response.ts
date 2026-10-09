@@ -1,19 +1,19 @@
-export type DeleteAppResAppData = {
+export type DeleteAppDTOAppData = {
 	id: number;
 };
 
-export type DeleteAppSuccessRes = {
+export type DeleteAppSuccessDTO = {
 	success: true;
-	data: DeleteAppResAppData;
+	data: DeleteAppDTOAppData;
 };
 
 export enum DeleteAppErrorCode {
 	APP_NOT_FOUND = 'App not found',
 }
 
-export type DeleteAppErrorRes = {
+export type DeleteAppErrorDTO = {
 	success: false;
 	data: DeleteAppErrorCode;
 };
 
-export type DeleteAppRes = DeleteAppSuccessRes | DeleteAppErrorRes;
+export type DeleteAppDTO = DeleteAppSuccessDTO | DeleteAppErrorDTO;

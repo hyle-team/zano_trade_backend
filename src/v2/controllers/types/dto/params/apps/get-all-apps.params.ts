@@ -1,5 +1,5 @@
 import UserData from '@/interfaces/common/UserData';
 
-export type GetAllAppsRequestBody = {
+export type GetAllAppsBodyDTO = {
 	userData: UserData;
 };

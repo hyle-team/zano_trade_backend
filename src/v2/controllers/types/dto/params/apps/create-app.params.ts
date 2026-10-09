@@ -2,12 +2,12 @@ import { body } from 'express-validator';
 
 import UserData from '@/interfaces/common/UserData';
 
-export type CreateAppRequestBody = {
+export type CreateAppBodyDTO = {
 	userData: UserData;
 	name: string;
 };
 
-export const createAppRequestBodyValidator = [
+export const createAppBodyDTOValidator = [
 	body('name')
 		.isString()
 		.withMessage('name must be a string')

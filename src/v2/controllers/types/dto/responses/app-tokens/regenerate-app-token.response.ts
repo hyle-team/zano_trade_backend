@@ -1,12 +1,12 @@
-export type RegenerateAppTokenResApiKeyData = {
+export type RegenerateAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
 };
 
-export type RegenerateAppTokenSuccessRes = {
+export type RegenerateAppTokenSuccessDTO = {
 	success: true;
-	data: RegenerateAppTokenResApiKeyData;
+	data: RegenerateAppTokenDTOApiKeyData;
 };
 
 export enum RegenerateAppTokenErrorCode {
@@ -14,9 +14,9 @@ export enum RegenerateAppTokenErrorCode {
 	API_KEY_NOT_FOUND = 'Api key not found',
 }
 
-export type RegenerateAppTokenErrorRes = {
+export type RegenerateAppTokenErrorDTO = {
 	success: false;
 	data: RegenerateAppTokenErrorCode;
 };
 
-export type RegenerateAppTokenRes = RegenerateAppTokenSuccessRes | RegenerateAppTokenErrorRes;
+export type RegenerateAppTokenDTO = RegenerateAppTokenSuccessDTO | RegenerateAppTokenErrorDTO;

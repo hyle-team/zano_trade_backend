@@ -1,21 +1,21 @@
-export type GetAppResAppData = {
+export type GetAppDTOAppData = {
 	id: number;
 	name: string;
 	apiKeyExists: boolean;
 };
 
-export type GetAppSuccessRes = {
+export type GetAppSuccessDTO = {
 	success: true;
-	data: GetAppResAppData;
+	data: GetAppDTOAppData;
 };
 
 export enum GetAppErrorCode {
 	APP_NOT_FOUND = 'App not found',
 }
 
-export type GetAppErrorRes = {
+export type GetAppErrorDTO = {
 	success: false;
 	data: GetAppErrorCode;
 };
 
-export type GetAppRes = GetAppSuccessRes | GetAppErrorRes;
+export type GetAppDTO = GetAppSuccessDTO | GetAppErrorDTO;

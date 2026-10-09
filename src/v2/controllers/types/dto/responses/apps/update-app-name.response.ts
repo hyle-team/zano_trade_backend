@@ -1,11 +1,11 @@
-export type UpdateAppNameResAppData = {
+export type UpdateAppNameDTOAppData = {
 	id: number;
 	name: string;
 };
 
-export type UpdateAppNameSuccessRes = {
+export type UpdateAppNameSuccessDTO = {
 	success: true;
-	data: UpdateAppNameResAppData;
+	data: UpdateAppNameDTOAppData;
 };
 
 export enum UpdateAppNameErrorCode {
@@ -13,9 +13,9 @@ export enum UpdateAppNameErrorCode {
 	NAME_TAKEN = 'Name taken',
 }
 
-export type UpdateAppNameErrorRes = {
+export type UpdateAppNameErrorDTO = {
 	success: false;
 	data: UpdateAppNameErrorCode;
 };
 
-export type UpdateAppNameRes = UpdateAppNameSuccessRes | UpdateAppNameErrorRes;
+export type UpdateAppNameDTO = UpdateAppNameSuccessDTO | UpdateAppNameErrorDTO;

@@ -1,11 +1,11 @@
-export type CreateAppResAppData = {
+export type CreateAppDTOAppData = {
 	id: number;
 	name: string;
 };
 
-export type CreateAppSuccessRes = {
+export type CreateAppSuccessDTO = {
 	success: true;
-	data: CreateAppResAppData;
+	data: CreateAppDTOAppData;
 };
 
 export enum CreateAppErrorCode {
@@ -13,9 +13,9 @@ export enum CreateAppErrorCode {
 	APP_LIMIT_REACHED = 'App limit reached',
 }
 
-export type CreateAppErrorRes = {
+export type CreateAppErrorDTO = {
 	success: false;
 	data: CreateAppErrorCode;
 };
 
-export type CreateAppRes = CreateAppSuccessRes | CreateAppErrorRes;
+export type CreateAppDTO = CreateAppSuccessDTO | CreateAppErrorDTO;

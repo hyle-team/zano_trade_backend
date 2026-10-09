@@ -8,7 +8,7 @@ import { Services } from '@/v2/services/types';
 class AppsController {
 	private createSuccessResponseMapper = (
 		createAppServiceResAppData: Services.Responses.CreateAppServiceResAppData,
-	): Controllers.Responses.CreateAppResAppData => {
+	): Controllers.Responses.CreateAppDTOAppData => {
 		const param = createAppServiceResAppData;
 
 		return {
@@ -17,8 +17,8 @@ class AppsController {
 		};
 	};
 
-	create = async (req: Request, res: Response<Controllers.Responses.CreateAppRes>) => {
-		const body = req.body as Controllers.Params.CreateAppRequestBody;
+	create = async (req: Request, res: Response<Controllers.Responses.CreateAppDTO>) => {
+		const body = req.body as Controllers.Params.CreateAppBodyDTO;
 		const { name, userData } = body;
 
 		const result = await appsService.create({ name, address: userData.address });
@@ -61,7 +61,7 @@ class AppsController {
 
 	private getAllSuccessResponseMapper = (
 		getAllAppsServiceResAppData: Services.Responses.GetAllAppsServiceResAppData[],
-	): Controllers.Responses.GetAllAppsResAppData[] => {
+	): Controllers.Responses.GetAllAppsDTOAppData[] => {
 		const param = getAllAppsServiceResAppData;
 
 		return param.map((appData) => ({
@@ -71,8 +71,8 @@ class AppsController {
 		}));
 	};
 
-	getAll = async (req: Request, res: Response<Controllers.Responses.GetAllAppsRes>) => {
-		const body = req.body as Controllers.Params.GetAllAppsRequestBody;
+	getAll = async (req: Request, res: Response<Controllers.Responses.GetAllAppsDTO>) => {
+		const body = req.body as Controllers.Params.GetAllAppsBodyDTO;
 		const { userData } = body;
 
 		const result = await appsService.getAll({ address: userData.address });
@@ -98,7 +98,7 @@ class AppsController {
 
 	private getOneSuccessResponseMapper = (
 		getAppServiceResAppData: Services.Responses.GetAppServiceResAppData,
-	): Controllers.Responses.GetAppResAppData => {
+	): Controllers.Responses.GetAppDTOAppData => {
 		const param = getAppServiceResAppData;
 
 		return {
@@ -108,9 +108,9 @@ class AppsController {
 		};
 	};
 
-	getOne = async (req: Request, res: Response<Controllers.Responses.GetAppRes>) => {
-		const body = req.body as Controllers.Params.GetAppRequestBody;
-		const params = req.params as unknown as Controllers.Params.GetAppRequestQueryParams;
+	getOne = async (req: Request, res: Response<Controllers.Responses.GetAppDTO>) => {
+		const body = req.body as Controllers.Params.GetAppBodyDTO;
+		const params = req.params as unknown as Controllers.Params.GetAppQueryParamsDTO;
 
 		const { userData } = body;
 
@@ -150,7 +150,7 @@ class AppsController {
 
 	private updateNameSuccessResponseMapper = (
 		updateAppNameServiceResAppData: Services.Responses.UpdateAppNameServiceResAppData,
-	): Controllers.Responses.UpdateAppNameResAppData => {
+	): Controllers.Responses.UpdateAppNameDTOAppData => {
 		const param = updateAppNameServiceResAppData;
 
 		return {
@@ -159,9 +159,9 @@ class AppsController {
 		};
 	};
 
-	updateName = async (req: Request, res: Response<Controllers.Responses.UpdateAppNameRes>) => {
-		const body = req.body as Controllers.Params.UpdateAppNameRequestBody;
-		const params = req.params as unknown as Controllers.Params.UpdateAppNameRequestQueryParams;
+	updateName = async (req: Request, res: Response<Controllers.Responses.UpdateAppNameDTO>) => {
+		const body = req.body as Controllers.Params.UpdateAppNameBodyDTO;
+		const params = req.params as unknown as Controllers.Params.UpdateAppNameQueryParamsDTO;
 
 		const { name, userData } = body;
 
@@ -209,7 +209,7 @@ class AppsController {
 
 	private deleteSuccessResponseMapper = (
 		deleteAppServiceResAppData: Services.Responses.DeleteAppServiceResAppData,
-	): Controllers.Responses.DeleteAppResAppData => {
+	): Controllers.Responses.DeleteAppDTOAppData => {
 		const param = deleteAppServiceResAppData;
 
 		return {
@@ -217,9 +217,9 @@ class AppsController {
 		};
 	};
 
-	delete = async (req: Request, res: Response<Controllers.Responses.DeleteAppRes>) => {
-		const body = req.body as Controllers.Params.DeleteAppRequestBody;
-		const params = req.params as unknown as Controllers.Params.DeleteAppRequestQueryParams;
+	delete = async (req: Request, res: Response<Controllers.Responses.DeleteAppDTO>) => {
+		const body = req.body as Controllers.Params.DeleteAppBodyDTO;
+		const params = req.params as unknown as Controllers.Params.DeleteAppQueryParamsDTO;
 
 		const { userData } = body;
 
@@ -259,7 +259,7 @@ class AppsController {
 
 	private createApiKeySuccessResponseMapper = (
 		createAppTokenServiceResApiKeyData: Services.Responses.CreateAppTokenServiceResApiKeyData,
-	): Controllers.Responses.CreateAppTokenResApiKeyData => {
+	): Controllers.Responses.CreateAppTokenDTOApiKeyData => {
 		const param = createAppTokenServiceResApiKeyData;
 
 		return {
@@ -269,9 +269,9 @@ class AppsController {
 		};
 	};
 
-	createApiKey = async (req: Request, res: Response<Controllers.Responses.CreateAppTokenRes>) => {
-		const body = req.body as Controllers.Params.CreateAppTokenRequestBody;
-		const params = req.params as unknown as Controllers.Params.CreateAppTokenRequestQueryParams;
+	createApiKey = async (req: Request, res: Response<Controllers.Responses.CreateAppTokenDTO>) => {
+		const body = req.body as Controllers.Params.CreateAppTokenBodyDTO;
+		const params = req.params as unknown as Controllers.Params.CreateAppTokenQueryParamsDTO;
 
 		const { userData, publicKeyHex } = body;
 
@@ -319,7 +319,7 @@ class AppsController {
 
 	private regenerateApiKeySuccessResponseMapper = (
 		regenerateAppTokenServiceResApiKeyData: Services.Responses.RegenerateAppTokenServiceResApiKeyData,
-	): Controllers.Responses.RegenerateAppTokenResApiKeyData => {
+	): Controllers.Responses.RegenerateAppTokenDTOApiKeyData => {
 		const param = regenerateAppTokenServiceResApiKeyData;
 
 		return {
@@ -331,11 +331,10 @@ class AppsController {
 
 	regenerateApiKey = async (
 		req: Request,
-		res: Response<Controllers.Responses.RegenerateAppTokenRes>,
+		res: Response<Controllers.Responses.RegenerateAppTokenDTO>,
 	) => {
-		const body = req.body as Controllers.Params.RegenerateAppTokenRequestBody;
-		const params =
-			req.params as unknown as Controllers.Params.RegenerateAppTokenRequestQueryParams;
+		const body = req.body as Controllers.Params.RegenerateAppTokenBodyDTO;
+		const params = req.params as unknown as Controllers.Params.RegenerateAppTokenQueryParamsDTO;
 
 		const { userData, publicKeyHex } = body;
 
@@ -383,7 +382,7 @@ class AppsController {
 
 	private getApiKeySuccessResponseMapper = (
 		getAppTokenServiceResApiKeyData: Services.Responses.GetAppTokenServiceResApiKeyData,
-	): Controllers.Responses.GetAppTokenResApiKeyData => {
+	): Controllers.Responses.GetAppTokenDTOApiKeyData => {
 		const param = getAppTokenServiceResApiKeyData;
 
 		return {
@@ -393,9 +392,9 @@ class AppsController {
 		};
 	};
 
-	getApiKey = async (req: Request, res: Response<Controllers.Responses.GetAppTokenRes>) => {
-		const body = req.body as Controllers.Params.GetAppTokenRequestBody;
-		const { appId } = req.params as unknown as Controllers.Params.GetAppTokenRequestQueryParams;
+	getApiKey = async (req: Request, res: Response<Controllers.Responses.GetAppTokenDTO>) => {
+		const body = req.body as Controllers.Params.GetAppTokenBodyDTO;
+		const { appId } = req.params as unknown as Controllers.Params.GetAppTokenQueryParamsDTO;
 
 		const { userData, publicKeyHex } = body;
 

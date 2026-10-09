@@ -1,19 +1,19 @@
-export type GetAllAppsResAppData = {
+export type GetAllAppsDTOAppData = {
 	id: number;
 	name: string;
 	apiKeyExists: boolean;
 };
 
-export type GetAllAppsSuccessRes = {
+export type GetAllAppsSuccessDTO = {
 	success: true;
-	data: GetAllAppsResAppData[];
+	data: GetAllAppsDTOAppData[];
 };
 
 export enum GetAllAppsErrorCode {}
 
-export type GetAllAppsErrorRes = {
+export type GetAllAppsErrorDTO = {
 	success: false;
 	data: GetAllAppsErrorCode;
 };
 
-export type GetAllAppsRes = GetAllAppsSuccessRes | GetAllAppsErrorRes;
+export type GetAllAppsDTO = GetAllAppsSuccessDTO | GetAllAppsErrorDTO;

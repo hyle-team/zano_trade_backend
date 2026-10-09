@@ -3,20 +3,20 @@ import { body } from 'express-validator';
 
 import UserData from '@/interfaces/common/UserData';
 
-export type CreateAppTokenRequestQueryParams = {
+export type CreateAppTokenQueryParamsDTO = {
 	appId: string;
 };
 
-export const createAppTokenRequestQueryParamsValidator = [
+export const createAppTokenQueryParamsDTOValidator = [
 	param('appId').isInt({ min: 1 }).withMessage('appId must be a positive integer'),
 ];
 
-export type CreateAppTokenRequestBody = {
+export type CreateAppTokenBodyDTO = {
 	userData: UserData;
 	publicKeyHex: string;
 };
 
-export const createAppTokenRequestBodyValidator = [
+export const createAppTokenBodyDTOValidator = [
 	body('publicKeyHex')
 		.isString()
 		.withMessage('publicKeyHex must be a string')

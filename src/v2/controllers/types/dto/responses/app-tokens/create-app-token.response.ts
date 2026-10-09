@@ -1,12 +1,12 @@
-export type CreateAppTokenResApiKeyData = {
+export type CreateAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
 };
 
-export type CreateAppTokenSuccessRes = {
+export type CreateAppTokenSuccessDTO = {
 	success: true;
-	data: CreateAppTokenResApiKeyData;
+	data: CreateAppTokenDTOApiKeyData;
 };
 
 export enum CreateAppTokenErrorCode {
@@ -14,9 +14,9 @@ export enum CreateAppTokenErrorCode {
 	API_KEY_ALREADY_EXISTS = 'Api key already exists',
 }
 
-export type CreateAppTokenErrorRes = {
+export type CreateAppTokenErrorDTO = {
 	success: false;
 	data: CreateAppTokenErrorCode;
 };
 
-export type CreateAppTokenRes = CreateAppTokenSuccessRes | CreateAppTokenErrorRes;
+export type CreateAppTokenDTO = CreateAppTokenSuccessDTO | CreateAppTokenErrorDTO;

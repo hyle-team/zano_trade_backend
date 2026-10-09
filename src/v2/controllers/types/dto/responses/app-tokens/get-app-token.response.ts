@@ -1,12 +1,12 @@
-export type GetAppTokenResApiKeyData = {
+export type GetAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
 };
 
-export type GetAppTokenSuccessRes = {
+export type GetAppTokenSuccessDTO = {
 	success: true;
-	data: GetAppTokenResApiKeyData;
+	data: GetAppTokenDTOApiKeyData;
 };
 
 export enum GetAppTokenErrorCode {
@@ -14,9 +14,9 @@ export enum GetAppTokenErrorCode {
 	API_KEY_NOT_FOUND = 'Api key not found',
 }
 
-export type GetAppTokenErrorRes = {
+export type GetAppTokenErrorDTO = {
 	success: false;
 	data: GetAppTokenErrorCode;
 };
 
-export type GetAppTokenRes = GetAppTokenSuccessRes | GetAppTokenErrorRes;
+export type GetAppTokenDTO = GetAppTokenSuccessDTO | GetAppTokenErrorDTO;
