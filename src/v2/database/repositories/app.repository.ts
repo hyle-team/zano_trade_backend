@@ -6,6 +6,7 @@ import {
 import {
 	RepositoryCountMethodOptions,
 	RepositoryCreateMethodOptions,
+	RepositoryDeleteMethodOptions,
 	RepositoryFindMethodOptions,
 	RepositoryUpdateMethodOptions,
 } from '@/v2/services/types/interfaces/repositories/shared/types';
@@ -83,6 +84,11 @@ export class AppRepository implements IAppRepository {
 	): Promise<number> => {
 		const [affectedRowsCount] = await AppSequelize.update(values, params);
 		return affectedRowsCount;
+	};
+
+	delete = async (params: RepositoryDeleteMethodOptions): Promise<number> => {
+		const deletedRowsCount = await AppSequelize.destroy(params);
+		return deletedRowsCount;
 	};
 }
 

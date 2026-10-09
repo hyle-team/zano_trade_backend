@@ -3,7 +3,6 @@ import { UniqueConstraintError } from 'sequelize';
 import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
 import { appRepository } from '@/v2/database/repositories/app.repository';
 import sequelize from '@/sequelize.js';
-import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
 import { CreateAppServiceParams } from '@/v2/services/types/params/apps/create-app.params.js';
@@ -154,17 +153,17 @@ class AppsService {
 		}
 
 		return sequelize.transaction(async (transaction) => {
-			const appRow = await App.findOne({
+			const app = await this.appRepository.findOne({
 				where: { id: appId, user_id: userRow.id },
 				transaction,
 			});
 
-			if (!appRow) {
+			if (!app) {
 				return { success: false, data: DeleteAppServiceErrorCode.APP_NOT_FOUND };
 			}
 
-			await AppToken.destroy({ where: { app_id: appRow.id }, transaction });
-			await appRow.destroy({ transaction });
+			await AppToken.destroy({ where: { app_id: app.id }, transaction });
+			await this.appRepository.delete({ where: { id: app.id }, transaction });
 
 			return { success: true, data: { id: appId } };
 		});

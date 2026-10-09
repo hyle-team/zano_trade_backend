@@ -2,6 +2,7 @@ import { App } from '@/v2/entities/app.entity';
 import {
 	RepositoryCountMethodOptions,
 	RepositoryCreateMethodOptions,
+	RepositoryDeleteMethodOptions,
 	RepositoryFindMethodOptions,
 	RepositoryUpdateMethodOptions,
 } from './shared/types';
@@ -17,4 +18,5 @@ export interface IAppRepository {
 	create(values: Record<string, unknown>, params?: RepositoryCreateMethodOptions): Promise<App>;
 	findAllWithApiKeyCount(params: { userId: number }): Promise<AppWithApiKeyCountEntry[]>;
 	update(values: Record<string, unknown>, params: RepositoryUpdateMethodOptions): Promise<number>;
+	delete(params: RepositoryDeleteMethodOptions): Promise<number>;
 }
