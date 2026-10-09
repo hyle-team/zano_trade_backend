@@ -1,7 +1,7 @@
 import { Model, DataTypes } from 'sequelize';
 
 import sequelize from '@/sequelize';
-import AppSequelize from '../v2/database/schemes/App';
+import AppSequelize from '@/v2/database/schemes/app.scheme';
 
 class AppToken extends Model {
 	declare readonly id: number;

@@ -1,7 +1,7 @@
 import { Model, DataTypes } from 'sequelize';
 
 import sequelize from '@/sequelize';
-import User from '../../../schemes/User';
+import User from '@/schemes/User';
 
 export const APPS_USER_ID_NAME_UNIQUE_CONSTRAINT = 'apps_user_id_name_unique';
 

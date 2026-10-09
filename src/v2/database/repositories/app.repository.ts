@@ -10,7 +10,7 @@ import {
 	RepositoryFindMethodOptions,
 	RepositoryUpdateMethodOptions,
 } from '@/v2/services/types/interfaces/repositories/shared/types';
-import AppSequelize from '@/v2/database/schemes/App';
+import AppSequelize from '@/v2/database/schemes/app.scheme';
 import AppToken from '@/schemes/AppToken.js';
 import sequelize from '@/sequelize.js';
 

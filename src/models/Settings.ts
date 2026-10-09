@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import CryptoJS from 'crypto-js';
 
-import AppSequelize from '@/v2/database/schemes/App';
+import AppSequelize from '@/v2/database/schemes/app.scheme';
 import sequelize from '@/sequelize';
 import { Settings as SettingsScheme } from '@/schemes/Settings';
 import { AppSettings, appSettingsSchema } from '@/interfaces/common/Settings';
