@@ -1,44 +1,13 @@
 import { Request, Response } from 'express';
-import {
-	CreateAppServiceErrorCode,
-	CreateAppServiceResAppData,
-} from '@/v2/services/types/responses/apps/create-app.response.js';
-import {
-	GetAllAppsServiceErrorCode,
-	GetAllAppsServiceResAppData,
-} from '@/v2/services/types/responses/apps/get-all-apps.response.js';
-import {
-	GetAppServiceErrorCode,
-	GetAppServiceResAppData,
-} from '@/v2/services/types/responses/apps/get-app.response.js';
-import {
-	UpdateAppNameServiceErrorCode,
-	UpdateAppNameServiceResAppData,
-} from '@/v2/services/types/responses/apps/update-app-name.response.js';
-import {
-	DeleteAppServiceErrorCode,
-	DeleteAppServiceResAppData,
-} from '@/v2/services/types/responses/apps/delete-app.response.js';
-import {
-	CreateAppTokenServiceErrorCode,
-	CreateAppTokenServiceResApiKeyData,
-} from '@/v2/services/types/responses/app-tokens/create-app-token.response.js';
-import {
-	GetAppTokenServiceErrorCode,
-	GetAppTokenServiceResApiKeyData,
-} from '@/v2/services/types/responses/app-tokens/get-app-token.response.js';
-import {
-	RegenerateAppTokenServiceErrorCode,
-	RegenerateAppTokenServiceResApiKeyData,
-} from '@/v2/services/types/responses/app-tokens/regenerate-app-token.response.js';
 import { appTokensService } from '@/v2/services/app-tokens.service.js';
 import { Decimal } from 'decimal.js';
 import { appsService } from '@/v2/services/apps.service.js';
 import { Controllers } from '@/v2/controllers/types';
+import { Services } from '@/v2/services/types';
 
 class AppsController {
 	private createSuccessResponseMapper = (
-		createAppServiceResAppData: CreateAppServiceResAppData,
+		createAppServiceResAppData: Services.Responses.CreateAppServiceResAppData,
 	): Controllers.Responses.CreateAppResAppData => {
 		const param = createAppServiceResAppData;
 
@@ -58,21 +27,21 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case CreateAppServiceErrorCode.NAME_TAKEN:
+				case Services.Responses.CreateAppServiceErrorCode.NAME_TAKEN:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.CreateAppErrorCode.NAME_TAKEN,
 					});
 					return;
 
-				case CreateAppServiceErrorCode.APP_LIMIT_REACHED:
+				case Services.Responses.CreateAppServiceErrorCode.APP_LIMIT_REACHED:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.CreateAppErrorCode.APP_LIMIT_REACHED,
 					});
 					return;
 
-				case CreateAppServiceErrorCode.USER_NOT_FOUND:
+				case Services.Responses.CreateAppServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
@@ -91,7 +60,7 @@ class AppsController {
 	};
 
 	private getAllSuccessResponseMapper = (
-		getAllAppsServiceResAppData: GetAllAppsServiceResAppData[],
+		getAllAppsServiceResAppData: Services.Responses.GetAllAppsServiceResAppData[],
 	): Controllers.Responses.GetAllAppsResAppData[] => {
 		const param = getAllAppsServiceResAppData;
 
@@ -111,7 +80,7 @@ class AppsController {
 		if (!result.success) {
 			const errorCode = result.data;
 
-			if (errorCode === GetAllAppsServiceErrorCode.USER_NOT_FOUND) {
+			if (errorCode === Services.Responses.GetAllAppsServiceErrorCode.USER_NOT_FOUND) {
 				throw new Error('JWT token of non-existent user');
 			} else {
 				const unhandledErrorCode: never = errorCode;
@@ -128,7 +97,7 @@ class AppsController {
 	};
 
 	private getOneSuccessResponseMapper = (
-		getAppServiceResAppData: GetAppServiceResAppData,
+		getAppServiceResAppData: Services.Responses.GetAppServiceResAppData,
 	): Controllers.Responses.GetAppResAppData => {
 		const param = getAppServiceResAppData;
 
@@ -154,14 +123,14 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case GetAppServiceErrorCode.APP_NOT_FOUND:
+				case Services.Responses.GetAppServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.GetAppErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case GetAppServiceErrorCode.USER_NOT_FOUND:
+				case Services.Responses.GetAppServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
@@ -180,7 +149,7 @@ class AppsController {
 	};
 
 	private updateNameSuccessResponseMapper = (
-		updateAppNameServiceResAppData: UpdateAppNameServiceResAppData,
+		updateAppNameServiceResAppData: Services.Responses.UpdateAppNameServiceResAppData,
 	): Controllers.Responses.UpdateAppNameResAppData => {
 		const param = updateAppNameServiceResAppData;
 
@@ -206,21 +175,21 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case UpdateAppNameServiceErrorCode.APP_NOT_FOUND:
+				case Services.Responses.UpdateAppNameServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.UpdateAppNameErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case UpdateAppNameServiceErrorCode.NAME_TAKEN:
+				case Services.Responses.UpdateAppNameServiceErrorCode.NAME_TAKEN:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.UpdateAppNameErrorCode.NAME_TAKEN,
 					});
 					return;
 
-				case UpdateAppNameServiceErrorCode.USER_NOT_FOUND:
+				case Services.Responses.UpdateAppNameServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
@@ -239,7 +208,7 @@ class AppsController {
 	};
 
 	private deleteSuccessResponseMapper = (
-		deleteAppServiceResAppData: DeleteAppServiceResAppData,
+		deleteAppServiceResAppData: Services.Responses.DeleteAppServiceResAppData,
 	): Controllers.Responses.DeleteAppResAppData => {
 		const param = deleteAppServiceResAppData;
 
@@ -263,14 +232,14 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case DeleteAppServiceErrorCode.APP_NOT_FOUND:
+				case Services.Responses.DeleteAppServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.DeleteAppErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case DeleteAppServiceErrorCode.USER_NOT_FOUND:
+				case Services.Responses.DeleteAppServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
@@ -289,7 +258,7 @@ class AppsController {
 	};
 
 	private createApiKeySuccessResponseMapper = (
-		createAppTokenServiceResApiKeyData: CreateAppTokenServiceResApiKeyData,
+		createAppTokenServiceResApiKeyData: Services.Responses.CreateAppTokenServiceResApiKeyData,
 	): Controllers.Responses.CreateAppTokenResApiKeyData => {
 		const param = createAppTokenServiceResApiKeyData;
 
@@ -316,21 +285,21 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case CreateAppTokenServiceErrorCode.APP_NOT_FOUND:
+				case Services.Responses.CreateAppTokenServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.CreateAppTokenErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case CreateAppTokenServiceErrorCode.API_KEY_ALREADY_EXISTS:
+				case Services.Responses.CreateAppTokenServiceErrorCode.API_KEY_ALREADY_EXISTS:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.CreateAppTokenErrorCode.API_KEY_ALREADY_EXISTS,
 					});
 					return;
 
-				case CreateAppTokenServiceErrorCode.USER_NOT_FOUND:
+				case Services.Responses.CreateAppTokenServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
@@ -349,7 +318,7 @@ class AppsController {
 	};
 
 	private regenerateApiKeySuccessResponseMapper = (
-		regenerateAppTokenServiceResApiKeyData: RegenerateAppTokenServiceResApiKeyData,
+		regenerateAppTokenServiceResApiKeyData: Services.Responses.RegenerateAppTokenServiceResApiKeyData,
 	): Controllers.Responses.RegenerateAppTokenResApiKeyData => {
 		const param = regenerateAppTokenServiceResApiKeyData;
 
@@ -380,21 +349,21 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND:
+				case Services.Responses.RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.RegenerateAppTokenErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case RegenerateAppTokenServiceErrorCode.API_KEY_NOT_FOUND:
+				case Services.Responses.RegenerateAppTokenServiceErrorCode.API_KEY_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.RegenerateAppTokenErrorCode.API_KEY_NOT_FOUND,
 					});
 					return;
 
-				case RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND:
+				case Services.Responses.RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {
@@ -413,7 +382,7 @@ class AppsController {
 	};
 
 	private getApiKeySuccessResponseMapper = (
-		getAppTokenServiceResApiKeyData: GetAppTokenServiceResApiKeyData,
+		getAppTokenServiceResApiKeyData: Services.Responses.GetAppTokenServiceResApiKeyData,
 	): Controllers.Responses.GetAppTokenResApiKeyData => {
 		const param = getAppTokenServiceResApiKeyData;
 
@@ -440,21 +409,21 @@ class AppsController {
 			const errorCode = result.data;
 
 			switch (errorCode) {
-				case GetAppTokenServiceErrorCode.APP_NOT_FOUND:
+				case Services.Responses.GetAppTokenServiceErrorCode.APP_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.GetAppTokenErrorCode.APP_NOT_FOUND,
 					});
 					return;
 
-				case GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND:
+				case Services.Responses.GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND:
 					res.status(400).send({
 						success: false,
 						data: Controllers.Responses.GetAppTokenErrorCode.API_KEY_NOT_FOUND,
 					});
 					return;
 
-				case GetAppTokenServiceErrorCode.USER_NOT_FOUND:
+				case Services.Responses.GetAppTokenServiceErrorCode.USER_NOT_FOUND:
 					throw new Error('JWT token of non-existent user');
 
 				default: {

@@ -2,26 +2,12 @@ import { UniqueConstraintError } from 'sequelize';
 
 import userModel from '@/models/User.js';
 import { asymmetricEncryptionHelper } from '@/v2/helpers/asymmetric-encryption.helper.js';
-import { CreateAppTokenServiceParams } from '@/v2/services/types/params/app-tokens/create-app-token.params.js';
-import {
-	CreateAppTokenServiceRes,
-	CreateAppTokenServiceErrorCode,
-} from '@/v2/services/types/responses/app-tokens/create-app-token.response.js';
-import { GetAppTokenServiceParams } from '@/v2/services/types/params/app-tokens/get-app-token.params.js';
-import {
-	GetAppTokenServiceRes,
-	GetAppTokenServiceErrorCode,
-} from '@/v2/services/types/responses/app-tokens/get-app-token.response.js';
-import { RegenerateAppTokenServiceParams } from '@/v2/services/types/params/app-tokens/regenerate-app-token.params.js';
-import {
-	RegenerateAppTokenServiceRes,
-	RegenerateAppTokenServiceErrorCode,
-} from '@/v2/services/types/responses/app-tokens/regenerate-app-token.response.js';
 import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
 import { appRepository } from '@/v2/database/repositories/app.repository';
 import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories/app-token.repository';
 import { appTokenRepository } from '@/v2/database/repositories/app-token.repository';
 import { AppToken } from '@/v2/entities/app-token.entity';
+import { Services } from '@/v2/services/types';
 
 class AppTokensService {
 	private readonly appRepository: IAppRepository = appRepository;
@@ -32,11 +18,14 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: CreateAppTokenServiceParams): Promise<CreateAppTokenServiceRes> => {
+	}: Services.Params.CreateAppTokenServiceParams): Promise<Services.Responses.CreateAppTokenServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: CreateAppTokenServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.CreateAppTokenServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		const app = await this.appRepository.findOne({
@@ -44,7 +33,10 @@ class AppTokensService {
 		});
 
 		if (!app) {
-			return { success: false, data: CreateAppTokenServiceErrorCode.APP_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.CreateAppTokenServiceErrorCode.APP_NOT_FOUND,
+			};
 		}
 
 		const value = AppToken.generateValue();
@@ -79,7 +71,7 @@ class AppTokensService {
 			if (error instanceof UniqueConstraintError) {
 				return {
 					success: false,
-					data: CreateAppTokenServiceErrorCode.API_KEY_ALREADY_EXISTS,
+					data: Services.Responses.CreateAppTokenServiceErrorCode.API_KEY_ALREADY_EXISTS,
 				};
 			}
 
@@ -91,11 +83,14 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: RegenerateAppTokenServiceParams): Promise<RegenerateAppTokenServiceRes> => {
+	}: Services.Params.RegenerateAppTokenServiceParams): Promise<Services.Responses.RegenerateAppTokenServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		const app = await this.appRepository.findOne({
@@ -103,7 +98,10 @@ class AppTokensService {
 		});
 
 		if (!app) {
-			return { success: false, data: RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND,
+			};
 		}
 
 		const value = AppToken.generateValue();
@@ -125,7 +123,10 @@ class AppTokensService {
 		);
 
 		if (affectedRowsCount === 0) {
-			return { success: false, data: RegenerateAppTokenServiceErrorCode.API_KEY_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.RegenerateAppTokenServiceErrorCode.API_KEY_NOT_FOUND,
+			};
 		}
 
 		return {
@@ -142,11 +143,14 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: GetAppTokenServiceParams): Promise<GetAppTokenServiceRes> => {
+	}: Services.Params.GetAppTokenServiceParams): Promise<Services.Responses.GetAppTokenServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: GetAppTokenServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.GetAppTokenServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		const app = await this.appRepository.findOne({
@@ -154,13 +158,19 @@ class AppTokensService {
 		});
 
 		if (!app) {
-			return { success: false, data: GetAppTokenServiceErrorCode.APP_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.GetAppTokenServiceErrorCode.APP_NOT_FOUND,
+			};
 		}
 
 		const appToken = await this.appTokenRepository.findOne({ where: { app_id: app.id } });
 
 		if (!appToken) {
-			return { success: false, data: GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND,
+			};
 		}
 
 		const {

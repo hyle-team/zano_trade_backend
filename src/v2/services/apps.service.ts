@@ -6,31 +6,7 @@ import { IAppTokenRepository } from '@/v2/services/types/interfaces/repositories
 import { appTokenRepository } from '@/v2/database/repositories/app-token.repository';
 import sequelize from '@/sequelize.js';
 import userModel from '@/models/User.js';
-import { CreateAppServiceParams } from '@/v2/services/types/params/apps/create-app.params.js';
-import {
-	CreateAppServiceRes,
-	CreateAppServiceErrorCode,
-} from '@/v2/services/types/responses/apps/create-app.response.js';
-import { GetAllAppsServiceParams } from '@/v2/services/types/params/apps/get-all-apps.params.js';
-import {
-	GetAllAppsServiceRes,
-	GetAllAppsServiceErrorCode,
-} from '@/v2/services/types/responses/apps/get-all-apps.response.js';
-import { GetAppServiceParams } from '@/v2/services/types/params/apps/get-app.params.js';
-import {
-	GetAppServiceRes,
-	GetAppServiceErrorCode,
-} from '@/v2/services/types/responses/apps/get-app.response.js';
-import { UpdateAppNameServiceParams } from '@/v2/services/types/params/apps/update-app-name.params.js';
-import {
-	UpdateAppNameServiceRes,
-	UpdateAppNameServiceErrorCode,
-} from '@/v2/services/types/responses/apps/update-app-name.response.js';
-import { DeleteAppServiceParams } from '@/v2/services/types/params/apps/delete-app.params.js';
-import {
-	DeleteAppServiceRes,
-	DeleteAppServiceErrorCode,
-} from '@/v2/services/types/responses/apps/delete-app.response.js';
+import { Services } from '@/v2/services/types';
 
 class AppsService {
 	private readonly appRepository: IAppRepository = appRepository;
@@ -39,17 +15,26 @@ class AppsService {
 
 	private readonly APPS_PER_USER_LIMIT = 1;
 
-	create = async ({ name, address }: CreateAppServiceParams): Promise<CreateAppServiceRes> => {
+	create = async ({
+		name,
+		address,
+	}: Services.Params.CreateAppServiceParams): Promise<Services.Responses.CreateAppServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: CreateAppServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.CreateAppServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		const appsCount = await this.appRepository.count({ where: { user_id: userRow.id } });
 
 		if (appsCount >= this.APPS_PER_USER_LIMIT) {
-			return { success: false, data: CreateAppServiceErrorCode.APP_LIMIT_REACHED };
+			return {
+				success: false,
+				data: Services.Responses.CreateAppServiceErrorCode.APP_LIMIT_REACHED,
+			};
 		}
 
 		try {
@@ -64,18 +49,26 @@ class AppsService {
 			};
 		} catch (error) {
 			if (error instanceof UniqueConstraintError) {
-				return { success: false, data: CreateAppServiceErrorCode.NAME_TAKEN };
+				return {
+					success: false,
+					data: Services.Responses.CreateAppServiceErrorCode.NAME_TAKEN,
+				};
 			}
 
 			throw error;
 		}
 	};
 
-	getAll = async ({ address }: GetAllAppsServiceParams): Promise<GetAllAppsServiceRes> => {
+	getAll = async ({
+		address,
+	}: Services.Params.GetAllAppsServiceParams): Promise<Services.Responses.GetAllAppsServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: GetAllAppsServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.GetAllAppsServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		const appEntries = await this.appRepository.findAllWithApiKeyCount({ userId: userRow.id });
@@ -90,11 +83,17 @@ class AppsService {
 		};
 	};
 
-	getOne = async ({ appId, address }: GetAppServiceParams): Promise<GetAppServiceRes> => {
+	getOne = async ({
+		appId,
+		address,
+	}: Services.Params.GetAppServiceParams): Promise<Services.Responses.GetAppServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: GetAppServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.GetAppServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		const app = await this.appRepository.findOne({
@@ -102,7 +101,10 @@ class AppsService {
 		});
 
 		if (!app) {
-			return { success: false, data: GetAppServiceErrorCode.APP_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.GetAppServiceErrorCode.APP_NOT_FOUND,
+			};
 		}
 
 		const appToken = await this.appTokenRepository.findOne({ where: { app_id: app.id } });
@@ -121,11 +123,14 @@ class AppsService {
 		appId,
 		address,
 		name,
-	}: UpdateAppNameServiceParams): Promise<UpdateAppNameServiceRes> => {
+	}: Services.Params.UpdateAppNameServiceParams): Promise<Services.Responses.UpdateAppNameServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: UpdateAppNameServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.UpdateAppNameServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		try {
@@ -135,24 +140,36 @@ class AppsService {
 			);
 
 			if (affectedRowsCount === 0) {
-				return { success: false, data: UpdateAppNameServiceErrorCode.APP_NOT_FOUND };
+				return {
+					success: false,
+					data: Services.Responses.UpdateAppNameServiceErrorCode.APP_NOT_FOUND,
+				};
 			}
 
 			return { success: true, data: { id: appId, name } };
 		} catch (error) {
 			if (error instanceof UniqueConstraintError) {
-				return { success: false, data: UpdateAppNameServiceErrorCode.NAME_TAKEN };
+				return {
+					success: false,
+					data: Services.Responses.UpdateAppNameServiceErrorCode.NAME_TAKEN,
+				};
 			}
 
 			throw error;
 		}
 	};
 
-	delete = async ({ appId, address }: DeleteAppServiceParams): Promise<DeleteAppServiceRes> => {
+	delete = async ({
+		appId,
+		address,
+	}: Services.Params.DeleteAppServiceParams): Promise<Services.Responses.DeleteAppServiceRes> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
-			return { success: false, data: DeleteAppServiceErrorCode.USER_NOT_FOUND };
+			return {
+				success: false,
+				data: Services.Responses.DeleteAppServiceErrorCode.USER_NOT_FOUND,
+			};
 		}
 
 		return sequelize.transaction(async (transaction) => {
@@ -162,7 +179,10 @@ class AppsService {
 			});
 
 			if (!app) {
-				return { success: false, data: DeleteAppServiceErrorCode.APP_NOT_FOUND };
+				return {
+					success: false,
+					data: Services.Responses.DeleteAppServiceErrorCode.APP_NOT_FOUND,
+				};
 			}
 
 			await this.appTokenRepository.delete({ where: { app_id: app.id }, transaction });
