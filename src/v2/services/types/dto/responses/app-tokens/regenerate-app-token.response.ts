@@ -1,25 +1,23 @@
-export enum RegenerateAppTokenServiceErrorCode {
+export enum RegenerateAppTokenErrorCode {
 	USER_NOT_FOUND = 'User not found',
 	APP_NOT_FOUND = 'App not found',
 	API_KEY_NOT_FOUND = 'Api key not found',
 }
 
-export type RegenerateAppTokenServiceResApiKeyData = {
+export type RegenerateAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
 };
 
-export type RegenerateAppTokenServiceSuccessRes = {
+export type RegenerateAppTokenSuccessDTO = {
 	success: true;
-	data: RegenerateAppTokenServiceResApiKeyData;
+	data: RegenerateAppTokenDTOApiKeyData;
 };
 
-export type RegenerateAppTokenServiceErrorRes = {
+export type RegenerateAppTokenErrorDTO = {
 	success: false;
-	data: RegenerateAppTokenServiceErrorCode;
+	data: RegenerateAppTokenErrorCode;
 };
 
-export type RegenerateAppTokenServiceRes =
-	| RegenerateAppTokenServiceSuccessRes
-	| RegenerateAppTokenServiceErrorRes;
+export type RegenerateAppTokenDTO = RegenerateAppTokenSuccessDTO | RegenerateAppTokenErrorDTO;

@@ -1,4 +1,4 @@
-export type CreateAppServiceParams = {
+export type CreateAppDTO = {
 	name: string;
 	address: string;
 };

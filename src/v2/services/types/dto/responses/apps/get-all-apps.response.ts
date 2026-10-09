@@ -1,21 +1,21 @@
-export enum GetAllAppsServiceErrorCode {
+export enum GetAllAppsErrorCode {
 	USER_NOT_FOUND = 'User not found',
 }
 
-export type GetAllAppsServiceResAppData = {
+export type GetAllAppsDTOAppData = {
 	id: number;
 	name: string;
 	apiKeyExists: boolean;
 };
 
-export type GetAllAppsServiceSuccessRes = {
+export type GetAllAppsSuccessDTO = {
 	success: true;
-	data: GetAllAppsServiceResAppData[];
+	data: GetAllAppsDTOAppData[];
 };
 
-export type GetAllAppsServiceErrorRes = {
+export type GetAllAppsErrorDTO = {
 	success: false;
-	data: GetAllAppsServiceErrorCode;
+	data: GetAllAppsErrorCode;
 };
 
-export type GetAllAppsServiceRes = GetAllAppsServiceSuccessRes | GetAllAppsServiceErrorRes;
+export type GetAllAppsDTO = GetAllAppsSuccessDTO | GetAllAppsErrorDTO;

@@ -1,25 +1,23 @@
-export enum CreateAppTokenServiceErrorCode {
+export enum CreateAppTokenErrorCode {
 	USER_NOT_FOUND = 'User not found',
 	APP_NOT_FOUND = 'App not found',
 	API_KEY_ALREADY_EXISTS = 'Api key already exists',
 }
 
-export type CreateAppTokenServiceResApiKeyData = {
+export type CreateAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
 };
 
-export type CreateAppTokenServiceSuccessRes = {
+export type CreateAppTokenSuccessDTO = {
 	success: true;
-	data: CreateAppTokenServiceResApiKeyData;
+	data: CreateAppTokenDTOApiKeyData;
 };
 
-export type CreateAppTokenServiceErrorRes = {
+export type CreateAppTokenErrorDTO = {
 	success: false;
-	data: CreateAppTokenServiceErrorCode;
+	data: CreateAppTokenErrorCode;
 };
 
-export type CreateAppTokenServiceRes =
-	| CreateAppTokenServiceSuccessRes
-	| CreateAppTokenServiceErrorRes;
+export type CreateAppTokenDTO = CreateAppTokenSuccessDTO | CreateAppTokenErrorDTO;

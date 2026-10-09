@@ -1,22 +1,22 @@
-export enum CreateAppServiceErrorCode {
+export enum CreateAppErrorCode {
 	USER_NOT_FOUND = 'User not found',
 	NAME_TAKEN = 'Name taken',
 	APP_LIMIT_REACHED = 'App limit reached',
 }
 
-export type CreateAppServiceResAppData = {
+export type CreateAppDTOAppData = {
 	id: number;
 	name: string;
 };
 
-export type CreateAppServiceSuccessRes = {
+export type CreateAppSuccessDTO = {
 	success: true;
-	data: CreateAppServiceResAppData;
+	data: CreateAppDTOAppData;
 };
 
-export type CreateAppServiceErrorRes = {
+export type CreateAppErrorDTO = {
 	success: false;
-	data: CreateAppServiceErrorCode;
+	data: CreateAppErrorCode;
 };
 
-export type CreateAppServiceRes = CreateAppServiceSuccessRes | CreateAppServiceErrorRes;
+export type CreateAppDTO = CreateAppSuccessDTO | CreateAppErrorDTO;

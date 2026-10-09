@@ -1,4 +1,4 @@
-export type GetAppServiceParams = {
+export type GetAppDTO = {
 	appId: number;
 	address: string;
 };

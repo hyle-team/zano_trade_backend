@@ -1,23 +1,23 @@
-export enum GetAppTokenServiceErrorCode {
+export enum GetAppTokenErrorCode {
 	USER_NOT_FOUND = 'User not found',
 	APP_NOT_FOUND = 'App not found',
 	API_KEY_NOT_FOUND = 'Api key not found',
 }
 
-export type GetAppTokenServiceResApiKeyData = {
+export type GetAppTokenDTOApiKeyData = {
 	valueEncryptedHex: string;
 	issuedAtEncryptedHex: string;
 	intermediateEncryptionPublicKeyHex: string;
 };
 
-export type GetAppTokenServiceSuccessRes = {
+export type GetAppTokenSuccessDTO = {
 	success: true;
-	data: GetAppTokenServiceResApiKeyData;
+	data: GetAppTokenDTOApiKeyData;
 };
 
-export type GetAppTokenServiceErrorRes = {
+export type GetAppTokenErrorDTO = {
 	success: false;
-	data: GetAppTokenServiceErrorCode;
+	data: GetAppTokenErrorCode;
 };
 
-export type GetAppTokenServiceRes = GetAppTokenServiceSuccessRes | GetAppTokenServiceErrorRes;
+export type GetAppTokenDTO = GetAppTokenSuccessDTO | GetAppTokenErrorDTO;

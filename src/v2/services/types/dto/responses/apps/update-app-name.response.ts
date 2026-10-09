@@ -1,22 +1,22 @@
-export enum UpdateAppNameServiceErrorCode {
+export enum UpdateAppNameErrorCode {
 	USER_NOT_FOUND = 'User not found',
 	APP_NOT_FOUND = 'App not found',
 	NAME_TAKEN = 'Name taken',
 }
 
-export type UpdateAppNameServiceResAppData = {
+export type UpdateAppNameDTOAppData = {
 	id: number;
 	name: string;
 };
 
-export type UpdateAppNameServiceSuccessRes = {
+export type UpdateAppNameSuccessDTO = {
 	success: true;
-	data: UpdateAppNameServiceResAppData;
+	data: UpdateAppNameDTOAppData;
 };
 
-export type UpdateAppNameServiceErrorRes = {
+export type UpdateAppNameErrorDTO = {
 	success: false;
-	data: UpdateAppNameServiceErrorCode;
+	data: UpdateAppNameErrorCode;
 };
 
-export type UpdateAppNameServiceRes = UpdateAppNameServiceSuccessRes | UpdateAppNameServiceErrorRes;
+export type UpdateAppNameDTO = UpdateAppNameSuccessDTO | UpdateAppNameErrorDTO;

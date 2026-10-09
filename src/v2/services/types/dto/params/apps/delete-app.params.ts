@@ -1,4 +1,4 @@
-export type DeleteAppServiceParams = {
+export type DeleteAppDTO = {
 	appId: number;
 	address: string;
 };

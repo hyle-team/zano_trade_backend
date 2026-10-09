@@ -1,3 +1,3 @@
-export type GetAllAppsServiceParams = {
+export type GetAllAppsDTO = {
 	address: string;
 };

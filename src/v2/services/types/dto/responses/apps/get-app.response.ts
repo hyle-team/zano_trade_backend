@@ -1,26 +1,26 @@
-export enum GetAppServiceErrorCode {
+export enum GetAppErrorCode {
 	USER_NOT_FOUND = 'User not found',
 	APP_NOT_FOUND = 'App not found',
 }
 
-export type GetAppServiceResApiKeyData = {
+export type GetAppDTOApiKeyData = {
 	issuedAt: Date;
 };
 
-export type GetAppServiceResAppData = {
+export type GetAppDTOAppData = {
 	id: number;
 	name: string;
-	apiKey: GetAppServiceResApiKeyData | null;
+	apiKey: GetAppDTOApiKeyData | null;
 };
 
-export type GetAppServiceSuccessRes = {
+export type GetAppSuccessDTO = {
 	success: true;
-	data: GetAppServiceResAppData;
+	data: GetAppDTOAppData;
 };
 
-export type GetAppServiceErrorRes = {
+export type GetAppErrorDTO = {
 	success: false;
-	data: GetAppServiceErrorCode;
+	data: GetAppErrorCode;
 };
 
-export type GetAppServiceRes = GetAppServiceSuccessRes | GetAppServiceErrorRes;
+export type GetAppDTO = GetAppSuccessDTO | GetAppErrorDTO;

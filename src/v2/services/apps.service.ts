@@ -18,13 +18,13 @@ class AppsService {
 	create = async ({
 		name,
 		address,
-	}: Services.Params.CreateAppServiceParams): Promise<Services.Responses.CreateAppServiceRes> => {
+	}: Services.Params.CreateAppDTO): Promise<Services.Responses.CreateAppDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.CreateAppServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.CreateAppErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -33,7 +33,7 @@ class AppsService {
 		if (appsCount >= this.APPS_PER_USER_LIMIT) {
 			return {
 				success: false,
-				data: Services.Responses.CreateAppServiceErrorCode.APP_LIMIT_REACHED,
+				data: Services.Responses.CreateAppErrorCode.APP_LIMIT_REACHED,
 			};
 		}
 
@@ -51,7 +51,7 @@ class AppsService {
 			if (error instanceof UniqueConstraintError) {
 				return {
 					success: false,
-					data: Services.Responses.CreateAppServiceErrorCode.NAME_TAKEN,
+					data: Services.Responses.CreateAppErrorCode.NAME_TAKEN,
 				};
 			}
 
@@ -61,13 +61,13 @@ class AppsService {
 
 	getAll = async ({
 		address,
-	}: Services.Params.GetAllAppsServiceParams): Promise<Services.Responses.GetAllAppsServiceRes> => {
+	}: Services.Params.GetAllAppsDTO): Promise<Services.Responses.GetAllAppsDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.GetAllAppsServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.GetAllAppsErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -86,13 +86,13 @@ class AppsService {
 	getOne = async ({
 		appId,
 		address,
-	}: Services.Params.GetAppServiceParams): Promise<Services.Responses.GetAppServiceRes> => {
+	}: Services.Params.GetAppDTO): Promise<Services.Responses.GetAppDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.GetAppServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.GetAppErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -103,7 +103,7 @@ class AppsService {
 		if (!app) {
 			return {
 				success: false,
-				data: Services.Responses.GetAppServiceErrorCode.APP_NOT_FOUND,
+				data: Services.Responses.GetAppErrorCode.APP_NOT_FOUND,
 			};
 		}
 
@@ -123,13 +123,13 @@ class AppsService {
 		appId,
 		address,
 		name,
-	}: Services.Params.UpdateAppNameServiceParams): Promise<Services.Responses.UpdateAppNameServiceRes> => {
+	}: Services.Params.UpdateAppNameDTO): Promise<Services.Responses.UpdateAppNameDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.UpdateAppNameServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.UpdateAppNameErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -142,7 +142,7 @@ class AppsService {
 			if (affectedRowsCount === 0) {
 				return {
 					success: false,
-					data: Services.Responses.UpdateAppNameServiceErrorCode.APP_NOT_FOUND,
+					data: Services.Responses.UpdateAppNameErrorCode.APP_NOT_FOUND,
 				};
 			}
 
@@ -151,7 +151,7 @@ class AppsService {
 			if (error instanceof UniqueConstraintError) {
 				return {
 					success: false,
-					data: Services.Responses.UpdateAppNameServiceErrorCode.NAME_TAKEN,
+					data: Services.Responses.UpdateAppNameErrorCode.NAME_TAKEN,
 				};
 			}
 
@@ -162,13 +162,13 @@ class AppsService {
 	delete = async ({
 		appId,
 		address,
-	}: Services.Params.DeleteAppServiceParams): Promise<Services.Responses.DeleteAppServiceRes> => {
+	}: Services.Params.DeleteAppDTO): Promise<Services.Responses.DeleteAppDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.DeleteAppServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.DeleteAppErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -181,7 +181,7 @@ class AppsService {
 			if (!app) {
 				return {
 					success: false,
-					data: Services.Responses.DeleteAppServiceErrorCode.APP_NOT_FOUND,
+					data: Services.Responses.DeleteAppErrorCode.APP_NOT_FOUND,
 				};
 			}
 

@@ -1,4 +1,4 @@
-export type GetAppTokenServiceParams = {
+export type GetAppTokenDTO = {
 	appId: number;
 	address: string;
 	publicKeyHex: string;

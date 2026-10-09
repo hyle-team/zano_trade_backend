@@ -18,13 +18,13 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: Services.Params.CreateAppTokenServiceParams): Promise<Services.Responses.CreateAppTokenServiceRes> => {
+	}: Services.Params.CreateAppTokenDTO): Promise<Services.Responses.CreateAppTokenDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.CreateAppTokenServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.CreateAppTokenErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -35,7 +35,7 @@ class AppTokensService {
 		if (!app) {
 			return {
 				success: false,
-				data: Services.Responses.CreateAppTokenServiceErrorCode.APP_NOT_FOUND,
+				data: Services.Responses.CreateAppTokenErrorCode.APP_NOT_FOUND,
 			};
 		}
 
@@ -71,7 +71,7 @@ class AppTokensService {
 			if (error instanceof UniqueConstraintError) {
 				return {
 					success: false,
-					data: Services.Responses.CreateAppTokenServiceErrorCode.API_KEY_ALREADY_EXISTS,
+					data: Services.Responses.CreateAppTokenErrorCode.API_KEY_ALREADY_EXISTS,
 				};
 			}
 
@@ -83,13 +83,13 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: Services.Params.RegenerateAppTokenServiceParams): Promise<Services.Responses.RegenerateAppTokenServiceRes> => {
+	}: Services.Params.RegenerateAppTokenDTO): Promise<Services.Responses.RegenerateAppTokenDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.RegenerateAppTokenServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.RegenerateAppTokenErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -100,7 +100,7 @@ class AppTokensService {
 		if (!app) {
 			return {
 				success: false,
-				data: Services.Responses.RegenerateAppTokenServiceErrorCode.APP_NOT_FOUND,
+				data: Services.Responses.RegenerateAppTokenErrorCode.APP_NOT_FOUND,
 			};
 		}
 
@@ -125,7 +125,7 @@ class AppTokensService {
 		if (affectedRowsCount === 0) {
 			return {
 				success: false,
-				data: Services.Responses.RegenerateAppTokenServiceErrorCode.API_KEY_NOT_FOUND,
+				data: Services.Responses.RegenerateAppTokenErrorCode.API_KEY_NOT_FOUND,
 			};
 		}
 
@@ -143,13 +143,13 @@ class AppTokensService {
 		appId,
 		address,
 		publicKeyHex,
-	}: Services.Params.GetAppTokenServiceParams): Promise<Services.Responses.GetAppTokenServiceRes> => {
+	}: Services.Params.GetAppTokenDTO): Promise<Services.Responses.GetAppTokenDTO> => {
 		const userRow = await userModel.getUserRow(address);
 
 		if (!userRow) {
 			return {
 				success: false,
-				data: Services.Responses.GetAppTokenServiceErrorCode.USER_NOT_FOUND,
+				data: Services.Responses.GetAppTokenErrorCode.USER_NOT_FOUND,
 			};
 		}
 
@@ -160,7 +160,7 @@ class AppTokensService {
 		if (!app) {
 			return {
 				success: false,
-				data: Services.Responses.GetAppTokenServiceErrorCode.APP_NOT_FOUND,
+				data: Services.Responses.GetAppTokenErrorCode.APP_NOT_FOUND,
 			};
 		}
 
@@ -169,7 +169,7 @@ class AppTokensService {
 		if (!appToken) {
 			return {
 				success: false,
-				data: Services.Responses.GetAppTokenServiceErrorCode.API_KEY_NOT_FOUND,
+				data: Services.Responses.GetAppTokenErrorCode.API_KEY_NOT_FOUND,
 			};
 		}
 
