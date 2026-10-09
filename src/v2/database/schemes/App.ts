@@ -1,11 +1,11 @@
 import { Model, DataTypes } from 'sequelize';
 
 import sequelize from '@/sequelize';
-import User from './User';
+import User from '../../../schemes/User';
 
 export const APPS_USER_ID_NAME_UNIQUE_CONSTRAINT = 'apps_user_id_name_unique';
 
-class App extends Model {
+class AppSequelize extends Model {
 	declare readonly id: number;
 
 	declare name: string;
@@ -17,7 +17,7 @@ class App extends Model {
 	declare readonly updatedAt: Date;
 }
 
-App.init(
+AppSequelize.init(
 	{
 		id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
 		name: {
@@ -38,12 +38,12 @@ App.init(
 	},
 );
 
-App.belongsTo(User, {
+AppSequelize.belongsTo(User, {
 	foreignKey: 'user_id',
 });
 
-User.hasMany(App, {
+User.hasMany(AppSequelize, {
 	foreignKey: 'user_id',
 });
 
-export default App;
+export default AppSequelize;

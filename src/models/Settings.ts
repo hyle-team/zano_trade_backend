@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import CryptoJS from 'crypto-js';
 
-import App from '@/schemes/App';
+import AppSequelize from '@/v2/database/schemes/App';
 import sequelize from '@/sequelize';
 import { Settings as SettingsScheme } from '@/schemes/Settings';
 import { AppSettings, appSettingsSchema } from '@/interfaces/common/Settings';
@@ -12,7 +12,7 @@ class Settings {
 		sensitiveDataEncryptionKey: '',
 	};
 
-	private readonly dependantTables = [App];
+	private readonly dependantTables = [AppSequelize];
 
 	initAndCheckSettings = async (): Promise<void> => {
 		await sequelize.query(`REVOKE DELETE ON TABLE "${SettingsScheme.tableName}" FROM PUBLIC;`);

@@ -1,7 +1,7 @@
 import { Model, DataTypes } from 'sequelize';
 
 import sequelize from '@/sequelize';
-import App from './App';
+import AppSequelize from '../v2/database/schemes/App';
 
 class AppToken extends Model {
 	declare readonly id: number;
@@ -38,11 +38,11 @@ AppToken.init(
 	},
 );
 
-AppToken.belongsTo(App, {
+AppToken.belongsTo(AppSequelize, {
 	foreignKey: 'app_id',
 });
 
-App.hasOne(AppToken, {
+AppSequelize.hasOne(AppToken, {
 	foreignKey: 'app_id',
 });
 
