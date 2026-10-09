@@ -36,9 +36,3 @@ export interface OrderWithPairAndCurrencies extends Order {
 export interface PairWithIdAndCurrencies extends PairWithCurrencies {
 	id: number;
 }
-
-export interface AppWithApiKeyCount {
-	id: number;
-	name: string;
-	api_key_count: string;
-}

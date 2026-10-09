@@ -1,11 +1,22 @@
 import { App } from '@/v2/entities/app.entity';
-import { IAppRepository } from '@/v2/services/types/interfaces/repositories/app.repository';
+import {
+	AppWithApiKeyCountEntry,
+	IAppRepository,
+} from '@/v2/services/types/interfaces/repositories/app.repository';
 import {
 	RepositoryCountMethodOptions,
 	RepositoryCreateMethodOptions,
 	RepositoryFindMethodOptions,
 } from '@/v2/services/types/interfaces/repositories/shared/types';
 import AppSequelize from '@/schemes/App';
+import AppToken from '@/schemes/AppToken.js';
+import sequelize from '@/sequelize.js';
+
+export interface AppWithApiKeyCount {
+	id: number;
+	name: string;
+	api_key_count: string;
+}
 
 export class AppRepository implements IAppRepository {
 	private mapRowToEntity = (appRow: AppSequelize): App =>
@@ -39,6 +50,30 @@ export class AppRepository implements IAppRepository {
 
 		const app = this.mapRowToEntity(appRow);
 		return app;
+	};
+
+	findAllWithApiKeyCount = async ({
+		userId,
+	}: {
+		userId: number;
+	}): Promise<AppWithApiKeyCountEntry[]> => {
+		const appRows = (await AppSequelize.findAll({
+			where: { user_id: userId },
+			attributes: [
+				'id',
+				'name',
+				[sequelize.fn('COUNT', sequelize.col('AppToken.id')), 'api_key_count'],
+			],
+			include: [{ model: AppToken, attributes: [] }],
+			group: ['App.id'],
+			order: [['id', 'ASC']],
+			raw: true,
+		})) as unknown as AppWithApiKeyCount[];
+
+		return appRows.map((appRow) => ({
+			app: new App({ id: appRow.id, name: appRow.name, userId }),
+			apiKeyCount: Number(appRow.api_key_count),
+		}));
 	};
 }
 

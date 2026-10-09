@@ -6,7 +6,6 @@ import sequelize from '@/sequelize.js';
 import App from '@/schemes/App.js';
 import AppToken from '@/schemes/AppToken.js';
 import userModel from '@/models/User.js';
-import { AppWithApiKeyCount } from '@/interfaces/database/modifiedRequests.js';
 import { CreateAppServiceParams } from '@/v2/services/types/params/apps/create-app.params.js';
 import {
 	CreateAppServiceRes,
@@ -32,7 +31,6 @@ import {
 	DeleteAppServiceRes,
 	DeleteAppServiceErrorCode,
 } from '@/v2/services/types/responses/apps/delete-app.response.js';
-import { Decimal } from 'decimal.js';
 
 class AppsService {
 	private readonly appRepository: IAppRepository = appRepository;
@@ -78,25 +76,14 @@ class AppsService {
 			return { success: false, data: GetAllAppsServiceErrorCode.USER_NOT_FOUND };
 		}
 
-		const appRows = (await App.findAll({
-			where: { user_id: userRow.id },
-			attributes: [
-				'id',
-				'name',
-				[sequelize.fn('COUNT', sequelize.col('AppToken.id')), 'api_key_count'],
-			],
-			include: [{ model: AppToken, attributes: [] }],
-			group: ['App.id'],
-			order: [['id', 'ASC']],
-			raw: true,
-		})) as unknown as AppWithApiKeyCount[];
+		const appEntries = await this.appRepository.findAllWithApiKeyCount({ userId: userRow.id });
 
 		return {
 			success: true,
-			data: appRows.map((appRow) => ({
-				id: appRow.id,
-				name: appRow.name,
-				apiKeyExists: new Decimal(appRow.api_key_count).greaterThan(0),
+			data: appEntries.map(({ app, apiKeyCount }) => ({
+				id: app.id,
+				name: app.name,
+				apiKeyExists: apiKeyCount > 0,
 			})),
 		};
 	};
