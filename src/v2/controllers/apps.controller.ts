@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { RequestHandler, Response } from 'express';
 import { Decimal } from 'decimal.js';
 
 import { appTokensService } from '@/v2/services/app-tokens.service.js';
@@ -52,9 +52,12 @@ class AppsController {
 		}
 	};
 
-	create = async (req: Request, res: Response<Controllers.Responses.CreateAppDTO>) => {
-		const body = req.body as Controllers.Params.CreateAppBodyDTO;
-		const { name, userData } = body;
+	create: RequestHandler<
+		unknown,
+		Controllers.Responses.CreateAppDTO,
+		Controllers.Params.CreateAppBodyDTO
+	> = async (req, res) => {
+		const { name, userData } = req.body;
 
 		const result = await appsService.create({ name, address: userData.address });
 
@@ -99,9 +102,12 @@ class AppsController {
 		}
 	};
 
-	getAll = async (req: Request, res: Response<Controllers.Responses.GetAllAppsDTO>) => {
-		const body = req.body as Controllers.Params.GetAllAppsBodyDTO;
-		const { userData } = body;
+	getAll: RequestHandler<
+		unknown,
+		Controllers.Responses.GetAllAppsDTO,
+		Controllers.Params.GetAllAppsBodyDTO
+	> = async (req, res) => {
+		const { userData } = req.body;
 
 		const result = await appsService.getAll({ address: userData.address });
 
@@ -157,14 +163,15 @@ class AppsController {
 		}
 	};
 
-	getOne = async (req: Request, res: Response<Controllers.Responses.GetAppDTO>) => {
-		const body = req.body as Controllers.Params.GetAppBodyDTO;
-		const params = req.params as unknown as Controllers.Params.GetAppQueryParamsDTO;
-
-		const { userData } = body;
+	getOne: RequestHandler<
+		Controllers.Params.GetAppQueryParamsDTO,
+		Controllers.Responses.GetAppDTO,
+		Controllers.Params.GetAppBodyDTO
+	> = async (req, res) => {
+		const { userData } = req.body;
 
 		const result = await appsService.getOne({
-			appId: new Decimal(params.appId).toNumber(),
+			appId: new Decimal(req.params.appId).toNumber(),
 			address: userData.address,
 		});
 
@@ -226,14 +233,15 @@ class AppsController {
 		}
 	};
 
-	updateName = async (req: Request, res: Response<Controllers.Responses.UpdateAppNameDTO>) => {
-		const body = req.body as Controllers.Params.UpdateAppNameBodyDTO;
-		const params = req.params as unknown as Controllers.Params.UpdateAppNameQueryParamsDTO;
-
-		const { name, userData } = body;
+	updateName: RequestHandler<
+		Controllers.Params.UpdateAppNameQueryParamsDTO,
+		Controllers.Responses.UpdateAppNameDTO,
+		Controllers.Params.UpdateAppNameBodyDTO
+	> = async (req, res) => {
+		const { name, userData } = req.body;
 
 		const result = await appsService.updateName({
-			appId: new Decimal(params.appId).toNumber(),
+			appId: new Decimal(req.params.appId).toNumber(),
 			address: userData.address,
 			name,
 		});
@@ -288,14 +296,15 @@ class AppsController {
 		}
 	};
 
-	delete = async (req: Request, res: Response<Controllers.Responses.DeleteAppDTO>) => {
-		const body = req.body as Controllers.Params.DeleteAppBodyDTO;
-		const params = req.params as unknown as Controllers.Params.DeleteAppQueryParamsDTO;
-
-		const { userData } = body;
+	delete: RequestHandler<
+		Controllers.Params.DeleteAppQueryParamsDTO,
+		Controllers.Responses.DeleteAppDTO,
+		Controllers.Params.DeleteAppBodyDTO
+	> = async (req, res) => {
+		const { userData } = req.body;
 
 		const result = await appsService.delete({
-			appId: new Decimal(params.appId).toNumber(),
+			appId: new Decimal(req.params.appId).toNumber(),
 			address: userData.address,
 		});
 
@@ -362,14 +371,15 @@ class AppsController {
 		}
 	};
 
-	createApiKey = async (req: Request, res: Response<Controllers.Responses.CreateAppTokenDTO>) => {
-		const body = req.body as Controllers.Params.CreateAppTokenBodyDTO;
-		const params = req.params as unknown as Controllers.Params.CreateAppTokenQueryParamsDTO;
-
-		const { userData, publicKeyHex } = body;
+	createApiKey: RequestHandler<
+		Controllers.Params.CreateAppTokenQueryParamsDTO,
+		Controllers.Responses.CreateAppTokenDTO,
+		Controllers.Params.CreateAppTokenBodyDTO
+	> = async (req, res) => {
+		const { userData, publicKeyHex } = req.body;
 
 		const result = await appTokensService.create({
-			appId: new Decimal(params.appId).toNumber(),
+			appId: new Decimal(req.params.appId).toNumber(),
 			address: userData.address,
 			publicKeyHex,
 		});
@@ -437,17 +447,15 @@ class AppsController {
 		}
 	};
 
-	regenerateApiKey = async (
-		req: Request,
-		res: Response<Controllers.Responses.RegenerateAppTokenDTO>,
-	) => {
-		const body = req.body as Controllers.Params.RegenerateAppTokenBodyDTO;
-		const params = req.params as unknown as Controllers.Params.RegenerateAppTokenQueryParamsDTO;
-
-		const { userData, publicKeyHex } = body;
+	regenerateApiKey: RequestHandler<
+		Controllers.Params.RegenerateAppTokenQueryParamsDTO,
+		Controllers.Responses.RegenerateAppTokenDTO,
+		Controllers.Params.RegenerateAppTokenBodyDTO
+	> = async (req, res) => {
+		const { userData, publicKeyHex } = req.body;
 
 		const result = await appTokensService.regenerate({
-			appId: new Decimal(params.appId).toNumber(),
+			appId: new Decimal(req.params.appId).toNumber(),
 			address: userData.address,
 			publicKeyHex,
 		});
@@ -513,11 +521,14 @@ class AppsController {
 		}
 	};
 
-	getApiKey = async (req: Request, res: Response<Controllers.Responses.GetAppTokenDTO>) => {
-		const body = req.body as Controllers.Params.GetAppTokenBodyDTO;
-		const { appId } = req.params as unknown as Controllers.Params.GetAppTokenQueryParamsDTO;
+	getApiKey: RequestHandler<
+		Controllers.Params.GetAppTokenQueryParamsDTO,
+		Controllers.Responses.GetAppTokenDTO,
+		Controllers.Params.GetAppTokenBodyDTO
+	> = async (req, res) => {
+		const { appId } = req.params;
 
-		const { userData, publicKeyHex } = body;
+		const { userData, publicKeyHex } = req.body;
 
 		const result = await appTokensService.getOne({
 			appId: new Decimal(appId).toNumber(),
