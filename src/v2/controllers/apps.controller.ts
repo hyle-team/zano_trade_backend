@@ -1,9 +1,11 @@
 import { Request, Response } from 'express';
-import { appTokensService } from '@/v2/services/app-tokens.service.js';
 import { Decimal } from 'decimal.js';
+
+import { appTokensService } from '@/v2/services/app-tokens.service.js';
 import { appsService } from '@/v2/services/apps.service.js';
 import { Controllers } from '@/v2/controllers/types';
 import { Services } from '@/v2/services/types';
+import { assertNever } from '@/v2/utils/assert-never';
 
 class AppsController {
 	private createSuccessResponseMapper = (
@@ -45,10 +47,8 @@ class AppsController {
 					throw new Error('JWT token of non-existent user');
 
 				default: {
-					const unhandledErrorCode: never = errorCode;
-					throw new Error(
-						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
-					);
+					assertNever(errorCode);
+					return;
 				}
 			}
 		}
@@ -83,10 +83,8 @@ class AppsController {
 			if (errorCode === Services.Responses.GetAllAppsErrorCode.USER_NOT_FOUND) {
 				throw new Error('JWT token of non-existent user');
 			} else {
-				const unhandledErrorCode: never = errorCode;
-				throw new Error(
-					`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
-				);
+				assertNever(errorCode);
+				return;
 			}
 		}
 
@@ -134,10 +132,8 @@ class AppsController {
 					throw new Error('JWT token of non-existent user');
 
 				default: {
-					const unhandledErrorCode: never = errorCode;
-					throw new Error(
-						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
-					);
+					assertNever(errorCode);
+					return;
 				}
 			}
 		}
@@ -193,10 +189,8 @@ class AppsController {
 					throw new Error('JWT token of non-existent user');
 
 				default: {
-					const unhandledErrorCode: never = errorCode;
-					throw new Error(
-						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
-					);
+					assertNever(errorCode);
+					return;
 				}
 			}
 		}
@@ -243,10 +237,8 @@ class AppsController {
 					throw new Error('JWT token of non-existent user');
 
 				default: {
-					const unhandledErrorCode: never = errorCode;
-					throw new Error(
-						`Unhandled apps service error: ${JSON.stringify(unhandledErrorCode)}`,
-					);
+					assertNever(errorCode);
+					return;
 				}
 			}
 		}
@@ -308,10 +300,8 @@ class AppsController {
 					throw new Error('JWT token of non-existent user');
 
 				default: {
-					const unhandledErrorCode: never = errorCode;
-					throw new Error(
-						`Unhandled app tokens service error: ${JSON.stringify(unhandledErrorCode)}`,
-					);
+					assertNever(errorCode);
+					return;
 				}
 			}
 		}
@@ -376,10 +366,8 @@ class AppsController {
 					throw new Error('JWT token of non-existent user');
 
 				default: {
-					const unhandledErrorCode: never = errorCode;
-					throw new Error(
-						`Unhandled app tokens service error: ${JSON.stringify(unhandledErrorCode)}`,
-					);
+					assertNever(errorCode);
+					return;
 				}
 			}
 		}
@@ -438,10 +426,8 @@ class AppsController {
 					throw new Error('JWT token of non-existent user');
 
 				default: {
-					const unhandledErrorCode: never = errorCode;
-					throw new Error(
-						`Unhandled app tokens service error: ${JSON.stringify(unhandledErrorCode)}`,
-					);
+					assertNever(errorCode);
+					return;
 				}
 			}
 		}
