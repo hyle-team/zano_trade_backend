@@ -31,6 +31,8 @@ const envSchema = z.object({
 
 	ZANO_EXPLORER_API_URL: z.url(),
 	ZANO_EXPLORER_INTEGRATION_KEY: z.string().min(1),
+
+	INACTIVE_USER_ORDERS_EXPIRATION_HOURS: z.coerce.number().positive().default(24),
 });
 
 const parsed = envSchema.safeParse(process.env);
