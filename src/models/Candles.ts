@@ -83,8 +83,37 @@ class CandlesModel {
 				body_second: number;
 			}
 
+			const weekOffset = 4 * 24 * 60 * 60 * 1000;
+
+			const getBucketStart = (timestamp: number) => {
+				if (period === '1m') {
+					const date = new Date(timestamp);
+					return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
+				}
+
+				if (period === '1w') {
+					return (
+						Math.floor((timestamp - weekOffset) / aggregationPeriod) *
+							aggregationPeriod +
+						weekOffset
+					);
+				}
+
+				return Math.floor(timestamp / aggregationPeriod) * aggregationPeriod;
+			};
+
+			const getNextBucketStart = (timestamp: number) => {
+				if (period === '1m') {
+					const date = new Date(timestamp);
+					return Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
+				}
+
+				return timestamp + aggregationPeriod;
+			};
+
 			const foundCandles = transactions.reduce((acc: ResultCandle[], transaction) => {
-				const currentTimestamp = parseInt(transaction.timestamp, 10);
+				const currentTimestamp = getBucketStart(parseInt(transaction.timestamp, 10));
+				const price = parseFloat(transaction.price);
 
 				const lastCadle = acc[acc.length - 1];
 
@@ -93,15 +122,15 @@ class CandlesModel {
 						{
 							pair_id: pairRow.id,
 							timestamp: currentTimestamp,
-							shadow_top: parseFloat(transaction.price),
-							shadow_bottom: parseFloat(transaction.price),
-							body_first: parseFloat(transaction.price),
-							body_second: parseFloat(transaction.price),
+							shadow_top: price,
+							shadow_bottom: price,
+							body_first: price,
+							body_second: price,
 						},
 					];
 				}
 
-				if (lastCadle.timestamp + aggregationPeriod < currentTimestamp) {
+				if (lastCadle.timestamp !== currentTimestamp) {
 					// creata new candle
 					const prevCandleEnding = lastCadle.body_second;
 					return [
@@ -109,19 +138,19 @@ class CandlesModel {
 						{
 							pair_id: pairRow.id,
 							timestamp: currentTimestamp,
-							shadow_top: parseFloat(transaction.price),
-							shadow_bottom: parseFloat(transaction.price),
+							shadow_top: Math.max(prevCandleEnding, price),
+							shadow_bottom: Math.min(prevCandleEnding, price),
 							body_first: prevCandleEnding,
-							body_second: parseFloat(transaction.price),
+							body_second: price,
 						},
 					];
 				}
 				// add to existing candle
 				const newCandle = {
 					...lastCadle,
-					shadow_top: Math.max(lastCadle.shadow_top, parseFloat(transaction.price)),
-					shadow_bottom: Math.min(lastCadle.shadow_bottom, parseFloat(transaction.price)),
-					body_second: parseFloat(transaction.price),
+					shadow_top: Math.max(lastCadle.shadow_top, price),
+					shadow_bottom: Math.min(lastCadle.shadow_bottom, price),
+					body_second: price,
 				};
 
 				acc[acc.length - 1] = newCandle;
@@ -129,11 +158,11 @@ class CandlesModel {
 				return acc;
 			}, [] as ResultCandle[]);
 
-			const endTimestamp = Date.now();
+			const endTimestamp = getBucketStart(Date.now());
 
 			const completeCandles = [];
 			let currentTimestamp =
-				foundCandles[0]?.timestamp || endTimestamp - aggregationPeriod * 10;
+				foundCandles[0]?.timestamp || getBucketStart(Date.now() - aggregationPeriod * 10);
 			let lastRealCandle = {
 				pair_id: pairRow.id,
 				timestamp: currentTimestamp,
@@ -156,13 +185,13 @@ class CandlesModel {
 						body_first: lastRealCandle.body_second,
 						body_second: lastRealCandle.body_second,
 					});
-					currentTimestamp += aggregationPeriod;
+					currentTimestamp = getNextBucketStart(currentTimestamp);
 				}
 
 				// Add the actual candle
 				completeCandles.push(candle);
 				lastRealCandle = candle; // Update last real candle to the current one
-				currentTimestamp = candle.timestamp + aggregationPeriod;
+				currentTimestamp = getNextBucketStart(candle.timestamp);
 			}
 
 			// Fill any remaining gaps up to the current time (endTimestamp) with the last known real candle's values
