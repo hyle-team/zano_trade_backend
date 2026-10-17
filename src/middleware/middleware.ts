@@ -14,6 +14,7 @@ import {
 	ValidateIntegrationKeyResult,
 } from '@/methods/validateIntegrationKey';
 import { INTEGRATION_KEY_HEADER_NAME } from 'shared/constants';
+import userActivityModel from '@/models/UserActivity';
 import UserData from '../interfaces/common/UserData';
 
 const narrowRateLimitMiddleware = rateLimit({
@@ -61,6 +62,7 @@ class Middleware {
 				algorithms: ['HS256'],
 			}) as UserData;
 			req.body.userData = userData;
+			userActivityModel.touchInBackground(userData.address);
 			next();
 		} catch {
 			res.status(401).send({ success: false, data: 'Unauthorized (JWT)' });

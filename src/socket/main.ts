@@ -4,6 +4,7 @@ import UserSocketData from '@/interfaces/special/socket-data/UserSocketData.js';
 import { PairStats } from '@/interfaces/responses/orders/GetPairStatsRes.js';
 
 import chatsModel from '../models/Chats.js';
+import userActivityModel from '../models/UserActivity.js';
 import processController from '../controllers/process.controller.js';
 import socketMiddleware, {
 	socketRateLimiterMiddleware,
@@ -87,6 +88,8 @@ function socketStart(io: Server) {
 	io.use((socket, next) => socketRateLimiterMiddleware(socket, next));
 
 	io.on('connection', (socket) => {
+		let dexNotificationsAddress: string | null = null;
+
 		socket.use((_, next) => socketRateLimiterMiddleware(socket, next));
 
 		socket.use(socketMiddleware);
@@ -106,6 +109,8 @@ function socketStart(io: Server) {
 
 		socket.on('in-dex-notifications', (data: UserSocketData) => {
 			socket.join(`dex-notifications${data.userData.address}`);
+			dexNotificationsAddress = data.userData.address;
+			userActivityModel.touchInBackground(data.userData.address, { force: true });
 		});
 
 		socket.on('out-dex-notifications', (data: UserSocketData) => {
@@ -150,6 +155,12 @@ function socketStart(io: Server) {
 				if (room.includes('chat')) {
 					socket.leave(room);
 				}
+			}
+		});
+
+		socket.on('disconnecting', () => {
+			if (dexNotificationsAddress) {
+				userActivityModel.touchInBackground(dexNotificationsAddress, { force: true });
 			}
 		});
 
