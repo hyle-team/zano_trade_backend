@@ -447,8 +447,11 @@ class OrdersController {
 
 			console.log('[DEBUG 21/10/2026]; isFull', isFull);
 
-			if (!isFull)
+			if (!isFull) {
+				console.log('[DEBUG 21/10/2026]; Endpoint is not full');
+
 				return res.status(400).send({ success: false, data: 'Invalid order data' });
+			}
 
 			await sequelize.transaction(async (transaction) => {
 				const result = await ordersModel.applyOrder(req.body, { transaction });
