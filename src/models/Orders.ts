@@ -808,8 +808,6 @@ class OrdersModel {
 			const { userData } = body;
 			const { orderData } = body;
 
-			console.log('[DEBUG 21/10/2026]; body', body);
-
 			const userRow = await userModel.getUserRow(userData.address);
 
 			if (!userRow) throw new Error('Invalid address from token.');
@@ -822,8 +820,6 @@ class OrdersModel {
 				},
 			});
 
-			console.log('[DEBUG 21/10/2026]; orderRow?.toJSON()', orderRow?.toJSON());
-
 			const applyingOrderRow = await Order.findOne({
 				where: {
 					id: orderData.id,
@@ -834,14 +830,7 @@ class OrdersModel {
 				},
 			});
 
-			console.log(
-				'[DEBUG 21/10/2026]; applyingOrderRow?.toJSON()',
-				applyingOrderRow?.toJSON(),
-			);
-
 			if (!(orderRow && applyingOrderRow)) {
-				console.log('[DEBUG 21/10/2026]; One of rows doesn`t exist');
-
 				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
@@ -863,8 +852,6 @@ class OrdersModel {
 						orderPrice.equals(applyingOrderPrice))
 				)
 			) {
-				console.log('[DEBUG 21/10/2026]; Orders do not match');
-
 				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
@@ -891,11 +878,7 @@ class OrdersModel {
 
 			const applyInvalid = txAmountLessThanMinPerApply;
 
-			console.log('[DEBUG 21/10/2026]; applyInvalid');
-
 			if (applyInvalid) {
-				console.log('[DEBUG 21/10/2026]; Min per apply doesn`t match');
-
 				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
