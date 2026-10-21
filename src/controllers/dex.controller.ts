@@ -37,6 +37,25 @@ class DexController {
 		}
 	}
 
+	async getFeaturedPairs(req: Request, res: Response) {
+		try {
+			const requestedLimit = Number(req.body?.limit);
+			const limit =
+				Number.isInteger(requestedLimit) && requestedLimit > 0
+					? Math.min(requestedLimit, 20)
+					: 6;
+
+			const result = await dexModel.getFeaturedPairs(limit);
+
+			if (!result.success) return res.status(500).send(result);
+
+			res.status(200).send(result);
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
 	async getPairsPagesAmount(req: Request, res: Response) {
 		try {
 			const { body } = req;

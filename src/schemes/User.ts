@@ -15,6 +15,8 @@ class User extends Model {
 
 	declare isAdmin: boolean;
 
+	declare last_seen_at: Date | null;
+
 	declare readonly createdAt: Date;
 
 	declare readonly updatedAt: Date;
@@ -42,6 +44,11 @@ User.init(
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: false,
+		},
+		last_seen_at: {
+			type: DataTypes.DATE,
+			allowNull: true,
+			defaultValue: null,
 		},
 	},
 	{
