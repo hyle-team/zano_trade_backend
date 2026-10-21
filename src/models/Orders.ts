@@ -782,11 +782,15 @@ class OrdersModel {
 			const { userData } = body;
 			const { orderData } = body;
 
+			console.log('[DEBUG 21/10/2026]; body', body);
+
 			const userRow = await userModel.getUserRow(userData.address);
 
 			if (!userRow) throw new Error('Invalid address from token.');
 
 			const orderRow = await Order.findByPk(orderData.connected_order_id);
+
+			console.log('[DEBUG 21/10/2026]; orderRow?.toJSON()', orderRow?.toJSON());
 
 			const applyingOrderRow = await Order.findOne({
 				where: {
@@ -798,12 +802,25 @@ class OrdersModel {
 				},
 			});
 
+			console.log(
+				'[DEBUG 21/10/2026]; applyingOrderRow?.toJSON()',
+				applyingOrderRow?.toJSON(),
+			);
+
 			if (!(orderRow && applyingOrderRow)) {
+				console.log('[DEBUG 21/10/2026]; One of rows doesn`t exist');
+
 				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
 			const orderPrice = new Decimal(orderRow.price);
 			const applyingOrderPrice = new Decimal(applyingOrderRow.price);
+
+			console.log(
+				'[DEBUG 21/10/2026]; orderPrice.toFixed(), applyingOrderPrice.toFixed()',
+				orderPrice.toFixed(),
+				applyingOrderPrice.toFixed(),
+			);
 
 			if (
 				!(
@@ -814,6 +831,8 @@ class OrdersModel {
 						orderPrice.equals(applyingOrderPrice))
 				)
 			) {
+				console.log('[DEBUG 21/10/2026]; Orders do not match');
+
 				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
@@ -840,7 +859,11 @@ class OrdersModel {
 
 			const applyInvalid = txAmountLessThanMinPerApply;
 
+			console.log('[DEBUG 21/10/2026]; applyInvalid');
+
 			if (applyInvalid) {
+				console.log('[DEBUG 21/10/2026]; Min per apply doesn`t match');
+
 				return { success: false, data: this.APPLY_ORDER_INVALID_ORDER_DATA_MSG };
 			}
 
@@ -851,6 +874,11 @@ class OrdersModel {
 					status: 'pending',
 				},
 			});
+
+			console.log(
+				'[DEBUG 21/10/2026]; existingTransactionRow?.toJSON()',
+				existingTransactionRow?.toJSON(),
+			);
 
 			if (existingTransactionRow) {
 				return { success: false, data: this.APPLY_ORDER_ALREADY_APPLIED_MSG };

@@ -445,6 +445,8 @@ class OrdersController {
 
 			const isFull = orderData && orderData?.id && orderData?.connected_order_id;
 
+			console.log('[DEBUG 21/10/2026]; isFull', isFull);
+
 			if (!isFull)
 				return res.status(400).send({ success: false, data: 'Invalid order data' });
 
