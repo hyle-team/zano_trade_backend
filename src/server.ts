@@ -28,6 +28,7 @@ import exchangeModel from './models/ExchangeTransactions';
 import { setupAssociations } from './schemes/Associations';
 import statsModel from './models/Stats';
 import ordersModerationService from './workers/ordersModerationService';
+import inactiveUsersOrdersService from './workers/inactiveUsersOrdersService';
 
 const app = express();
 
@@ -91,6 +92,7 @@ process.on('unhandledRejection', (reason, promise) => {
 	app.use(middleware.integrationRateLimit);
 
 	socketStart(io);
+	inactiveUsersOrdersService.run(io);
 
 	app.use(middleware.defaultCors);
 

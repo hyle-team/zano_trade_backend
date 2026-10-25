@@ -205,6 +205,48 @@ class DexModel {
 		}
 	}
 
+	async getFeaturedPairs(limit: number) {
+		try {
+			const pairs = await Pair.findAll({
+				attributes: [
+					'id',
+					'first_currency_id',
+					'second_currency_id',
+					'rate',
+					'coefficient',
+					'high',
+					'low',
+					'volume',
+					'featured',
+				],
+				where: { featured: true },
+				order: [
+					['volume', 'DESC'],
+					['id', 'ASC'],
+				],
+				limit,
+			});
+
+			const pairsWithCurrencies: PairWithCurrencies[] = pairs.map((pair) => pair.toJSON());
+
+			for (let i = 0; i < pairs.length; i++) {
+				pairsWithCurrencies[i].first_currency = await configModel.getCurrencyRow(
+					pairs[i].first_currency_id,
+				);
+				pairsWithCurrencies[i].second_currency = await configModel.getCurrencyRow(
+					pairs[i].second_currency_id,
+				);
+				pairsWithCurrencies[i].whitelisted =
+					pairsWithCurrencies[i].first_currency?.whitelisted || false;
+			}
+
+			return { success: true, data: pairsWithCurrencies };
+		} catch (err) {
+			console.log(err);
+			return { success: false, data: 'Internal error' };
+		}
+	}
+
 	async getPairsPagesAmount(searchText: string, whitelistedOnly: boolean) {
 		try {
 			const { searchCondition, includeCondition } = this.getPairsSearchCondition(
