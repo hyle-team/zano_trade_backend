@@ -5,6 +5,7 @@ import { getUserOrdersValidator } from '@/interfaces/bodies/orders/GetUserOrders
 import { getUserOrdersAllPairsValidator } from '@/interfaces/bodies/orders/GetUserOrdersAllPairsBody.js';
 import { cancelAllValidator } from '@/interfaces/bodies/orders/CancelAllBody.js';
 import { getAllOrdersByAddressValidator } from '@/interfaces/bodies/orders/GetAllOrdersByAddressBody.js';
+import { setEmailNotificationsValidator } from '@/interfaces/bodies/orders/SetEmailNotificationsBody.js';
 import middleware from '../middleware/middleware.js';
 import ordersController from '../controllers/orders.controller.js';
 
@@ -19,6 +20,7 @@ ordersRouter.use(
 		'/orders/apply-order',
 		'/orders/get-user-orders-pairs',
 		'/orders/cancel-all',
+		'/orders/set-email-notifications',
 	],
 	middleware.authGuard,
 );
@@ -38,6 +40,11 @@ ordersRouter.patch(
 	ordersController.getUserOrders.bind(ordersController),
 );
 ordersRouter.post('/orders/cancel', ordersController.cancelOrder);
+ordersRouter.post(
+	'/orders/set-email-notifications',
+	middleware.expressValidator(setEmailNotificationsValidator),
+	ordersController.setEmailNotifications,
+);
 ordersRouter.post('/orders/get-candles', ordersController.getCandles);
 ordersRouter.post('/orders/get-chart-orders', ordersController.getChartOrders);
 ordersRouter.post('/orders/get-pair-stats', ordersController.getPairStats);

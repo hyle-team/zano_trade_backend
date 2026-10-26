@@ -3,6 +3,7 @@ import configModel from '../models/Config.js';
 import userModel from '../models/User.js';
 import GetUserBody from '../interfaces/bodies/user/GetUserBody.js';
 import SetFavouriteCurrsBody from '../interfaces/bodies/user/SetFavouriteCurrsBody.js';
+import SetEmailBody from '../interfaces/bodies/user/SetEmailBody.js';
 
 class UserController {
 	async getUser(req: Request, res: Response) {
@@ -86,6 +87,37 @@ class UserController {
 			}
 
 			return res.status(500).send(result);
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
+	async getNotificationSettings(req: Request, res: Response) {
+		try {
+			const result = await userModel.getNotificationSettings(req.body.userData.address);
+
+			if (result.success) return res.status(200).send(result);
+
+			if (result.data === 'User not found') return res.status(400).send(result);
+
+			res.status(500).send(result);
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
+	async setEmail(req: Request, res: Response) {
+		try {
+			const body = req.body as SetEmailBody;
+			const result = await userModel.setEmail(body.userData.address, body.email ?? null);
+
+			if (result.success) return res.status(200).send(result);
+
+			if (result.data === 'User not found') return res.status(400).send(result);
+
+			res.status(500).send(result);
 		} catch (err) {
 			console.log(err);
 			res.status(500).send({ success: false, data: 'Unhandled error' });

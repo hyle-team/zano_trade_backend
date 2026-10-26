@@ -7,6 +7,7 @@ const dexRouter = express.Router();
 
 dexRouter.post('/dex/get-pairs-page', dexController.getPairsPage);
 dexRouter.post('/dex/get-pairs-pages-amount', dexController.getPairsPagesAmount);
+dexRouter.post('/dex/get-featured-pairs', dexController.getFeaturedPairs);
 dexRouter.post('/dex/get-pair', dexController.getPair);
 dexRouter.post('/dex/renew-bot', middleware.authGuard, dexController.registerBot);
 // dexRouter.post('/dex/volume-stats', dexController.volumeStats);
