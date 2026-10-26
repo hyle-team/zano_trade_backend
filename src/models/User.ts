@@ -187,6 +187,46 @@ class UserModel {
 		//     }
 		// });
 	}
+
+	async getNotificationSettings(address: string) {
+		try {
+			const userRow = await User.unscoped().findOne({
+				where: { address },
+				attributes: ['id', 'email'],
+			});
+
+			if (!userRow) return { success: false, data: 'User not found' };
+
+			return { success: true, data: { email: userRow.email ?? null } };
+		} catch (err) {
+			console.log(err);
+			return { success: false, data: 'Internal error' };
+		}
+	}
+
+	async setEmail(address: string, email: string | null) {
+		try {
+			const userRow = await this.getUserRow(address);
+
+			if (!userRow) return { success: false, data: 'User not found' };
+
+			const normalizedEmail = email?.trim() || null;
+
+			await User.update({ email: normalizedEmail }, { where: { id: userRow.id } });
+
+			if (!normalizedEmail) {
+				await Order.update(
+					{ email_notifications: false },
+					{ where: { user_id: userRow.id, email_notifications: true } },
+				);
+			}
+
+			return { success: true, data: { email: normalizedEmail } };
+		} catch (err) {
+			console.log(err);
+			return { success: false, data: 'Internal error' };
+		}
+	}
 }
 
 const userModel = new UserModel();

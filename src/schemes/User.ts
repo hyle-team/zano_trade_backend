@@ -17,6 +17,8 @@ class User extends Model {
 
 	declare last_seen_at: Date | null;
 
+	declare email: string | null;
+
 	declare readonly createdAt: Date;
 
 	declare readonly updatedAt: Date;
@@ -50,11 +52,19 @@ User.init(
 			allowNull: true,
 			defaultValue: null,
 		},
+		email: {
+			type: DataTypes.STRING(254),
+			allowNull: true,
+			defaultValue: null,
+		},
 	},
 	{
 		sequelize,
 		modelName: 'User',
 		timestamps: true,
+		defaultScope: {
+			attributes: { exclude: ['email', 'last_seen_at'] },
+		},
 	},
 );
 

@@ -10,6 +10,7 @@ import {
 import dexModel from './Dex.js';
 import userModel from './User.js';
 import exchangeModel from './ExchangeTransactions.js';
+import emailNotificationsModel from './EmailNotifications.js';
 import {
 	sendDeleteOrderMessage,
 	sendNewOrderMessage,
@@ -22,6 +23,7 @@ import ApplyTip from '../interfaces/responses/orders/ApplyTip.js';
 import CreateOrderBody, { CreateOrderType } from '../interfaces/bodies/orders/CreateOrderBody.js';
 import GetUserOrdersPageBody from '../interfaces/bodies/orders/GetUserOrdersPageBody.js';
 import CancelOrderBody from '../interfaces/bodies/orders/CancelOrderBody.js';
+import SetEmailNotificationsBody from '../interfaces/bodies/orders/SetEmailNotificationsBody.js';
 import ApplyOrderBody from '../interfaces/bodies/orders/ApplyOrderBody.js';
 import Order, { OrderStatus, OrderType } from '../schemes/Order';
 import User from '../schemes/User';
@@ -278,6 +280,10 @@ class OrdersModel {
 					pair: newOrderPair.toJSON(),
 				});
 			}
+
+			emailNotificationsModel.runInBackground(
+				emailNotificationsModel.notifyMatchFound(matchedOrders.map((e) => e.id)),
+			);
 
 			await Order.update(
 				{
@@ -875,6 +881,10 @@ class OrdersModel {
 
 			sendUpdateOrderMessage(io, orderRow.pair_id.toString());
 
+			emailNotificationsModel.runInBackground(
+				emailNotificationsModel.notifyProposalReceived(applyingOrderRow.id),
+			);
+
 			return { success: true, data: { transactionId: transactionRow.id } };
 		} catch (err) {
 			console.log(err);
@@ -1221,6 +1231,38 @@ class OrdersModel {
 			data: orders,
 		};
 	};
+
+	async setEmailNotifications(body: SetEmailNotificationsBody) {
+		try {
+			const userRow = await User.unscoped().findOne({
+				where: { address: body.userData.address },
+				attributes: ['id', 'email'],
+			});
+
+			if (!userRow) return { success: false, data: 'Invalid address from token.' };
+
+			const orderRow = await Order.findOne({
+				where: {
+					id: body.orderId,
+					user_id: userRow.id,
+					status: { [Op.ne]: OrderStatus.FINISHED },
+				},
+			});
+
+			if (!orderRow) return { success: false, data: 'Invalid order data' };
+
+			if (body.enabled && !userRow.email) {
+				return { success: false, data: 'Email is not set' };
+			}
+
+			await orderRow.update({ email_notifications: body.enabled });
+
+			return { success: true, data: { enabled: body.enabled } };
+		} catch (err) {
+			console.log(err);
+			return { success: false, data: 'Internal error' };
+		}
+	}
 }
 
 const ordersModel = new OrdersModel();

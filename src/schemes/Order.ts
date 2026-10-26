@@ -41,6 +41,8 @@ class Order extends Model {
 
 	declare hasNotification: boolean;
 
+	declare email_notifications: boolean;
+
 	declare min_per_apply_amount: string | null;
 
 	declare max_per_apply_amount: string | null;
@@ -94,6 +96,11 @@ Order.init(
 			allowNull: false,
 		},
 		hasNotification: {
+			type: DataTypes.BOOLEAN,
+			allowNull: false,
+			defaultValue: false,
+		},
+		email_notifications: {
 			type: DataTypes.BOOLEAN,
 			allowNull: false,
 			defaultValue: false,

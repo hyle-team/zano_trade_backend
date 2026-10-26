@@ -22,6 +22,7 @@ import GetAllOrdersByAddressRes, {
 	GetAllOrdersByAddressErrorCode,
 	GetAllOrdersByAddressResOrderData,
 } from '@/interfaces/responses/orders/GetAllOrdersByAddressRes';
+import SetEmailNotificationsBody from '@/interfaces/bodies/orders/SetEmailNotificationsBody.js';
 import candlesModel from '../models/Candles';
 import ordersModel from '../models/Orders';
 import CreateOrderBody from '../interfaces/bodies/orders/CreateOrderBody';
@@ -377,6 +378,23 @@ class OrdersController {
 			if (result.data === 'Internal error') return res.status(500).send(result);
 
 			res.status(200).send(result);
+		} catch (err) {
+			console.log(err);
+			res.status(500).send({ success: false, data: 'Unhandled error' });
+		}
+	}
+
+	async setEmailNotifications(req: Request, res: Response) {
+		try {
+			const result = await ordersModel.setEmailNotifications(
+				req.body as SetEmailNotificationsBody,
+			);
+
+			if (result.success) return res.status(200).send(result);
+
+			if (result.data === 'Internal error') return res.status(500).send(result);
+
+			res.status(400).send(result);
 		} catch (err) {
 			console.log(err);
 			res.status(500).send({ success: false, data: 'Unhandled error' });

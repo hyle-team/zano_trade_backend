@@ -1,6 +1,11 @@
 import 'dotenv/config';
 import { z } from 'zod';
 
+const emptyToUndefined = (value: unknown) =>
+	typeof value === 'string' && value.trim() === '' ? undefined : value;
+
+const optionalString = z.preprocess(emptyToUndefined, z.string().min(1).optional());
+
 const envSchema = z.object({
 	// Runtime
 	NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -33,6 +38,19 @@ const envSchema = z.object({
 	ZANO_EXPLORER_INTEGRATION_KEY: z.string().min(1),
 
 	INACTIVE_USER_ORDERS_EXPIRATION_HOURS: z.coerce.number().positive().default(24),
+
+	SMTP_HOST: optionalString,
+	SMTP_PORT: z.preprocess(emptyToUndefined, z.coerce.number().int().positive().default(587)),
+	SMTP_SECURE: z.preprocess(
+		emptyToUndefined,
+		z
+			.enum(['true', 'false'])
+			.default('false')
+			.transform((value) => value === 'true'),
+	),
+	SMTP_USER: optionalString,
+	SMTP_PASSWORD: optionalString,
+	SMTP_FROM: optionalString,
 });
 
 const parsed = envSchema.safeParse(process.env);
